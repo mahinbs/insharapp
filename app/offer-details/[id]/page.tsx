@@ -9,6 +9,7 @@ export async function generateStaticParams() {
   ];
 }
 
-export default function OfferDetailsPage({ params }: { params: { id: string } }) {
-  return <OfferDetailsClient offerId={params.id} />;
+export default async function OfferDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <OfferDetailsClient offerId={id} />;
 }
