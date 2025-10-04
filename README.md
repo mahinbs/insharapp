@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Inshaaar - Next.js Application
 
 A modern Next.js application built with TypeScript and Tailwind CSS.
@@ -92,3 +93,7 @@ This is a private repository. For access or contributions, please contact the re
 ---
 
 **Live Application**: [http://localhost:3000](http://localhost:3000)
+=======
+# insharapp
+insharapp
+>>>>>>> 74f0ba94ea445192a9b89966a2ad2a5488538155
