@@ -10,7 +10,6 @@ const myOffers = [
     id: 1,
     title: "Free 3-Course Dinner",
     description: "Promote our new seasonal menu",
-    value: "$120",
     applications: 15,
     views: 234,
     status: "Active",
@@ -20,7 +19,6 @@ const myOffers = [
     id: 2,
     title: "Weekend Brunch Package",
     description: "Share your brunch experience",
-    value: "$80",
     applications: 8,
     views: 156,
     status: "Active",
@@ -60,6 +58,12 @@ export default function BusinessDashboard() {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-12 pb-6">
+        {/* Logo Section */}
+        <div className="text-center mb-6">
+          <h1 className="font-['Pacifico'] text-3xl text-white mb-2 drop-shadow-lg">Inshaar</h1>
+          <p className="text-white/80 text-sm">Business Dashboard</p>
+        </div>
+        
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -70,7 +74,7 @@ export default function BusinessDashboard() {
               />
             </div>
             <div>
-              <h1 className="text-white font-semibold text-lg">Bella Vista Restaurant</h1>
+              <h2 className="text-white font-semibold text-lg">Bella Vista Restaurant</h2>
               <p className="text-white/80 text-sm">Fine Dining • Downtown</p>
             </div>
           </div>
@@ -165,9 +169,7 @@ export default function BusinessDashboard() {
                     alt={offer.title}
                     className="w-full h-48 object-cover"
                   />
-                  <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {offer.value}
-                  </div>
+                 
                   <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                     {offer.status}
                   </div>

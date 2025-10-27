@@ -88,7 +88,10 @@ export default function BusinessApplications() {
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <h1 className="text-white font-semibold text-xl">Applications</h1>
+          <div className="flex flex-col items-center">
+            <h1 className="font-['Pacifico'] text-2xl text-white mb-1">Inshaar</h1>
+            <span className="text-white/80 text-sm">Applications</span>
+          </div>
           <div className="w-10"></div>
         </div>
 

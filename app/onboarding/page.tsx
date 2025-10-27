@@ -38,8 +38,13 @@ export default function OnboardingScreen() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Skip button */}
-      <div className="flex justify-end p-6">
+      {/* Header with Logo */}
+      <div className="flex justify-between items-center p-6">
+        <div className="flex items-center space-x-2">
+          <h1 className="font-['Pacifico'] text-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent">
+            Inshaar
+          </h1>
+        </div>
         <Link href="/auth" className="text-gray-500 font-medium">
           Skip
         </Link>

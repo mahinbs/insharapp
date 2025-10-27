@@ -1,28 +1,34 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState } from "react";
+import Link from "next/link";
 
 export default function PostOffer() {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    serviceOffered: '',
-    value: '',
-    category: '',
-    location: '',
-    requirements: '',
-    images: []
+    title: "",
+    description: "",
+    serviceOffered: "",
+    category: "",
+    location: "",
+    requirements: "",
+    images: [],
   });
 
   const categories = [
-    'Restaurant', 'Beauty & Spa', 'Fashion', 'Fitness', 'Travel', 'Technology', 'Home & Garden', 'Entertainment'
+    "Restaurant",
+    "Beauty & Spa",
+    "Fashion",
+    "Fitness",
+    "Travel",
+    "Technology",
+    "Home & Garden",
+    "Entertainment",
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission
-    console.log('Offer posted:', formData);
+    console.log("Offer posted:", formData);
   };
 
   return (
@@ -35,7 +41,12 @@ export default function PostOffer() {
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <h1 className="text-white font-semibold text-xl">Post New Offer</h1>
+          <div className="flex flex-col items-center">
+            <h1 className="font-['Pacifico'] text-2xl text-white mb-1">
+              Inshaar
+            </h1>
+            <span className="text-white/80 text-sm">Post New Offer</span>
+          </div>
           <div className="w-10"></div>
         </div>
       </div>
@@ -45,12 +56,16 @@ export default function PostOffer() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">Offer Title</label>
+            <label className="block text-gray-800 font-semibold mb-3">
+              Offer Title
+            </label>
             <input
               type="text"
               placeholder="e.g., Free 3-Course Dinner"
               value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-purple-500 outline-none text-gray-800"
               required
             />
@@ -58,40 +73,37 @@ export default function PostOffer() {
 
           {/* Category */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">Category</label>
+            <label className="block text-gray-800 font-semibold mb-3">
+              Category
+            </label>
             <select
               value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
               className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-purple-500 outline-none text-gray-800"
               required
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* Value */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">Estimated Value</label>
-            <input
-              type="text"
-              placeholder="e.g., $120"
-              value={formData.value}
-              onChange={(e) => setFormData({...formData, value: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-purple-500 outline-none text-gray-800"
-              required
-            />
-          </div>
-
           {/* Description */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">Description</label>
+            <label className="block text-gray-800 font-semibold mb-3">
+              Description
+            </label>
             <textarea
               placeholder="Describe what the influencer will receive and experience..."
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               rows={4}
               maxLength={500}
               className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-purple-500 outline-none text-gray-800 resize-none"
@@ -104,11 +116,15 @@ export default function PostOffer() {
 
           {/* Service Offered */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">What You're Offering</label>
+            <label className="block text-gray-800 font-semibold mb-3">
+              What You're Offering
+            </label>
             <textarea
               placeholder="Detail the specific service or product you're providing..."
               value={formData.serviceOffered}
-              onChange={(e) => setFormData({...formData, serviceOffered: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, serviceOffered: e.target.value })
+              }
               rows={3}
               maxLength={500}
               className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-purple-500 outline-none text-gray-800 resize-none"
@@ -118,12 +134,16 @@ export default function PostOffer() {
 
           {/* Location */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">Location</label>
+            <label className="block text-gray-800 font-semibold mb-3">
+              Location
+            </label>
             <input
               type="text"
               placeholder="e.g., Downtown Plaza, 123 Main Street"
               value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
               className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-purple-500 outline-none text-gray-800"
               required
             />
@@ -131,11 +151,15 @@ export default function PostOffer() {
 
           {/* Requirements */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">Influencer Requirements</label>
+            <label className="block text-gray-800 font-semibold mb-3">
+              Influencer Requirements
+            </label>
             <textarea
               placeholder="e.g., Minimum 10K followers, Food niche, Post 3 stories, 1 Instagram post..."
               value={formData.requirements}
-              onChange={(e) => setFormData({...formData, requirements: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, requirements: e.target.value })
+              }
               rows={4}
               maxLength={500}
               className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-purple-500 outline-none text-gray-800 resize-none"
@@ -145,10 +169,14 @@ export default function PostOffer() {
 
           {/* Images */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <label className="block text-gray-800 font-semibold mb-3">Photos</label>
+            <label className="block text-gray-800 font-semibold mb-3">
+              Photos
+            </label>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
               <i className="ri-image-add-line text-4xl text-gray-400 mb-4"></i>
-              <p className="text-gray-600 mb-2">Upload photos of your business or service</p>
+              <p className="text-gray-600 mb-2">
+                Upload photos of your business or service
+              </p>
               <p className="text-gray-500 text-sm">PNG, JPG up to 10MB each</p>
               <button
                 type="button"

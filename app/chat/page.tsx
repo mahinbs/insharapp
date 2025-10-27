@@ -47,7 +47,10 @@ export default function ChatList() {
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <h1 className="text-white font-semibold text-xl">Messages</h1>
+          <div className="flex flex-col items-center">
+            <h1 className="font-['Pacifico'] text-2xl text-white mb-1">Inshaar</h1>
+            <span className="text-white/80 text-sm">Messages</span>
+          </div>
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
             <i className="ri-more-line text-white text-xl"></i>
           </div>
