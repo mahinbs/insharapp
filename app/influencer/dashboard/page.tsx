@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 
@@ -9,9 +9,9 @@ const barterOffers = [
     id: 1,
     businessName: "Bella Vista Restaurant",
     businessLogo:
-      "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20logo%2C%20modern%20dining%20establishment%2C%20sophisticated%20branding%2C%20clean%20minimalist%20design%2C%20professional%20restaurant%20identity%2C%20upscale%20dining%20logo&width=80&height=80&seq=resto1&orientation=squarish",
+      "https://i.pravatar.cc/80?img=12",
     offerImage:
-      "https://readdy.ai/api/search-image?query=Gourmet%20restaurant%20meal%2C%20beautifully%20plated%20fine%20dining%20dish%2C%20elegant%20food%20presentation%2C%20professional%20food%20photography%2C%20warm%20restaurant%20lighting%2C%20luxury%20dining%20experience&width=300&height=200&seq=meal1&orientation=landscape",
+      "https://picsum.photos/seed/offer-meal-1/1200/640",
     title: "Free 3-Course Dinner",
     description: "Promote our new seasonal menu",
     category: "Restaurant",
@@ -21,9 +21,9 @@ const barterOffers = [
     id: 2,
     businessName: "Luxe Beauty Salon",
     businessLogo:
-      "https://readdy.ai/api/search-image?query=Luxury%20beauty%20salon%20logo%2C%20elegant%20spa%20branding%2C%20premium%20beauty%20services%20logo%2C%20sophisticated%20wellness%20brand%20identity%2C%20minimalist%20beauty%20logo%20design&width=80&height=80&seq=salon1&orientation=squarish",
+      "https://i.pravatar.cc/80?img=32",
     offerImage:
-      "https://readdy.ai/api/search-image?query=Luxury%20beauty%20salon%20interior%2C%20professional%20hair%20styling%20session%2C%20elegant%20spa%20treatment%20room%2C%20modern%20beauty%20salon%20equipment%2C%20relaxing%20wellness%20environment&width=300&height=200&seq=beauty1&orientation=landscape",
+      "https://picsum.photos/seed/offer-beauty-1/1200/640",
     title: "Complete Hair Makeover",
     description: "Hair cut, color & styling package",
     category: "Beauty",
@@ -33,9 +33,9 @@ const barterOffers = [
     id: 3,
     businessName: "Urban Threads",
     businessLogo:
-      "https://readdy.ai/api/search-image?query=Modern%20fashion%20boutique%20logo%2C%20trendy%20clothing%20brand%20identity%2C%20urban%20fashion%20logo%2C%20stylish%20apparel%20branding%2C%20contemporary%20fashion%20design&width=80&height=80&seq=fashion1&orientation=squarish",
+      "https://i.pravatar.cc/80?img=14",
     offerImage:
-      "https://readdy.ai/api/search-image?query=Trendy%20fashion%20boutique%20interior%2C%20stylish%20clothing%20display%2C%20modern%20retail%20store%2C%20fashionable%20apparel%20collection%2C%20contemporary%20shopping%20experience&width=300&height=200&seq=clothes1&orientation=landscape",
+      "https://picsum.photos/seed/offer-fashion-1/1200/640",
     title: "Designer Outfit Package",
     description: "Complete outfit worth $300",
     category: "Fashion",
@@ -59,8 +59,103 @@ const myCollaborations = [
   },
 ];
 
+const categories = [
+  { id: 1, name: "All", icon: "ri-apps-line", count: 45 },
+  { id: 2, name: "Restaurant", icon: "ri-restaurant-line", count: 12 },
+  { id: 3, name: "Beauty", icon: "ri-scissors-line", count: 8 },
+  { id: 4, name: "Fashion", icon: "ri-shirt-line", count: 15 },
+  { id: 5, name: "Fitness", icon: "ri-run-line", count: 6 },
+  { id: 6, name: "Travel", icon: "ri-plane-line", count: 4 },
+];
+
+const top10Offers = [
+  {
+    id: 1,
+    businessName: "Bella Vista Restaurant",
+    title: "Free 3-Course Dinner",
+    category: "Restaurant",
+    rating: 4.9,
+    applications: 156,
+    image: "https://picsum.photos/seed/top-restaurant-1/80/80",
+  },
+  {
+    id: 2,
+    businessName: "Luxe Beauty Salon",
+    title: "Complete Hair Makeover",
+    category: "Beauty",
+    rating: 4.8,
+    applications: 89,
+    image: "https://picsum.photos/seed/top-beauty-1/80/80",
+  },
+  {
+    id: 3,
+    businessName: "Urban Threads",
+    title: "Designer Outfit Package",
+    category: "Fashion",
+    rating: 4.7,
+    applications: 67,
+    image: "https://picsum.photos/seed/top-fashion-1/80/80",
+  },
+];
+
+const nearbyBusinesses = [
+  {
+    id: 1,
+    businessName: "Café Mocha",
+    category: "Restaurant",
+    distance: "0.2 miles",
+    rating: 4.6,
+    image: "https://picsum.photos/seed/near-coffee-1/80/80",
+  },
+  {
+    id: 2,
+    businessName: "FitLife Gym",
+    category: "Fitness",
+    distance: "0.5 miles",
+    rating: 4.5,
+    image: "https://picsum.photos/seed/near-gym-1/80/80",
+  },
+  {
+    id: 3,
+    businessName: "Style Studio",
+    category: "Beauty",
+    distance: "0.8 miles",
+    rating: 4.7,
+    image: "https://picsum.photos/seed/near-beauty-1/80/80",
+  },
+];
+
+const trendingBusinesses = [
+  {
+    id: 1,
+    businessName: "Eco Fashion Co",
+    category: "Fashion",
+    trend: "Rising",
+    growth: "+23%",
+    image: "https://picsum.photos/seed/trend-fashion-1/80/80",
+  },
+  {
+    id: 2,
+    businessName: "Tech Hub Café",
+    category: "Restaurant",
+    trend: "Hot",
+    growth: "+45%",
+    image: "https://picsum.photos/seed/trend-restaurant-1/80/80",
+  },
+  {
+    id: 3,
+    businessName: "Wellness Spa",
+    category: "Beauty",
+    trend: "Popular",
+    growth: "+18%",
+    image: "https://picsum.photos/seed/trend-beauty-1/80/80",
+  },
+];
+
 export default function InfluencerDashboard() {
   const [activeTab, setActiveTab] = useState("available");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [userLocation, setUserLocation] = useState("Downtown, NYC");
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -77,8 +172,8 @@ export default function InfluencerDashboard() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <img
-                src="https://readdy.ai/api/search-image?query=Young%20female%20influencer%20profile%20photo%2C%20professional%20headshot%2C%20social%20media%20personality%2C%20confident%20smile%2C%20modern%20portrait%20photography%2C%20bright%20natural%20lighting&width=48&height=48&seq=profile1&orientation=squarish"
+              <img 
+                src="https://i.pravatar.cc/48?img=5"
                 alt="Profile"
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -92,7 +187,7 @@ export default function InfluencerDashboard() {
               </p>
             </div>
           </div>
-
+          
           <div className="flex items-center space-x-3">
             <Link href="/notifications">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -120,6 +215,26 @@ export default function InfluencerDashboard() {
           <div className="bg-white/20 rounded-xl p-4 text-center">
             <div className="text-white text-2xl font-bold">4.9</div>
             <div className="text-white/80 text-sm">Rating</div>
+          </div>
+        </div>
+
+        {/* Location & Quick Actions */}
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <i className="ri-map-pin-line text-white/80"></i>
+            <span className="text-white/80 text-sm">{userLocation}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Link href="/search">
+              <button className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-white/30 transition-colors">
+                <i className="ri-search-line mr-1"></i>
+                Search
+              </button>
+            </Link>
+            <button className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-white/30 transition-colors">
+              <i className="ri-refresh-line mr-1"></i>
+              Refresh
+            </button>
           </div>
         </div>
       </div>
@@ -153,45 +268,195 @@ export default function InfluencerDashboard() {
       {/* Content */}
       <div className="px-6 py-6">
         {activeTab === "available" && (
+          <div className="space-y-6">
+            {/* Category Filter */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Available Offers</h2>
+              <div className="flex space-x-2 overflow-x-auto pb-2">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.name)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+                      selectedCategory === category.name
+                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <i className={category.icon}></i>
+                    <span>{category.name}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${
+                      selectedCategory === category.name
+                        ? "bg-white/20"
+                        : "bg-gray-200"
+                    }`}>
+                      {category.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Top 10 Section */}
+            <div className="bg-white rounded-2xl p-5 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+                  <i className="ri-trophy-line text-yellow-500"></i>
+                  <span>Top 10 Offers</span>
+                </h3>
+                <Link href="/search" className="text-purple-600 text-sm font-medium">
+                  View All
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {top10Offers.map((offer, index) => (
+                  <div key={offer.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <img src={offer.image} alt={offer.businessName} className="w-12 h-12 rounded-lg object-cover" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-800 text-sm">{offer.businessName}</h4>
+                      <p className="text-gray-600 text-xs">{offer.title}</p>
+                      <div className="flex items-center space-x-3 mt-1">
+                        <div className="flex items-center space-x-1">
+                          <i className="ri-star-fill text-yellow-400 text-xs"></i>
+                          <span className="text-xs text-gray-600">{offer.rating}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <i className="ri-user-line text-gray-400 text-xs"></i>
+                          <span className="text-xs text-gray-600">{offer.applications} applied</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Link href={`/offer-details/${offer.id}`}>
+                      <button className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-3 py-1 rounded-lg text-xs font-medium">
+                        Apply
+                      </button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* What's Around Me */}
+            <div className="bg-white rounded-2xl p-5 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+                  <i className="ri-map-pin-line text-blue-500"></i>
+                  <span>What's Around Me</span>
+                </h3>
+                <button className="text-purple-600 text-sm font-medium">
+                  <i className="ri-refresh-line mr-1"></i>
+                  Refresh
+                </button>
+              </div>
+              <div className="space-y-3">
+                {nearbyBusinesses.map((business) => (
+                  <div key={business.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                    <img src={business.image} alt={business.businessName} className="w-12 h-12 rounded-lg object-cover" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-800 text-sm">{business.businessName}</h4>
+                      <p className="text-gray-600 text-xs">{business.category}</p>
+                      <div className="flex items-center space-x-3 mt-1">
+                        <div className="flex items-center space-x-1">
+                          <i className="ri-map-pin-line text-gray-400 text-xs"></i>
+                          <span className="text-xs text-gray-600">{business.distance}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <i className="ri-star-fill text-yellow-400 text-xs"></i>
+                          <span className="text-xs text-gray-600">{business.rating}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-medium">
+                      View
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Trending Businesses */}
+            <div className="bg-white rounded-2xl p-5 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+                  <i className="ri-fire-line text-orange-500"></i>
+                  <span>Trending Now</span>
+                </h3>
+                <Link href="/search" className="text-purple-600 text-sm font-medium">
+                  View All
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {trendingBusinesses.map((business) => (
+                  <div key={business.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                    <img src={business.image} alt={business.businessName} className="w-12 h-12 rounded-lg object-cover" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-800 text-sm">{business.businessName}</h4>
+                      <p className="text-gray-600 text-xs">{business.category}</p>
+                      <div className="flex items-center space-x-3 mt-1">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          business.trend === "Hot" ? "bg-red-100 text-red-700" :
+                          business.trend === "Rising" ? "bg-green-100 text-green-700" :
+                          "bg-blue-100 text-blue-700"
+                        }`}>
+                          {business.trend}
+                        </span>
+                        <span className="text-xs text-green-600 font-medium">{business.growth}</span>
+                      </div>
+                    </div>
+                    <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-lg text-xs font-medium">
+                      Explore
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Filtered Offers */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                {selectedCategory === "All" ? "All Offers" : `${selectedCategory} Offers`}
+              </h3>
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Available Barter Offers
-            </h2>
-            {barterOffers.map((offer) => (
-              <div
-                key={offer.id}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden"
-              >
+                {barterOffers
+                  .filter(offer => selectedCategory === "All" || offer.category === selectedCategory)
+                  .map((offer) => (
+                    <div
+                      key={offer.id}
+                      className="bg-white rounded-2xl shadow-lg overflow-hidden"
+                    >
                 <div className="relative">
-                  <img
+                  <img 
                     src={offer.offerImage}
                     alt={offer.title}
                     className="w-full h-48 object-cover"
                   />
                 </div>
-
+                
                 <div className="p-4">
                   <div className="flex items-center space-x-3 mb-3">
-                    <img
+                    <img 
                       src={offer.businessLogo}
                       alt={offer.businessName}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                     <div>
-                      <h3 className="font-semibold text-gray-800">
-                        {offer.businessName}
-                      </h3>
-                      <p className="text-gray-500 text-sm">
-                        {offer.category} • {offer.location}
-                      </p>
+                            <h3 className="font-semibold text-gray-800">
+                              {offer.businessName}
+                            </h3>
+                            <p className="text-gray-500 text-sm">
+                              {offer.category} • {offer.location}
+                            </p>
                     </div>
                   </div>
-
-                  <h4 className="font-bold text-lg text-gray-800 mb-2">
-                    {offer.title}
-                  </h4>
+                  
+                        <h4 className="font-bold text-lg text-gray-800 mb-2">
+                          {offer.title}
+                        </h4>
                   <p className="text-gray-600 mb-4">{offer.description}</p>
-
+                  
                   <Link href={`/offer-details/${offer.id}`}>
                     <button className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
                       Apply for Collaboration
@@ -200,6 +465,8 @@ export default function InfluencerDashboard() {
                 </div>
               </div>
             ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -227,7 +494,7 @@ export default function InfluencerDashboard() {
                     {collab.status}
                   </span>
                 </div>
-
+                
                 {collab.status === "Active" && (
                   <div>
                     <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -235,14 +502,14 @@ export default function InfluencerDashboard() {
                       <span>{collab.deadline}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
+                      <div 
                         className="bg-gradient-to-r from-pink-500 to-purple-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${collab.progress}%` }}
                       ></div>
                     </div>
                   </div>
                 )}
-
+                
                 {collab.status === "Completed" && (
                   <div className="flex items-center space-x-2">
                     <span className="text-gray-600">Rating:</span>

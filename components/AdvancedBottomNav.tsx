@@ -50,6 +50,12 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
       badge: 2
     },
     {
+      href: '/help',
+      icon: 'ri-question-line',
+      activeIcon: 'ri-question-fill',
+      label: 'Help'
+    },
+    {
       href: '/profile',
       icon: 'ri-user-line',
       activeIcon: 'ri-user-fill',
@@ -85,10 +91,22 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
       badge: 1
     },
     {
-      href: '/analytics',
-      icon: 'ri-bar-chart-line',
-      activeIcon: 'ri-bar-chart-fill',
-      label: 'Analytics'
+      href: '/business/profile',
+      icon: 'ri-store-2-line',
+      activeIcon: 'ri-store-2-fill',
+      label: 'Profile'
+    },
+    {
+      href: '/business/explore',
+      icon: 'ri-compass-line',
+      activeIcon: 'ri-compass-fill',
+      label: 'Explore'
+    },
+    {
+      href: '/help',
+      icon: 'ri-question-line',
+      activeIcon: 'ri-question-fill',
+      label: 'Help'
     }
   ];
 
@@ -134,7 +152,7 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500"></div>
         
         <div className="px-2 py-2">
-          <div className="grid grid-cols-5 gap-1">
+          <div className={`grid ${navItems.length === 7 ? 'grid-cols-7' : navItems.length === 6 ? 'grid-cols-6' : 'grid-cols-5'} gap-1`}>
             {navItems.map((item, index) => {
               const active = isActive(item.href);
               return (

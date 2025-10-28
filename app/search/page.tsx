@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../components/AdvancedBottomNav';
 
@@ -83,6 +83,132 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [hoveredCategory, setHoveredCategory] = useState<number | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [countries, setCountries] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  // Load countries on component mount
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2');
+        const data = await response.json();
+        const countryList = data.map((country: any) => ({
+          name: country.name.common,
+          code: country.cca2
+        })).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        setCountries(countryList);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+        // Fallback data
+        setCountries([
+          { name: 'United States', code: 'US' },
+          { name: 'United Kingdom', code: 'GB' },
+          { name: 'Canada', code: 'CA' },
+          { name: 'Australia', code: 'AU' },
+          { name: 'Germany', code: 'DE' },
+          { name: 'France', code: 'FR' },
+          { name: 'India', code: 'IN' },
+          { name: 'Japan', code: 'JP' },
+          { name: 'Brazil', code: 'BR' },
+          { name: 'Mexico', code: 'MX' }
+        ]);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  // Load cities when country is selected
+  useEffect(() => {
+    if (selectedCountry) {
+      setLoadingCities(true);
+      setSelectedCity('');
+      
+      // Simulate API call for cities (using a mock service)
+      const fetchCities = async () => {
+        try {
+          // Using a free cities API
+          const response = await fetch(`https://api.countrystatecity.in/v1/countries/${countries.find(c => c.name === selectedCountry)?.code}/cities`, {
+            headers: {
+              'X-CSCAPI-KEY': 'YOUR_API_KEY' // This would need a real API key
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setCities(data.map((city: any) => ({ name: city.name })));
+          } else {
+            // Fallback cities data
+            const fallbackCities = {
+              'US': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'],
+              'GB': ['London', 'Birmingham', 'Manchester', 'Glasgow', 'Liverpool', 'Leeds', 'Sheffield', 'Edinburgh', 'Bristol', 'Leicester'],
+              'CA': ['Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Edmonton', 'Ottawa', 'Winnipeg', 'Quebec City', 'Hamilton', 'Kitchener'],
+              'AU': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Newcastle', 'Canberra', 'Sunshine Coast', 'Wollongong'],
+              'DE': ['Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Dortmund', 'Essen', 'Leipzig'],
+              'FR': ['Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille'],
+              'IN': ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad', 'Chennai', 'Kolkata', 'Pune', 'Jaipur', 'Lucknow'],
+              'JP': ['Tokyo', 'Yokohama', 'Osaka', 'Nagoya', 'Sapporo', 'Fukuoka', 'Kobe', 'Kyoto', 'Kawasaki', 'Saitama'],
+              'BR': ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza', 'Belo Horizonte', 'Manaus', 'Curitiba', 'Recife', 'Porto Alegre'],
+              'MX': ['Mexico City', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'León', 'Juárez', 'Zapopan', 'Nezahualcóyotl', 'Guadalupe']
+            };
+            
+            const countryCode = countries.find(c => c.name === selectedCountry)?.code;
+            const cityList = fallbackCities[countryCode as keyof typeof fallbackCities] || [];
+            setCities(cityList.map(city => ({ name: city })));
+          }
+        } catch (error) {
+          console.error('Error fetching cities:', error);
+          // Fallback cities
+          setCities([
+            { name: 'New York' },
+            { name: 'Los Angeles' },
+            { name: 'Chicago' },
+            { name: 'Houston' },
+            { name: 'Phoenix' }
+          ]);
+        } finally {
+          setLoadingCities(false);
+        }
+      };
+
+      fetchCities();
+    } else {
+      setCities([]);
+    }
+  }, [selectedCountry, countries]);
+
+  const handleCountryChange = (country: string) => {
+    setSelectedCountry(country);
+    setSelectedCity('');
+  };
+
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category === selectedCategory ? '' : category);
+  };
+
+  const clearFilters = () => {
+    setSelectedCountry('');
+    setSelectedCity('');
+    setSelectedCategory('');
+    setSearchQuery('');
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (selectedCountry) count++;
+    if (selectedCity) count++;
+    if (selectedCategory) count++;
+    if (searchQuery) count++;
+    return count;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -98,9 +224,17 @@ export default function SearchPage() {
             <h1 className="font-['Pacifico'] text-2xl text-white mb-1">Inshaar</h1>
             <span className="text-white/80 text-sm">Discover</span>
           </div>
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center relative"
+          >
             <i className="ri-filter-line text-white text-xl"></i>
-          </div>
+            {getActiveFiltersCount() > 0 && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{getActiveFiltersCount()}</span>
+              </div>
+            )}
+          </button>
         </div>
 
         {/* Search Bar */}
@@ -116,6 +250,114 @@ export default function SearchPage() {
         </div>
       </div>
 
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="bg-white mx-4 -mt-4 rounded-2xl shadow-lg p-6 relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
+            <button 
+              onClick={clearFilters}
+              className="text-purple-600 text-sm font-medium hover:text-purple-700"
+            >
+              Clear All
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {/* Country Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+              <select
+                value={selectedCountry}
+                onChange={(e) => handleCountryChange(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">Select a country</option>
+                {countries.map((country) => (
+                  <option key={country.code} value={country.name}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* City Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+              <select
+                value={selectedCity}
+                onChange={(e) => handleCityChange(e.target.value)}
+                disabled={!selectedCountry || loadingCities}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Select a city</option>
+                {loadingCities ? (
+                  <option disabled>Loading cities...</option>
+                ) : (
+                  cities.map((city, index) => (
+                    <option key={index} value={city.name}>
+                      {city.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* Category Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <div className="grid grid-cols-2 gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategoryChange(category.name)}
+                    className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${
+                      selectedCategory === category.name
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <i className={`${category.icon} text-lg`}></i>
+                      <span className="font-medium">{category.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Active Filters Summary */}
+            {(selectedCountry || selectedCity || selectedCategory || searchQuery) && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Active Filters:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {searchQuery && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      Search: "{searchQuery}"
+                    </span>
+                  )}
+                  {selectedCountry && (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                      Country: {selectedCountry}
+                    </span>
+                  )}
+                  {selectedCity && (
+                    <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                      City: {selectedCity}
+                    </span>
+                  )}
+                  {selectedCategory && (
+                    <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                      Category: {selectedCategory}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Advanced Categories Section */}
       <div className="px-6 py-6">
         <div className="flex items-center justify-between mb-6">
@@ -130,7 +372,7 @@ export default function SearchPage() {
           {categories.map((category) => (
             <button
               key={category.id}
-              onClick={() => setSelectedCategory(category.name)}
+              onClick={() => handleCategoryChange(category.name)}
               onMouseEnter={() => setHoveredCategory(category.id)}
               onMouseLeave={() => setHoveredCategory(null)}
               className={`relative overflow-hidden rounded-3xl transition-all duration-500 transform ${
@@ -200,10 +442,70 @@ export default function SearchPage() {
           </div>
         </div>
 
+        {/* Search Results Summary */}
+        {(searchQuery || selectedCountry || selectedCity || selectedCategory) && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">Search Results</h3>
+                <p className="text-gray-600 text-sm">
+                  {searchQuery && `Searching for "${searchQuery}"`}
+                  {selectedCountry && ` in ${selectedCountry}`}
+                  {selectedCity && `, ${selectedCity}`}
+                  {selectedCategory && ` - ${selectedCategory} category`}
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-purple-600">
+                  {featuredOffers.filter(offer => {
+                    const matchesSearch = !searchQuery || 
+                      offer.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      offer.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      offer.category.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesCategory = !selectedCategory || offer.category === selectedCategory;
+                    return matchesSearch && matchesCategory;
+                  }).length}
+                </div>
+                <div className="text-gray-500 text-sm">offers found</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Featured Offers */}
         <h2 className="text-xl font-bold text-gray-800 mb-4">Featured Offers</h2>
         <div className="space-y-4">
-          {featuredOffers.map((offer) => (
+          {(() => {
+            const filteredOffers = featuredOffers.filter(offer => {
+              const matchesSearch = !searchQuery || 
+                offer.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                offer.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                offer.category.toLowerCase().includes(searchQuery.toLowerCase());
+              const matchesCategory = !selectedCategory || offer.category === selectedCategory;
+              return matchesSearch && matchesCategory;
+            });
+
+            if (filteredOffers.length === 0 && (searchQuery || selectedCategory)) {
+              return (
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i className="ri-search-line text-4xl text-gray-400"></i>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No offers found</h3>
+                  <p className="text-gray-500 mb-6">
+                    Try adjusting your search terms or filters to find more offers
+                  </p>
+                  <button 
+                    onClick={clearFilters}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              );
+            }
+
+            return filteredOffers.map((offer) => (
             <div key={offer.id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="relative">
                 <img 
@@ -241,7 +543,8 @@ export default function SearchPage() {
                 </Link>
               </div>
             </div>
-          ))}
+            ));
+          })()}
         </div>
       </div>
 

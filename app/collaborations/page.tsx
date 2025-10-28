@@ -11,8 +11,8 @@ const activeCollaborations = [
     businessLogo:
       "https://readdy.ai/api/search-image?query=Modern%20coffee%20shop%20logo%2C%20elegant%20caf%C3%A9%20branding%2C%20minimalist%20coffee%20brand%20identity%2C%20sophisticated%20caf%C3%A9%20logo%20design%2C%20premium%20coffee%20house%20branding&width=60&height=60&seq=cafe1&orientation=squarish",
     title: "Weekend Brunch Feature",
-    progress: 75,
-    deadline: "3 days left",
+    startDate: "Dec 15, 2024",
+    deadline: "Dec 22, 2024",
     status: "In Progress",
     requirements: [
       "Post 2 Instagram stories ✓",
@@ -27,8 +27,8 @@ const activeCollaborations = [
     businessLogo:
       "https://readdy.ai/api/search-image?query=Modern%20fitness%20gym%20logo%2C%20athletic%20training%20brand%20identity%2C%20professional%20fitness%20center%20branding%2C%20sports%20club%20logo%20design%2C%20health%20wellness%20branding&width=60&height=60&seq=gym1&orientation=squarish",
     title: "30-Day Membership Trial",
-    progress: 40,
-    deadline: "1 week left",
+    startDate: "Dec 10, 2024",
+    deadline: "Jan 10, 2025",
     status: "In Progress",
     requirements: [
       "Post workout stories ✓",
@@ -154,70 +154,104 @@ export default function CollaborationsPage() {
                     <h3 className="font-bold text-lg text-gray-800">
                       {collab.businessName}
                     </h3>
-                    <p className="text-gray-600">{collab.title}</p>
+                    <p className="text-gray-600 mb-1">{collab.title}</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <i className="ri-calendar-line"></i>
+                        <span>Started: {collab.startDate}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <i className="ri-time-line"></i>
+                        <span>Due: {collab.deadline}</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
-                      {collab.progress}%
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      collab.status === 'In Progress' 
+                        ? 'bg-blue-100 text-blue-700' 
+                        : 'bg-green-100 text-green-700'
+                    }`}>
+                      {collab.status}
                     </div>
-                    <div className="text-gray-500 text-sm">Complete</div>
                   </div>
                 </div>
 
-                {/* Progress Bar */}
+                {/* Timeline Info */}
                 <div className="mb-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>Progress</span>
-                    <span>{collab.status}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-gradient-to-r from-pink-500 to-purple-500 h-3 rounded-full transition-all duration-300"
-                      style={{ width: `${collab.progress}%` }}
-                    ></div>
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <i className="ri-calendar-check-line text-blue-600"></i>
+                        <span className="text-sm font-medium text-gray-700">Collaboration Timeline</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">{collab.startDate}</span> - <span className="font-medium">{collab.deadline}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Requirements Checklist */}
                 <div className="mb-4">
-                  <h4 className="font-semibold text-gray-800 mb-2">
-                    Requirements:
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center space-x-2">
+                    <i className="ri-task-line text-purple-600"></i>
+                    <span>Collaboration Tasks</span>
                   </h4>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {collab.requirements.map((req, index) => (
                       <div
                         key={index}
-                        className="flex items-center space-x-2 text-sm"
+                        className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 ${
+                          req.includes("✓")
+                            ? "bg-green-50 border border-green-200"
+                            : "bg-orange-50 border border-orange-200"
+                        }`}
                       >
-                        <i
-                          className={`${
-                            req.includes("✓")
-                              ? "ri-check-line text-green-500"
-                              : "ri-time-line text-orange-500"
-                          }`}
-                        ></i>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                          req.includes("✓")
+                            ? "bg-green-500"
+                            : "bg-orange-500"
+                        }`}>
+                          <i
+                            className={`text-white text-sm ${
+                              req.includes("✓")
+                                ? "ri-check-line"
+                                : "ri-time-line"
+                            }`}
+                          ></i>
+                        </div>
                         <span
-                          className={
+                          className={`text-sm font-medium ${
                             req.includes("✓")
-                              ? "text-gray-600 line-through"
-                              : "text-gray-800"
-                          }
+                              ? "text-green-700 line-through"
+                              : "text-orange-700"
+                          }`}
                         >
-                          {req}
+                          {req.replace(" ✓", "").replace(" (Pending)", "")}
                         </span>
+                        {req.includes("✓") && (
+                          <span className="ml-auto text-green-600 text-xs font-medium">
+                            Completed
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                    View Details
+                <div className="flex space-x-3">
+                  <button className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
+                    <i className="ri-eye-line"></i>
+                    <span>View Details</span>
                   </button>
                   <Link href="/chat">
-                    <button className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
-                      Message Business
+                    <button className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2">
+                      <i className="ri-message-3-line"></i>
+                      <span>Message Business</span>
                     </button>
                   </Link>
                 </div>
@@ -260,33 +294,48 @@ export default function CollaborationsPage() {
                     <h3 className="font-bold text-lg text-gray-800">
                       {collab.businessName}
                     </h3>
-                    <p className="text-gray-600">{collab.title}</p>
+                    <p className="text-gray-600 mb-2">{collab.title}</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <i className="ri-calendar-check-line"></i>
+                        <span>Completed: {collab.completedDate}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <i className="ri-star-fill text-yellow-400"></i>
+                        <span>{collab.rating}/5 Rating</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="text-center">
-                    <div className="flex items-center space-x-1 mb-1">
-                      {[...Array(collab.rating)].map((_, i) => (
-                        <i key={i} className="ri-star-fill text-yellow-400"></i>
-                      ))}
+                    <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                      Completed
                     </div>
-                    <div className="text-gray-500 text-sm">Rating</div>
                   </div>
                 </div>
 
                 {/* Review */}
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                  <h4 className="font-semibold text-gray-800 mb-2">
-                    My Review:
-                  </h4>
-                  <p className="text-gray-600 text-sm">{collab.review}</p>
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 mb-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <i className="ri-star-fill text-yellow-400"></i>
+                    <h4 className="font-semibold text-gray-800">My Review</h4>
+                    <div className="flex items-center space-x-1 ml-auto">
+                      {[...Array(collab.rating)].map((_, i) => (
+                        <i key={i} className="ri-star-fill text-yellow-400 text-sm"></i>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed">{collab.review}</p>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                    View Portfolio
+                <div className="flex space-x-3">
+                  <button className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
+                    <i className="ri-image-line"></i>
+                    <span>View Portfolio</span>
                   </button>
-                  <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
-                    Collaborate Again
+                  <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2">
+                    <i className="ri-refresh-line"></i>
+                    <span>Collaborate Again</span>
                   </button>
                 </div>
               </div>
