@@ -68,6 +68,13 @@ export default function OfferDetailsClient({
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [acceptedConditions, setAcceptedConditions] = useState({
+    checkDeal: false,
+    respectDateTime: false,
+    postContent: false
+  });
   const [bookingStatus, setBookingStatus] = useState<
     "pending" | "accepted" | "declined" | null
   >(null);
@@ -93,19 +100,42 @@ export default function OfferDetailsClient({
     "8:00 PM",
   ];
 
-  // Generate available dates (next 30 days)
-  const getAvailableDates = () => {
-    const dates = [];
+  // Get available months (current month + next 11 months)
+  const getAvailableMonths = () => {
+    const months = [];
     const today = new Date();
-    for (let i = 1; i <= 30; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push(date.toISOString().split("T")[0]);
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      months.push({
+        value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+        label: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        month: date.getMonth() + 1,
+        year: date.getFullYear()
+      });
+    }
+    return months;
+  };
+
+  // Get available dates for selected month
+  const getAvailableDatesForMonth = () => {
+    if (!selectedMonth) return [];
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const dates = [];
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const today = new Date();
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month - 1, day);
+      // Only show future dates
+      if (date >= today) {
+        dates.push(date.toISOString().split("T")[0]);
+      }
     }
     return dates;
   };
 
-  const availableDates = getAvailableDates();
+  const availableMonths = getAvailableMonths();
+  const availableDates = getAvailableDatesForMonth();
 
   const handleBookingSubmit = () => {
     if (!selectedDate || !selectedTime) {
@@ -115,14 +145,35 @@ export default function OfferDetailsClient({
       return;
     }
 
+    // Show confirmation modal instead of submitting directly
+    setShowBookingModal(false);
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmBooking = () => {
+    // Check if all conditions are accepted
+    if (!acceptedConditions.checkDeal || !acceptedConditions.respectDateTime || !acceptedConditions.postContent) {
+      setNotificationMessage("Please accept all conditions to continue");
+      setNotificationType("warning");
+      setShowNotification(true);
+      return;
+    }
+
     // Simulate booking submission
     setBookingStatus("pending");
-    setShowBookingModal(false);
+    setShowConfirmationModal(false);
     setNotificationMessage(
       "Booking request sent! Waiting for business confirmation."
     );
     setNotificationType("success");
     setShowNotification(true);
+
+    // Reset conditions
+    setAcceptedConditions({
+      checkDeal: false,
+      respectDateTime: false,
+      postContent: false
+    });
 
     // Simulate business response after 3 seconds
     setTimeout(() => {
@@ -401,62 +452,87 @@ export default function OfferDetailsClient({
                 </p>
               </div>
 
-              {/* Date Selection */}
+              {/* Month Selection */}
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-3">
-                  Select Date
+                  Select Month
                 </label>
                 <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                  {availableDates.map((date) => {
-                    const dateObj = new Date(date);
-                    const dayName = dateObj.toLocaleDateString("en-US", {
-                      weekday: "short",
-                    });
-                    const dayNumber = dateObj.getDate();
-                    const monthName = dateObj.toLocaleDateString("en-US", {
-                      month: "short",
-                    });
-
-                    return (
-                      <button
-                        key={date}
-                        onClick={() => setSelectedDate(date)}
-                        className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${
-                          selectedDate === date
-                            ? "border-purple-500 bg-purple-50 text-purple-700"
-                            : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
-                        }`}
-                      >
-                        <div className="text-xs text-gray-500">{dayName}</div>
-                        <div className="font-semibold">{dayNumber}</div>
-                        <div className="text-xs text-gray-500">{monthName}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Time Selection */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-3">
-                  Select Time
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map((time) => (
+                  {availableMonths.map((month) => (
                     <button
-                      key={time}
-                      onClick={() => setSelectedTime(time)}
+                      key={month.value}
+                      onClick={() => {
+                        setSelectedMonth(month.value);
+                        setSelectedDate(""); // Reset date when month changes
+                      }}
                       className={`p-3 rounded-lg border-2 text-center transition-all duration-200 ${
-                        selectedTime === time
-                          ? "border-pink-500 bg-pink-50 text-pink-700"
-                          : "border-gray-200 hover:border-pink-300 hover:bg-pink-50"
+                        selectedMonth === month.value
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
                       }`}
                     >
-                      {time}
+                      <div className="font-semibold">{month.label}</div>
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* Date Selection - Only show if month is selected */}
+              {selectedMonth && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-3">
+                    Select Date
+                  </label>
+                  <div className="grid grid-cols-7 gap-2 max-h-48 overflow-y-auto">
+                    {availableDates.map((date) => {
+                      const dateObj = new Date(date);
+                      const dayName = dateObj.toLocaleDateString("en-US", {
+                        weekday: "short",
+                      });
+                      const dayNumber = dateObj.getDate();
+
+                      return (
+                        <button
+                          key={date}
+                          onClick={() => setSelectedDate(date)}
+                          className={`p-3 rounded-lg border-2 text-center transition-all duration-200 ${
+                            selectedDate === date
+                              ? "border-purple-500 bg-purple-50 text-purple-700"
+                              : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                          }`}
+                        >
+                          <div className="text-xs text-gray-500 mb-1">{dayName}</div>
+                          <div className="font-semibold text-lg">{dayNumber}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Time Selection - Only show if date is selected */}
+              {selectedDate && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-3">
+                    Select Time
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {timeSlots.map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        className={`p-3 rounded-lg border-2 text-center transition-all duration-200 ${
+                          selectedTime === time
+                            ? "border-pink-500 bg-pink-50 text-pink-700"
+                            : "border-gray-200 hover:border-pink-300 hover:bg-pink-50"
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Selected Details */}
               {selectedDate && selectedTime && (
@@ -499,9 +575,164 @@ export default function OfferDetailsClient({
                   disabled={!selectedDate || !selectedTime}
                   className="flex-1 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Confirm Booking
+                  Continue
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-800">Collaboration Agreement</h3>
+              <button
+                onClick={() => {
+                  setShowConfirmationModal(false);
+                  setShowBookingModal(true);
+                }}
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <i className="ri-close-line text-gray-600"></i>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-gray-600 text-sm mb-4">
+                Please read the information below before continuing
+              </p>
+            </div>
+
+            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 mb-6">
+              <h4 className="text-xl font-bold text-gray-800 mb-4">
+                Collaboration Terms & Conditions
+              </h4>
+              <p className="text-gray-600 text-sm mb-6">
+                Please read and accept the following terms before proceeding with your collaboration:
+              </p>
+
+              <div className="space-y-4 mb-6">
+                {/* Condition 1 */}
+                <div className="flex items-start space-x-3">
+                  <button
+                    onClick={() => setAcceptedConditions(prev => ({ ...prev, checkDeal: !prev.checkDeal }))}
+                    className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                      acceptedConditions.checkDeal
+                        ? 'bg-purple-500 border-purple-500'
+                        : 'border-gray-300 bg-white'
+                    }`}
+                  >
+                    {acceptedConditions.checkDeal && (
+                      <i className="ri-check-line text-white text-sm"></i>
+                    )}
+                  </button>
+                  <div className="flex items-start space-x-2 flex-1">
+                    <i className="ri-file-text-line text-yellow-500 text-xl mt-0.5"></i>
+                    <p className="text-gray-800 text-sm">
+                      I have reviewed and understand the collaboration terms and requirements
+                    </p>
+                  </div>
+                </div>
+
+                {/* Condition 2 */}
+                <div className="flex items-start space-x-3">
+                  <button
+                    onClick={() => setAcceptedConditions(prev => ({ ...prev, respectDateTime: !prev.respectDateTime }))}
+                    className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                      acceptedConditions.respectDateTime
+                        ? 'bg-purple-500 border-purple-500'
+                        : 'border-gray-300 bg-white'
+                    }`}
+                  >
+                    {acceptedConditions.respectDateTime && (
+                      <i className="ri-check-line text-white text-sm"></i>
+                    )}
+                  </button>
+                  <div className="flex items-start space-x-2 flex-1">
+                    <i className="ri-time-line text-red-500 text-xl mt-0.5"></i>
+                    <p className="text-gray-800 text-sm">
+                      I will respect the scheduled date and time for this collaboration
+                    </p>
+                  </div>
+                </div>
+
+                {/* Condition 3 */}
+                <div className="flex items-start space-x-3">
+                  <button
+                    onClick={() => setAcceptedConditions(prev => ({ ...prev, postContent: !prev.postContent }))}
+                    className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                      acceptedConditions.postContent
+                        ? 'bg-purple-500 border-purple-500'
+                        : 'border-gray-300 bg-white'
+                    }`}
+                  >
+                    {acceptedConditions.postContent && (
+                      <i className="ri-check-line text-white text-sm"></i>
+                    )}
+                  </button>
+                  <div className="flex items-start space-x-2 flex-1">
+                    <i className="ri-smartphone-line text-gray-800 text-xl mt-0.5"></i>
+                    <p className="text-gray-800 text-sm">
+                      I will post the required content within 48 hours of the collaboration
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Collaboration Summary */}
+              {selectedDate && selectedTime && (
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <h5 className="font-semibold text-gray-800 mb-2 text-sm">Collaboration Summary</h5>
+                  <div className="space-y-1 text-xs text-gray-600">
+                    <p>
+                      <span className="font-medium">Date:</span>{" "}
+                      {new Date(selectedDate).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                    <p>
+                      <span className="font-medium">Time:</span> {selectedTime}
+                    </p>
+                    <p>
+                      <span className="font-medium">Business:</span> {offerDetails.businessName}
+                    </p>
+                    <p>
+                      <span className="font-medium">Offer:</span> {offerDetails.title}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setShowConfirmationModal(false);
+                    setShowBookingModal(true);
+                  }}
+                  className="w-full py-3 px-4 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmBooking}
+                  disabled={!acceptedConditions.checkDeal || !acceptedConditions.respectDateTime || !acceptedConditions.postContent}
+                  className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Accept & Continue
+                </button>
+              </div>
+
+              {/* Disclaimer */}
+              <p className="text-xs text-gray-500 mt-4 text-center">
+                *Failure to comply with these terms may result in the revocation of your access to the Inshaar app
+              </p>
             </div>
           </div>
         </div>

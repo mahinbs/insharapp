@@ -2,47 +2,70 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import AdvancedBottomNav from '../../components/AdvancedBottomNav';
+import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 
 const chatList = [
   {
     id: 1,
-    name: "Bella Vista Restaurant",
-    lastMessage: "Great! Looking forward to the collaboration",
+    name: "Sarah Styles",
+    username: "@sarahstyles",
+    lastMessage: "Thank you for accepting my application! When can we schedule?",
     time: "2m ago",
     unread: 2,
-    avatar: "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20logo%2C%20modern%20dining%20establishment%2C%20sophisticated%20branding%2C%20clean%20minimalist%20design%2C%20professional%20restaurant%20identity%2C%20upscale%20dining%20logo&width=60&height=60&seq=chat1&orientation=squarish",
-    online: true
+    avatar: "https://i.pravatar.cc/48?img=5",
+    online: true,
+    collaboration: "Free 3-Course Dinner"
   },
   {
     id: 2,
-    name: "Luxe Beauty Salon",
-    lastMessage: "When would you like to schedule your appointment?",
+    name: "Alex Chen",
+    username: "@alexeats",
+    lastMessage: "I've completed the content. Here's the link to review.",
     time: "1h ago",
     unread: 0,
-    avatar: "https://readdy.ai/api/search-image?query=Luxury%20beauty%20salon%20logo%2C%20elegant%20spa%20branding%2C%20premium%20beauty%20services%20logo%2C%20sophisticated%20wellness%20brand%20identity%2C%20minimalist%20beauty%20logo%20design&width=60&height=60&seq=chat2&orientation=squarish",
-    online: false
+    avatar: "https://i.pravatar.cc/48?img=8",
+    online: false,
+    collaboration: "Weekend Brunch Package"
   },
   {
     id: 3,
-    name: "Urban Threads",
-    lastMessage: "The outfit package is ready for pickup!",
+    name: "Emma Wilson",
+    username: "@emmastyle",
+    lastMessage: "Looking forward to working with you!",
     time: "3h ago",
     unread: 1,
-    avatar: "https://readdy.ai/api/search-image?query=Modern%20fashion%20boutique%20logo%2C%20trendy%20clothing%20brand%20identity%2C%20urban%20fashion%20logo%2C%20stylish%20apparel%20branding%2C%20contemporary%20fashion%20design&width=60&height=60&seq=chat3&orientation=squarish",
-    online: true
+    avatar: "https://readdy.ai/api/search-image?query=Young%20female%20lifestyle%20influencer%2C%20professional%20headshot%2C%20confident%20smile%2C%20modern%20portrait%20photography%2C%20bright%20natural%20lighting%2C%20social%20media%20personality&width=60&height=60&seq=influencer1&orientation=squarish",
+    online: true,
+    collaboration: "Chef's Special Tasting"
+  },
+  {
+    id: 4,
+    name: "Fitness Queen",
+    username: "@fitnessqueen",
+    lastMessage: "The gym session was amazing! Thank you so much.",
+    time: "5h ago",
+    unread: 0,
+    avatar: "https://i.pravatar.cc/48?img=20",
+    online: false,
+    collaboration: "30-Day Membership"
   }
 ];
 
-export default function ChatList() {
+export default function BusinessChatList() {
   const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredChats = chatList.filter(chat =>
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    chat.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    chat.collaboration.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-6">
+      <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-12 pb-6">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/influencer/dashboard">
+          <Link href="/business/dashboard">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
@@ -74,7 +97,7 @@ export default function ChatList() {
       {/* Chat List */}
       <div className="px-6 py-6">
         <div className="space-y-2">
-          {chatList.map((chat) => (
+          {filteredChats.map((chat) => (
             <Link key={chat.id} href={`/chat/${chat.id}`}>
               <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
                 <div className="flex items-center space-x-4">
@@ -91,14 +114,18 @@ export default function ChatList() {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-gray-800 truncate">{chat.name}</h3>
+                      <div>
+                        <h3 className="font-semibold text-gray-800 truncate">{chat.name}</h3>
+                        <p className="text-purple-600 text-xs truncate">{chat.username}</p>
+                      </div>
                       <span className="text-gray-500 text-sm">{chat.time}</span>
                     </div>
-                    <p className="text-gray-600 text-sm truncate">{chat.lastMessage}</p>
+                    <p className="text-gray-600 text-sm truncate mb-1">{chat.lastMessage}</p>
+                    <p className="text-gray-400 text-xs truncate">Collaboration: {chat.collaboration}</p>
                   </div>
                   
                   {chat.unread > 0 && (
-                    <div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
+                    <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">{chat.unread}</span>
                     </div>
                   )}
@@ -110,16 +137,19 @@ export default function ChatList() {
       </div>
 
       {/* Empty State */}
-      {chatList.length === 0 && (
+      {filteredChats.length === 0 && (
         <div className="text-center py-12">
           <i className="ri-message-line text-6xl text-gray-300 mb-4"></i>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">No Messages Yet</h3>
-          <p className="text-gray-500">Start collaborating to begin conversations</p>
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">No Messages Found</h3>
+          <p className="text-gray-500">
+            {searchQuery ? 'Try a different search term' : 'Start collaborating to begin conversations'}
+          </p>
         </div>
       )}
 
       {/* Advanced Bottom Navigation */}
-      <AdvancedBottomNav userType="influencer" />
+      <AdvancedBottomNav userType="business" />
     </div>
   );
 }
+

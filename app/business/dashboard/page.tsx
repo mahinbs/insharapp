@@ -131,27 +131,17 @@ export default function BusinessDashboard() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            My Offers
+            Offers & Applications
           </button>
           <button
-            onClick={() => setActiveTab('requests')}
+            onClick={() => setActiveTab('profile')}
             className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === 'requests'
+              activeTab === 'profile'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            Requests
-          </button>
-          <button
-            onClick={() => setActiveTab('completed')}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === 'completed'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            Completed
+            Profile
           </button>
         </div>
       </div>
@@ -160,7 +150,15 @@ export default function BusinessDashboard() {
       <div className="px-6 py-6">
         {activeTab === 'offers' && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">My Active Offers</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">My Offers</h2>
+              <Link href="/business/post-offer">
+                <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                  <i className="ri-add-line mr-1"></i>
+                  New Offer
+                </button>
+              </Link>
+            </div>
             {myOffers.map((offer) => (
               <div key={offer.id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div className="relative">
@@ -201,69 +199,97 @@ export default function BusinessDashboard() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
 
-        {activeTab === 'requests' && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Influencer Requests</h2>
-            {influencerRequests.map((request) => (
-              <div key={request.id} className="bg-white rounded-2xl p-4 shadow-lg">
-                <div className="flex items-start space-x-4">
-                  <img 
-                    src={request.profileImage}
-                    alt={request.influencerName}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{request.influencerName}</h3>
-                        <p className="text-purple-600 text-sm">{request.username}</p>
+            <div className="mt-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Applications</h2>
+              {influencerRequests.map((request) => (
+                <div key={request.id} className="bg-white rounded-2xl p-4 shadow-lg mb-4">
+                  <div className="flex items-start space-x-4">
+                    <img 
+                      src={request.profileImage}
+                      alt={request.influencerName}
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold text-gray-800">{request.influencerName}</h3>
+                          <p className="text-purple-600 text-sm">{request.username}</p>
+                        </div>
+                        <span className="text-gray-500 text-sm">{request.appliedDate}</span>
                       </div>
-                      <span className="text-gray-500 text-sm">{request.appliedDate}</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <div className="text-center">
-                        <div className="font-semibold text-gray-800">{request.followers}</div>
-                        <div className="text-gray-500 text-xs">Followers</div>
+                      
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="text-center">
+                          <div className="font-semibold text-gray-800">{request.followers}</div>
+                          <div className="text-gray-500 text-xs">Followers</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold text-gray-800">{request.engagement}</div>
+                          <div className="text-gray-500 text-xs">Engagement</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold text-gray-800">{request.niche}</div>
+                          <div className="text-gray-500 text-xs">Niche</div>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-gray-800">{request.engagement}</div>
-                        <div className="text-gray-500 text-xs">Engagement</div>
+                      
+                      <p className="text-gray-600 text-sm mb-3">Applied for: {request.offerTitle}</p>
+                      
+                      <div className="flex space-x-2">
+                        <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                          View Profile
+                        </button>
+                        <button className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors">
+                          Decline
+                        </button>
+                        <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
+                          Accept
+                        </button>
                       </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-gray-800">{request.niche}</div>
-                        <div className="text-gray-500 text-xs">Niche</div>
-                      </div>
-                    </div>
-                    
-                    <p className="text-gray-600 text-sm mb-3">Applied for: {request.offerTitle}</p>
-                    
-                    <div className="flex space-x-2">
-                      <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                        View Profile
-                      </button>
-                      <button className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors">
-                        Decline
-                      </button>
-                      <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
-                        Accept
-                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
-        {activeTab === 'completed' && (
-          <div className="text-center py-12">
-            <i className="ri-check-double-line text-6xl text-gray-300 mb-4"></i>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">No Completed Collaborations Yet</h3>
-            <p className="text-gray-500">Your completed collaborations will appear here</p>
+        {activeTab === 'profile' && (
+          <div className="space-y-4">
+            <Link href="/business/profile">
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                      <i className="ri-store-2-line text-white text-2xl"></i>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-800">Business Profile</h3>
+                      <p className="text-gray-500 text-sm">View and edit your business information</p>
+                    </div>
+                  </div>
+                  <i className="ri-arrow-right-s-line text-gray-400 text-xl"></i>
+                </div>
+              </div>
+            </Link>
+            
+            <Link href="/business/explore">
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+                      <i className="ri-compass-line text-white text-2xl"></i>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-800">Explore</h3>
+                      <p className="text-gray-500 text-sm">Discover influencer content</p>
+                    </div>
+                  </div>
+                  <i className="ri-arrow-right-s-line text-gray-400 text-xl"></i>
+                </div>
+              </div>
+            </Link>
           </div>
         )}
       </div>

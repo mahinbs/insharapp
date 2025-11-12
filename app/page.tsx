@@ -24,64 +24,6 @@ export default function SplashScreen() {
           </p>
         </div>
 
-        {/* Scrolling Banner */}
-        <div className="mb-12 w-full max-w-4xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 overflow-hidden">
-            <div className="flex animate-scroll">
-              <div className="flex space-x-8 whitespace-nowrap">
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-store-line text-pink-300"></i>
-                  <span className="text-sm font-medium">New: Luxe Beauty Salon joins Inshaar!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-calendar-event-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Event: Influencer Meetup this Saturday</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-gift-line text-orange-300"></i>
-                  <span className="text-sm font-medium">Special: 50% off first collaboration</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-restaurant-line text-pink-300"></i>
-                  <span className="text-sm font-medium">Update: Bella Vista Restaurant now accepting applications</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-trophy-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Achievement: 1000+ successful collaborations!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-megaphone-line text-orange-300"></i>
-                  <span className="text-sm font-medium">News: Inshaar featured in TechCrunch</span>
-                </div>
-                {/* Duplicate for seamless loop */}
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-store-line text-pink-300"></i>
-                  <span className="text-sm font-medium">New: Luxe Beauty Salon joins Inshaar!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-calendar-event-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Event: Influencer Meetup this Saturday</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-gift-line text-orange-300"></i>
-                  <span className="text-sm font-medium">Special: 50% off first collaboration</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-restaurant-line text-pink-300"></i>
-                  <span className="text-sm font-medium">Update: Bella Vista Restaurant now accepting applications</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-trophy-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Achievement: 1000+ successful collaborations!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-megaphone-line text-orange-300"></i>
-                  <span className="text-sm font-medium">News: Inshaar featured in TechCrunch</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
         
         {/* Get Started Button */}
         <Link href="/onboarding">

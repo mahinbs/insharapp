@@ -40,12 +40,39 @@ const myOffers = [
   },
 ];
 
+const applications = [
+  {
+    id: 1,
+    influencerName: "Emma Wilson",
+    username: "@emmastyle",
+    followers: "45K",
+    engagement: "4.2%",
+    niche: "Lifestyle",
+    profileImage: "https://readdy.ai/api/search-image?query=Young%20female%20lifestyle%20influencer%2C%20professional%20headshot%2C%20confident%20smile%2C%20modern%20portrait%20photography%2C%20bright%20natural%20lighting%2C%20social%20media%20personality&width=60&height=60&seq=influencer3&orientation=squarish",
+    offerTitle: "Free 3-Course Dinner",
+    appliedDate: "2 days ago",
+    status: "pending"
+  },
+  {
+    id: 2,
+    influencerName: "Alex Chen",
+    username: "@alexeats",
+    followers: "32K",
+    engagement: "5.1%",
+    niche: "Food",
+    profileImage: "https://readdy.ai/api/search-image?query=Young%20male%20food%20influencer%2C%20professional%20headshot%2C%20friendly%20expression%2C%20modern%20portrait%20photography%2C%20natural%20lighting%2C%20food%20blogger%20personality&width=60&height=60&seq=influencer4&orientation=squarish",
+    offerTitle: "Weekend Brunch Package",
+    appliedDate: "1 day ago",
+    status: "pending"
+  }
+];
+
 export default function BusinessOffers() {
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("offers");
 
   const filteredOffers = myOffers.filter((offer) => {
-    if (activeFilter === "all") return true;
-    return offer.status.toLowerCase() === activeFilter;
+    if (activeTab === "offers") return true;
+    return offer.status.toLowerCase() === activeTab;
   });
 
   return (
@@ -88,46 +115,37 @@ export default function BusinessOffers() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Tab Navigation */}
       <div className="bg-white px-6 py-4 shadow-sm">
         <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
           <button
-            onClick={() => setActiveFilter("all")}
+            onClick={() => setActiveTab("offers")}
             className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeFilter === "all"
+              activeTab === "offers"
                 ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
-            All Offers
+            My Offers
           </button>
           <button
-            onClick={() => setActiveFilter("active")}
+            onClick={() => setActiveTab("applications")}
             className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeFilter === "active"
+              activeTab === "applications"
                 ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
-            Active
-          </button>
-          <button
-            onClick={() => setActiveFilter("draft")}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeFilter === "draft"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            Drafts
+            Applications
           </button>
         </div>
       </div>
 
-      {/* Offers List */}
+      {/* Content */}
       <div className="px-6 py-6">
-        <div className="space-y-4">
-          {filteredOffers.map((offer) => (
+        {activeTab === "offers" && (
+          <div className="space-y-4">
+            {filteredOffers.map((offer) => (
             <div
               key={offer.id}
               className="bg-white rounded-2xl shadow-lg overflow-hidden"
@@ -191,23 +209,62 @@ export default function BusinessOffers() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {filteredOffers.length === 0 && (
-          <div className="text-center py-12">
-            <i className="ri-megaphone-line text-6xl text-gray-300 mb-4"></i>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              No Offers Found
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Create your first barter offer to get started
-            </p>
-            <Link href="/business/post-offer">
-              <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-                Create Offer
-              </button>
-            </Link>
+        {activeTab === "applications" && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Influencer Applications</h2>
+            {applications.map((application) => (
+              <div key={application.id} className="bg-white rounded-2xl p-4 shadow-lg">
+                <div className="flex items-start space-x-4">
+                  <img 
+                    src={application.profileImage}
+                    alt={application.influencerName}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-800">{application.influencerName}</h3>
+                        <p className="text-purple-600 text-sm">{application.username}</p>
+                      </div>
+                      <span className="text-gray-500 text-sm">{application.appliedDate}</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <div className="text-center">
+                        <div className="font-semibold text-gray-800">{application.followers}</div>
+                        <div className="text-gray-500 text-xs">Followers</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-semibold text-gray-800">{application.engagement}</div>
+                        <div className="text-gray-500 text-xs">Engagement</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-semibold text-gray-800">{application.niche}</div>
+                        <div className="text-gray-500 text-xs">Niche</div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-600 text-sm mb-3">Applied for: <span className="font-medium">{application.offerTitle}</span></p>
+                    
+                    <div className="flex space-x-2">
+                      <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                        View Profile
+                      </button>
+                      <button className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors">
+                        Decline
+                      </button>
+                      <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
+                        Accept
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
