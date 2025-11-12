@@ -161,6 +161,65 @@ export default function InfluencerDashboard() {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-6">
+        {/* Scrolling Banner */}
+        <div className="mb-6 w-full mx-auto">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 overflow-hidden">
+            <div className="flex animate-scroll">
+              <div className="flex space-x-8 whitespace-nowrap">
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-store-line text-pink-300"></i>
+                  <span className="text-sm font-medium">New: Luxe Beauty Salon joins Inshaar!</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-calendar-event-line text-purple-300"></i>
+                  <span className="text-sm font-medium">Event: Influencer Meetup this Saturday</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-gift-line text-orange-300"></i>
+                  <span className="text-sm font-medium">Special: 50% off first collaboration</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-restaurant-line text-pink-300"></i>
+                  <span className="text-sm font-medium">Update: Bella Vista Restaurant now accepting applications</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-trophy-line text-purple-300"></i>
+                  <span className="text-sm font-medium">Achievement: 1000+ successful collaborations!</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-megaphone-line text-orange-300"></i>
+                  <span className="text-sm font-medium">News: Inshaar featured in TechCrunch</span>
+                </div>
+                {/* Duplicate for seamless loop */}
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-store-line text-pink-300"></i>
+                  <span className="text-sm font-medium">New: Luxe Beauty Salon joins Inshaar!</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-calendar-event-line text-purple-300"></i>
+                  <span className="text-sm font-medium">Event: Influencer Meetup this Saturday</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-gift-line text-orange-300"></i>
+                  <span className="text-sm font-medium">Special: 50% off first collaboration</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-restaurant-line text-pink-300"></i>
+                  <span className="text-sm font-medium">Update: Bella Vista Restaurant now accepting applications</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-trophy-line text-purple-300"></i>
+                  <span className="text-sm font-medium">Achievement: 1000+ successful collaborations!</span>
+                </div>
+                <div className="flex items-center space-x-2 text-white/90">
+                  <i className="ri-megaphone-line text-orange-300"></i>
+                  <span className="text-sm font-medium">News: Inshaar featured in TechCrunch</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Logo Section */}
         <div className="text-center mb-6">
           <h1 className="font-['Pacifico'] text-3xl text-white mb-2 drop-shadow-lg">
@@ -269,28 +328,28 @@ export default function InfluencerDashboard() {
       <div className="px-6 py-6">
         {activeTab === "available" && (
           <div className="space-y-6">
-            {/* Category Filter */}
+            {/* Categories - Display directly on homepage */}
             <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Available Offers</h2>
-              <div className="flex space-x-2 overflow-x-auto pb-2">
-                {categories.map((category) => (
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Categories</h2>
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                {categories.filter(cat => cat.name !== "All").map((category) => (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.name)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 ${
                       selectedCategory === category.name
-                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md scale-105"
+                        : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
                     }`}
                   >
-                    <i className={category.icon}></i>
-                    <span>{category.name}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
+                    <i className={`${category.icon} text-2xl mb-2`}></i>
+                    <span className="text-sm font-medium">{category.name}</span>
+                    <span className={`text-xs mt-1 ${
                       selectedCategory === category.name
-                        ? "bg-white/20"
-                        : "bg-gray-200"
+                        ? "text-white/80"
+                        : "text-gray-500"
                     }`}>
-                      {category.count}
+                      {category.count} offers
                     </span>
                   </button>
                 ))}
@@ -415,14 +474,15 @@ export default function InfluencerDashboard() {
             </div>
 
             {/* Filtered Offers */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                {selectedCategory === "All" ? "All Offers" : `${selectedCategory} Offers`}
-              </h3>
-          <div className="space-y-4">
-                {barterOffers
-                  .filter(offer => selectedCategory === "All" || offer.category === selectedCategory)
-                  .map((offer) => (
+            {selectedCategory !== "All" && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  {selectedCategory} Offers
+                </h3>
+                <div className="space-y-4">
+                  {barterOffers
+                    .filter(offer => offer.category === selectedCategory)
+                    .map((offer) => (
                     <div
                       key={offer.id}
                       className="bg-white rounded-2xl shadow-lg overflow-hidden"
@@ -465,8 +525,9 @@ export default function InfluencerDashboard() {
                 </div>
               </div>
             ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 

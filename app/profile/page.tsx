@@ -50,6 +50,10 @@ export default function ProfilePage() {
     }
   ];
 
+  // Check if user has pending collaboration videos not uploaded
+  const hasPendingUploads = false; // This would be fetched from backend
+  const canStartNewCollaboration = !hasPendingUploads;
+
   const portfolioItems = [
     {
       id: 1,
@@ -62,7 +66,8 @@ export default function ProfilePage() {
       likes: '1.2K',
       date: '2 weeks ago',
       platform: 'Instagram Reels',
-      isCollaboration: true
+      isCollaboration: true,
+      autoAdded: true // Videos from completed collaborations are automatically added
     },
     {
       id: 2,
@@ -129,12 +134,19 @@ export default function ProfilePage() {
             </div>
           </Link>
           <h1 className="text-white font-semibold text-lg">Profile</h1>
-          <button 
-            onClick={() => setIsEditing(!isEditing)}
-            className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
-          >
-            <i className={`${isEditing ? 'ri-close-line' : 'ri-edit-line'} text-white text-xl`}></i>
-          </button>
+          <div className="flex items-center space-x-2">
+            <Link href="/help">
+              <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                <i className="ri-question-line text-white text-xl"></i>
+              </button>
+            </Link>
+            <button 
+              onClick={() => setIsEditing(!isEditing)}
+              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+            >
+              <i className={`${isEditing ? 'ri-close-line' : 'ri-edit-line'} text-white text-xl`}></i>
+            </button>
+          </div>
         </div>
 
         {/* Profile Header */}
@@ -237,28 +249,16 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <a 
-              href={`https://${profileData.website}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl hover:from-blue-100 hover:to-purple-100 transition-all duration-300 group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <i className="ri-global-line text-white text-xl"></i>
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-800 font-medium">{profileData.website}</p>
-                <p className="text-gray-500 text-sm">Website</p>
-              </div>
-              <i className="ri-external-link-line text-gray-400 group-hover:text-blue-500 transition-colors"></i>
-            </a>
           </div>
         </div>
 
         {/* Portfolio Section */}
         <div className="bg-white rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-800">Portfolio</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">Portfolio</h3>
+              <p className="text-gray-500 text-xs mt-1">Videos from completed collaborations are automatically added</p>
+            </div>
             <div className="flex items-center space-x-2">
               <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center space-x-1">
                 <i className="ri-upload-line"></i>
@@ -267,6 +267,17 @@ export default function ProfilePage() {
               <button className="text-purple-600 text-sm font-medium">Manage</button>
             </div>
           </div>
+
+          {!canStartNewCollaboration && (
+            <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl p-4">
+              <div className="flex items-center space-x-2">
+                <i className="ri-alert-line text-orange-600"></i>
+                <p className="text-orange-800 text-sm font-medium">
+                  You cannot start a new collaboration until you upload videos from your completed collaborations to your portfolio.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Portfolio Stats */}
           <div className="grid grid-cols-3 gap-4 mb-6">
@@ -324,6 +335,15 @@ export default function ProfilePage() {
                     <div className="absolute top-2 right-2">
                       <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
                         <i className="ri-handshake-line text-white text-xs"></i>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Auto-added Badge */}
+                  {item.autoAdded && (
+                    <div className="absolute bottom-2 left-2">
+                      <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                        Auto-added
                       </div>
                     </div>
                   )}

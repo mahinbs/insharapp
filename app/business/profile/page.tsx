@@ -57,9 +57,11 @@ export default function BusinessProfilePage() {
             <h1 className="font-['Pacifico'] text-2xl text-white mb-1">Inshaar</h1>
             <span className="text-white/80 text-sm">Business Profile</span>
           </div>
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <i className="ri-store-2-line text-white text-xl"></i>
-          </div>
+          <Link href="/help">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+              <i className="ri-question-line text-white text-xl"></i>
+            </div>
+          </Link>
         </div>
 
         {/* Business Summary */}
