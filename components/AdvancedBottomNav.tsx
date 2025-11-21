@@ -50,12 +50,6 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
       badge: 2
     },
     {
-      href: '/services',
-      icon: 'ri-service-line',
-      activeIcon: 'ri-service-fill',
-      label: 'Services'
-    },
-    {
       href: '/profile',
       icon: 'ri-user-line',
       activeIcon: 'ri-user-fill',
@@ -65,16 +59,10 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
 
   const businessNavItems: NavItem[] = [
     {
-      href: '/business/dashboard',
+      href: '/business/home',
       icon: 'ri-dashboard-line',
       activeIcon: 'ri-dashboard-fill',
-      label: 'Dashboard'
-    },
-    {
-      href: '/business/offers',
-      icon: 'ri-megaphone-line',
-      activeIcon: 'ri-megaphone-fill',
-      label: 'Offers'
+      label: 'Home'
     },
     {
       href: '/business/explore',
@@ -83,11 +71,18 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
       label: 'Explore'
     },
     {
-      href: '/business/services',
-      icon: 'ri-service-line',
-      activeIcon: 'ri-service-fill',
-      label: 'Services'
-    }
+      href: '/business/chat',
+      icon: 'ri-message-line',
+      activeIcon: 'ri-message-fill',
+      label: 'messages'
+    },
+    {
+      href: '/business/dashboard',
+      icon: 'ri-user-line',
+      activeIcon: 'ri-user-fill',
+      label: 'Profile'
+    },
+
   ];
 
   const navItems = userType === 'influencer' ? influencerNavItems : businessNavItems;

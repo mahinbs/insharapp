@@ -57,7 +57,7 @@ export default function BusinessDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-12 pb-6">
+      <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-4 pb-4">
         {/* Logo Section */}
         <div className="text-center mb-6">
           <h1 className="font-['Pacifico'] text-3xl text-white mb-2 drop-shadow-lg">Inshaar</h1>

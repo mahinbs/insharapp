@@ -8,54 +8,47 @@ const barterOffers = [
   {
     id: 1,
     businessName: "Bella Vista Restaurant",
-    businessLogo:
-      "https://i.pravatar.cc/80?img=12",
-    offerImage:
-      "https://picsum.photos/seed/offer-meal-1/1200/640",
+    businessLogo: "https://i.pravatar.cc/80?img=12",
+    offerImage: "https://picsum.photos/seed/offer-meal-1/600/400",
     title: "Free 3-Course Dinner",
-    description: "Promote our new seasonal menu",
+    description:
+      "Promote our new seasonal menu and get a complimentary 3-course dining experience for two",
     category: "Restaurant",
     location: "Downtown",
+    rating: 4.9,
+    applications: 156,
+    duration: "2 weeks",
+    value: "$150",
   },
   {
     id: 2,
     businessName: "Luxe Beauty Salon",
-    businessLogo:
-      "https://i.pravatar.cc/80?img=32",
-    offerImage:
-      "https://picsum.photos/seed/offer-beauty-1/1200/640",
+    businessLogo: "https://i.pravatar.cc/80?img=32",
+    offerImage: "https://picsum.photos/seed/offer-beauty-1/600/400",
     title: "Complete Hair Makeover",
-    description: "Hair cut, color & styling package",
+    description:
+      "Hair cut, color & styling package worth $250. Perfect for influencers in beauty niche",
     category: "Beauty",
     location: "Uptown",
+    rating: 4.8,
+    applications: 89,
+    duration: "1 week",
+    value: "$250",
   },
   {
     id: 3,
     businessName: "Urban Threads",
-    businessLogo:
-      "https://i.pravatar.cc/80?img=14",
-    offerImage:
-      "https://picsum.photos/seed/offer-fashion-1/1200/640",
+    businessLogo: "https://i.pravatar.cc/80?img=14",
+    offerImage: "https://picsum.photos/seed/offer-fashion-1/600/400",
     title: "Designer Outfit Package",
-    description: "Complete outfit worth $300",
+    description:
+      "Complete outfit worth $300 from our new collection. Style and share your looks",
     category: "Fashion",
     location: "Mall District",
-  },
-];
-
-const myCollaborations = [
-  {
-    id: 1,
-    businessName: "Café Mocha",
-    status: "Active",
-    deadline: "3 days left",
-    progress: 75,
-  },
-  {
-    id: 2,
-    businessName: "Fitness Plus",
-    status: "Completed",
-    rating: 5,
+    rating: 4.7,
+    applications: 67,
+    duration: "3 weeks",
+    value: "$300",
   },
 ];
 
@@ -76,7 +69,8 @@ const top10Offers = [
     category: "Restaurant",
     rating: 4.9,
     applications: 156,
-    image: "https://picsum.photos/seed/top-restaurant-1/80/80",
+    image: "https://picsum.photos/seed/top-restaurant-1/200/200",
+    value: "$150",
   },
   {
     id: 2,
@@ -85,7 +79,8 @@ const top10Offers = [
     category: "Beauty",
     rating: 4.8,
     applications: 89,
-    image: "https://picsum.photos/seed/top-beauty-1/80/80",
+    image: "https://picsum.photos/seed/top-beauty-1/200/200",
+    value: "$250",
   },
   {
     id: 3,
@@ -94,7 +89,8 @@ const top10Offers = [
     category: "Fashion",
     rating: 4.7,
     applications: 67,
-    image: "https://picsum.photos/seed/top-fashion-1/80/80",
+    image: "https://picsum.photos/seed/top-fashion-1/200/200",
+    value: "$300",
   },
 ];
 
@@ -105,7 +101,8 @@ const nearbyBusinesses = [
     category: "Restaurant",
     distance: "0.2 miles",
     rating: 4.6,
-    image: "https://picsum.photos/seed/near-coffee-1/80/80",
+    image: "https://picsum.photos/seed/near-coffee-1/200/200",
+    offers: 5,
   },
   {
     id: 2,
@@ -113,7 +110,8 @@ const nearbyBusinesses = [
     category: "Fitness",
     distance: "0.5 miles",
     rating: 4.5,
-    image: "https://picsum.photos/seed/near-gym-1/80/80",
+    image: "https://picsum.photos/seed/near-gym-1/200/200",
+    offers: 3,
   },
   {
     id: 3,
@@ -121,7 +119,8 @@ const nearbyBusinesses = [
     category: "Beauty",
     distance: "0.8 miles",
     rating: 4.7,
-    image: "https://picsum.photos/seed/near-beauty-1/80/80",
+    image: "https://picsum.photos/seed/near-beauty-1/200/200",
+    offers: 7,
   },
 ];
 
@@ -132,7 +131,8 @@ const trendingBusinesses = [
     category: "Fashion",
     trend: "Rising",
     growth: "+23%",
-    image: "https://picsum.photos/seed/trend-fashion-1/80/80",
+    image: "https://picsum.photos/seed/trend-fashion-1/200/200",
+    trendIcon: "ri-trending-up-line",
   },
   {
     id: 2,
@@ -140,7 +140,8 @@ const trendingBusinesses = [
     category: "Restaurant",
     trend: "Hot",
     growth: "+45%",
-    image: "https://picsum.photos/seed/trend-restaurant-1/80/80",
+    image: "https://picsum.photos/seed/trend-restaurant-1/200/200",
+    trendIcon: "ri-fire-line",
   },
   {
     id: 3,
@@ -148,7 +149,8 @@ const trendingBusinesses = [
     category: "Beauty",
     trend: "Popular",
     growth: "+18%",
-    image: "https://picsum.photos/seed/trend-beauty-1/80/80",
+    image: "https://picsum.photos/seed/trend-beauty-1/200/200",
+    trendIcon: "ri-heart-line",
   },
 ];
 
@@ -158,63 +160,42 @@ export default function InfluencerDashboard() {
   const [userLocation, setUserLocation] = useState("Downtown, NYC");
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50/60 pb-18">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-6">
+      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-4 pt-4 pb-4 sm:px-6">
         {/* Scrolling Banner */}
-        <div className="mb-6 w-full mx-auto">
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 overflow-hidden">
+        <div className="mb-6 w-full mx-auto max-w-4xl">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-3 sm:p-4 overflow-hidden">
             <div className="flex animate-scroll">
-              <div className="flex space-x-8 whitespace-nowrap">
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-store-line text-pink-300"></i>
-                  <span className="text-sm font-medium">New: Luxe Beauty Salon joins Inshaar!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-calendar-event-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Event: Influencer Meetup this Saturday</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-gift-line text-orange-300"></i>
-                  <span className="text-sm font-medium">Special: 50% off first collaboration</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-restaurant-line text-pink-300"></i>
-                  <span className="text-sm font-medium">Update: Bella Vista Restaurant now accepting applications</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-trophy-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Achievement: 1000+ successful collaborations!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-megaphone-line text-orange-300"></i>
-                  <span className="text-sm font-medium">News: Inshaar featured in TechCrunch</span>
-                </div>
-                {/* Duplicate for seamless loop */}
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-store-line text-pink-300"></i>
-                  <span className="text-sm font-medium">New: Luxe Beauty Salon joins Inshaar!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-calendar-event-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Event: Influencer Meetup this Saturday</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-gift-line text-orange-300"></i>
-                  <span className="text-sm font-medium">Special: 50% off first collaboration</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-restaurant-line text-pink-300"></i>
-                  <span className="text-sm font-medium">Update: Bella Vista Restaurant now accepting applications</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-trophy-line text-purple-300"></i>
-                  <span className="text-sm font-medium">Achievement: 1000+ successful collaborations!</span>
-                </div>
-                <div className="flex items-center space-x-2 text-white/90">
-                  <i className="ri-megaphone-line text-orange-300"></i>
-                  <span className="text-sm font-medium">News: Inshaar featured in TechCrunch</span>
-                </div>
+              <div className="flex space-x-6 sm:space-x-8 whitespace-nowrap">
+                {[...Array(2)].map((_, setIndex) => (
+                  <div key={setIndex} className="flex space-x-6 sm:space-x-8">
+                    <div className="flex items-center space-x-2 text-white/90">
+                      <i className="ri-store-line text-pink-300 text-sm sm:text-base"></i>
+                      <span className="text-xs sm:text-sm font-medium">
+                        New: Luxe Beauty Salon joins!
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-white/90">
+                      <i className="ri-calendar-event-line text-purple-300 text-sm sm:text-base"></i>
+                      <span className="text-xs sm:text-sm font-medium">
+                        Influencer Meetup Saturday
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-white/90">
+                      <i className="ri-gift-line text-orange-300 text-sm sm:text-base"></i>
+                      <span className="text-xs sm:text-sm font-medium">
+                        50% off first collaboration
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-white/90">
+                      <i className="ri-trophy-line text-purple-300 text-sm sm:text-base"></i>
+                      <span className="text-xs sm:text-sm font-medium">
+                        1000+ successful collabs!
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -222,75 +203,30 @@ export default function InfluencerDashboard() {
 
         {/* Logo Section */}
         <div className="text-center mb-6">
-          <h1 className="font-['Pacifico'] text-3xl text-white mb-2 drop-shadow-lg">
+          <h1 className="font-['Pacifico'] text-2xl sm:text-3xl text-white mb-2 drop-shadow-lg">
             Inshaar
           </h1>
-          <p className="text-white/80 text-sm">Influencer Dashboard</p>
-        </div>
-
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <img 
-                src="https://i.pravatar.cc/48?img=5"
-                alt="Profile"
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            </div>
-            <div>
-              <h2 className="text-white font-semibold text-lg">
-                Welcome back, Sarah!
-              </h2>
-              <p className="text-white/80 text-sm">
-                @sarahstyles • 25K followers
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <Link href="/notifications">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <i className="ri-notification-line text-white text-xl"></i>
-              </div>
-            </Link>
-            <Link href="/chat">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <i className="ri-message-line text-white text-xl"></i>
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">12</div>
-            <div className="text-white/80 text-sm">Active Offers</div>
-          </div>
-          <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">8</div>
-            <div className="text-white/80 text-sm">Completed</div>
-          </div>
-          <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">4.9</div>
-            <div className="text-white/80 text-sm">Rating</div>
-          </div>
+          <p className="text-white/80 text-xs sm:text-sm">
+            Influencer Dashboard
+          </p>
         </div>
 
         {/* Location & Quick Actions */}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <i className="ri-map-pin-line text-white/80"></i>
-            <span className="text-white/80 text-sm">{userLocation}</span>
+            <i className="ri-map-pin-line text-white/80 text-sm"></i>
+            <span className="text-white/80 text-xs sm:text-sm">
+              {userLocation}
+            </span>
           </div>
           <div className="flex items-center space-x-2">
             <Link href="/search">
-              <button className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-white/30 transition-colors">
+              <button className="bg-white/20 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/30 transition-all duration-300 active:scale-95">
                 <i className="ri-search-line mr-1"></i>
                 Search
               </button>
             </Link>
-            <button className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-white/30 transition-colors">
+            <button className="bg-white/20 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/30 transition-all duration-300 active:scale-95">
               <i className="ri-refresh-line mr-1"></i>
               Refresh
             </button>
@@ -299,98 +235,132 @@ export default function InfluencerDashboard() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white px-6 py-4 shadow-sm">
-        <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
+      <div className="bg-white px-4 py-4 shadow-sm sm:px-6">
+        <div className="flex space-x-1 bg-gray-100 rounded-xl p-1 max-w-md mx-auto">
           <button
             onClick={() => setActiveTab("available")}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
               activeTab === "available"
-                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
+                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/25"
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
             Available Offers
           </button>
-          <button
-            onClick={() => setActiveTab("collaborations")}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === "collaborations"
-                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            My Collaborations
-          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-6 py-6">
+      <div className="px-4 py-6 sm:px-6">
         {activeTab === "available" && (
-          <div className="space-y-6">
-            {/* Categories - Display directly on homepage */}
+          <div className="space-y-8 max-w-4xl mx-auto">
+            {/* Categories */}
             <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Categories</h2>
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                {categories.filter(cat => cat.name !== "All").map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.name)}
-                    className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 ${
-                      selectedCategory === category.name
-                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md scale-105"
-                        : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
-                    }`}
-                  >
-                    <i className={`${category.icon} text-2xl mb-2`}></i>
-                    <span className="text-sm font-medium">{category.name}</span>
-                    <span className={`text-xs mt-1 ${
-                      selectedCategory === category.name
-                        ? "text-white/80"
-                        : "text-gray-500"
-                    }`}>
-                      {category.count} offers
-                    </span>
-                  </button>
-                ))}
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-2">
+                Categories
+              </h2>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-2">
+                {categories
+                  .filter((cat) => cat.name !== "All")
+                  .map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.name)}
+                      className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl transition-all duration-300 border-2 ${
+                        selectedCategory === category.name
+                          ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-purple-500/25 border-transparent scale-105"
+                          : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border-gray-100 hover:border-gray-200"
+                      }`}
+                    >
+                      <i
+                        className={`${category.icon} text-xl sm:text-2xl mb-2`}
+                      ></i>
+                      <span className="text-xs sm:text-sm font-semibold">
+                        {category.name}
+                      </span>
+                      <span
+                        className={`text-xs mt-1 ${
+                          selectedCategory === category.name
+                            ? "text-white/80"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {category.count} offers
+                      </span>
+                    </button>
+                  ))}
               </div>
             </div>
 
-            {/* Top 10 Section */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
-                  <i className="ri-trophy-line text-yellow-500"></i>
-                  <span>Top 10 Offers</span>
-                </h3>
-                <Link href="/search" className="text-purple-600 text-sm font-medium">
+            {/* Top 10 Offers - Modern Card Design */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xl border border-gray-100">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <i className="ri-trophy-line text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                      Top Offers
+                    </h3>
+                    <p className="text-gray-500 text-xs sm:text-sm">
+                      Most popular collaborations
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/search"
+                  className="text-purple-600 text-sm font-semibold hover:text-purple-700 transition-colors"
+                >
                   View All
                 </Link>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {top10Offers.map((offer, index) => (
-                  <div key={offer.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {index + 1}
+                  <div
+                    key={offer.id}
+                    className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                  >
+                    <div className="relative mb-4">
+                      <img
+                        src={offer.image}
+                        alt={offer.businessName}
+                        className="w-full h-32 sm:h-28 rounded-xl object-cover shadow-md"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg">
+                          {index + 1}
+                        </div>
+                      </div>
+                      <div className="absolute top-3 right-3 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
+                        {offer.applications} applied
+                      </div>
                     </div>
-                    <img src={offer.image} alt={offer.businessName} className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 text-sm">{offer.businessName}</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <h4 className="font-bold text-gray-800 text-sm sm:text-base flex-1 pr-2">
+                          {offer.businessName}
+                        </h4>
+                        <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">
+                          {offer.value}
+                        </span>
+                      </div>
                       <p className="text-gray-600 text-xs">{offer.title}</p>
-                      <div className="flex items-center space-x-3 mt-1">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-1">
-                          <i className="ri-star-fill text-yellow-400 text-xs"></i>
-                          <span className="text-xs text-gray-600">{offer.rating}</span>
+                          <i className="ri-star-fill text-yellow-400 text-sm"></i>
+                          <span className="text-xs text-gray-600 font-semibold">
+                            {offer.rating}
+                          </span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <i className="ri-user-line text-gray-400 text-xs"></i>
-                          <span className="text-xs text-gray-600">{offer.applications} applied</span>
-                        </div>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">
+                          {offer.category}
+                        </span>
                       </div>
                     </div>
                     <Link href={`/offer-details/${offer.id}`}>
-                      <button className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-3 py-1 rounded-lg text-xs font-medium">
-                        Apply
+                      <button className="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95">
+                        Apply Now
                       </button>
                     </Link>
                   </div>
@@ -398,74 +368,146 @@ export default function InfluencerDashboard() {
               </div>
             </div>
 
-            {/* What's Around Me */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
-                  <i className="ri-map-pin-line text-blue-500"></i>
-                  <span>What's Around Me</span>
-                </h3>
-                <button className="text-purple-600 text-sm font-medium">
+            {/* What's Around Me - Modern Card Design */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xl border border-gray-100">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <i className="ri-map-pin-line text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                      Nearby Businesses
+                    </h3>
+                    <p className="text-gray-500 text-xs sm:text-sm">
+                      Close to your location
+                    </p>
+                  </div>
+                </div>
+                <button className="text-purple-600 text-sm font-semibold hover:text-purple-700 transition-colors">
                   <i className="ri-refresh-line mr-1"></i>
                   Refresh
                 </button>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nearbyBusinesses.map((business) => (
-                  <div key={business.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                    <img src={business.image} alt={business.businessName} className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 text-sm">{business.businessName}</h4>
-                      <p className="text-gray-600 text-xs">{business.category}</p>
-                      <div className="flex items-center space-x-3 mt-1">
+                  <div
+                    key={business.id}
+                    className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                  >
+                    <div className="relative mb-4">
+                      <img
+                        src={business.image}
+                        alt={business.businessName}
+                        className="w-full h-32 sm:h-28 rounded-xl object-cover shadow-md"
+                      />
+                      <div className="absolute top-3 right-3 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
+                        {business.offers} offers
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-gray-800 text-sm sm:text-base">
+                        {business.businessName}
+                      </h4>
+                      <p className="text-gray-600 text-xs">
+                        {business.category}
+                      </p>
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-1">
-                          <i className="ri-map-pin-line text-gray-400 text-xs"></i>
-                          <span className="text-xs text-gray-600">{business.distance}</span>
+                          <i className="ri-map-pin-line text-blue-500 text-sm"></i>
+                          <span className="text-xs text-gray-600">
+                            {business.distance}
+                          </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <i className="ri-star-fill text-yellow-400 text-xs"></i>
-                          <span className="text-xs text-gray-600">{business.rating}</span>
+                          <i className="ri-star-fill text-yellow-400 text-sm"></i>
+                          <span className="text-xs text-gray-600 font-semibold">
+                            {business.rating}
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-medium">
-                      View
+                    <button className="w-full mt-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95">
+                      Explore Offers
                     </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Trending Businesses */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
-                  <i className="ri-fire-line text-orange-500"></i>
-                  <span>Trending Now</span>
-                </h3>
-                <Link href="/search" className="text-purple-600 text-sm font-medium">
+            {/* Trending Businesses - Modern Card Design */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xl border border-gray-100">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <i className="ri-fire-line text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                      Trending Now
+                    </h3>
+                    <p className="text-gray-500 text-xs sm:text-sm">
+                      Rising opportunities
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/search"
+                  className="text-purple-600 text-sm font-semibold hover:text-purple-700 transition-colors"
+                >
                   View All
                 </Link>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {trendingBusinesses.map((business) => (
-                  <div key={business.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                    <img src={business.image} alt={business.businessName} className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 text-sm">{business.businessName}</h4>
-                      <p className="text-gray-600 text-xs">{business.category}</p>
-                      <div className="flex items-center space-x-3 mt-1">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          business.trend === "Hot" ? "bg-red-100 text-red-700" :
-                          business.trend === "Rising" ? "bg-green-100 text-green-700" :
-                          "bg-blue-100 text-blue-700"
-                        }`}>
+                  <div
+                    key={business.id}
+                    className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                  >
+                    <div className="relative mb-4">
+                      <img
+                        src={business.image}
+                        alt={business.businessName}
+                        className="w-full h-32 sm:h-28 rounded-xl object-cover shadow-md"
+                      />
+                      <div className="absolute top-3 right-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            business.trend === "Hot"
+                              ? "bg-red-500 text-white"
+                              : business.trend === "Rising"
+                              ? "bg-green-500 text-white"
+                              : "bg-blue-500 text-white"
+                          }`}
+                        >
                           {business.trend}
                         </span>
-                        <span className="text-xs text-green-600 font-medium">{business.growth}</span>
                       </div>
                     </div>
-                    <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-lg text-xs font-medium">
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-gray-800 text-sm sm:text-base">
+                        {business.businessName}
+                      </h4>
+                      <p className="text-gray-600 text-xs">
+                        {business.category}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <i
+                            className={
+                              business.trendIcon + " text-orange-500 text-sm"
+                            }
+                          ></i>
+                          <span className="text-xs text-gray-600">
+                            Trending
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                          {business.growth}
+                        </span>
+                      </div>
+                    </div>
+                    <button className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95">
                       Explore
                     </button>
                   </div>
@@ -473,116 +515,119 @@ export default function InfluencerDashboard() {
               </div>
             </div>
 
-            {/* Filtered Offers */}
+            {/* Filtered Offers - Modern Card Design */}
             {selectedCategory !== "All" && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  {selectedCategory} Offers
-                </h3>
-                <div className="space-y-4">
-                  {barterOffers
-                    .filter(offer => offer.category === selectedCategory)
-                    .map((offer) => (
-                    <div
-                      key={offer.id}
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden"
-                    >
-                <div className="relative">
-                  <img 
-                    src={offer.offerImage}
-                    alt={offer.title}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
-                
-                <div className="p-4">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <img 
-                      src={offer.businessLogo}
-                      alt={offer.businessName}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                            <h3 className="font-semibold text-gray-800">
-                              {offer.businessName}
-                            </h3>
-                            <p className="text-gray-500 text-sm">
-                              {offer.category} • {offer.location}
-                            </p>
-                    </div>
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <i className="ri-gift-line text-white text-xl"></i>
                   </div>
-                  
-                        <h4 className="font-bold text-lg text-gray-800 mb-2">
-                          {offer.title}
-                        </h4>
-                  <p className="text-gray-600 mb-4">{offer.description}</p>
-                  
-                  <Link href={`/offer-details/${offer.id}`}>
-                    <button className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-                      Apply for Collaboration
-                    </button>
-                  </Link>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                      {selectedCategory} Offers
+                    </h3>
+                    <p className="text-gray-500 text-xs sm:text-sm">
+                      Handpicked collaborations for you
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+                <div className="grid grid-cols-1 gap-6">
+                  {barterOffers
+                    .filter((offer) => offer.category === selectedCategory)
+                    .map((offer) => (
+                      <div
+                        key={offer.id}
+                        className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 transition-all duration-500 hover:shadow-3xl group"
+                      >
+                        {/* Large Hero Image */}
+                        <div className="relative h-56 sm:h-64 overflow-hidden">
+                          <img
+                            src={offer.offerImage}
+                            alt={offer.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+
+                          {/* Top Badges */}
+                          <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                            <span className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                              {offer.category}
+                            </span>
+                            <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                              Value: {offer.value}
+                            </span>
+                          </div>
+
+                          {/* Bottom Gradient Content */}
+                          <div className="absolute bottom-4 left-4 right-4">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <img
+                                src={offer.businessLogo}
+                                alt={offer.businessName}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-lg"
+                              />
+                              <div className="flex-1">
+                                <h3 className="font-bold text-white text-lg">
+                                  {offer.businessName}
+                                </h3>
+                                <div className="flex items-center space-x-3 mt-1">
+                                  <div className="flex items-center space-x-1">
+                                    <i className="ri-star-fill text-yellow-400 text-sm"></i>
+                                    <span className="text-white text-sm font-semibold">
+                                      {offer.rating}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <i className="ri-user-line text-white/80 text-sm"></i>
+                                    <span className="text-white/80 text-sm">
+                                      {offer.applications} applied
+                                    </span>
+                                  </div>
+                                  <span className="text-white/80 text-sm">
+                                    • {offer.location}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Content Below Image */}
+                        <div className="p-5 sm:p-6">
+                          <h4 className="font-bold text-gray-800 text-xl sm:text-2xl mb-3">
+                            {offer.title}
+                          </h4>
+                          <p className="text-gray-600 mb-5 leading-relaxed text-sm sm:text-base">
+                            {offer.description}
+                          </p>
+
+                          <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <div className="flex items-center space-x-1">
+                                <i className="ri-time-line"></i>
+                                <span>{offer.duration}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <i className="ri-money-dollar-circle-line"></i>
+                                <span>{offer.value} value</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Link href={`/offer-details/${offer.id}`}>
+                            <button className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-100 group-hover:shadow-2xl">
+                              <span className="flex items-center justify-center space-x-2">
+                                <i className="ri-send-plane-fill"></i>
+                                <span>Apply for Collaboration</span>
+                              </span>
+                            </button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === "collaborations" && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              My Collaborations
-            </h2>
-            {myCollaborations.map((collab) => (
-              <div
-                key={collab.id}
-                className="bg-white rounded-2xl p-4 shadow-lg"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-800">
-                    {collab.businessName}
-                  </h3>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      collab.status === "Active"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-blue-100 text-blue-600"
-                    }`}
-                  >
-                    {collab.status}
-                  </span>
-                </div>
-                
-                {collab.status === "Active" && (
-                  <div>
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
-                      <span>Progress</span>
-                      <span>{collab.deadline}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-pink-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${collab.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-                
-                {collab.status === "Completed" && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-gray-600">Rating:</span>
-                    <div className="flex space-x-1">
-                      {[...Array(collab.rating)].map((_, i) => (
-                        <i key={i} className="ri-star-fill text-yellow-400"></i>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
         )}
       </div>
