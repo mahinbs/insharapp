@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
+import logo_dark from "@/assetes/logo_dark.png";
 
 const restaurantOffers = [
   {
@@ -125,10 +126,21 @@ export default function InfluencerDashboard() {
   return (
     <div className="min-h-screen bg-white pb-24">
       {/* Simplified Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-4 pt-12 pb-6">
+      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-4 pt-4 pb-4">
+        <div className="flex items-center justify-center">
+        <div className="w-40 h-10 ">
+          <img
+            src={logo_dark.src}
+            alt="Inshaar"
+            className="h-full w-full object-cover mb-1"
+          />
+        </div>
+        </div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Welcome Back!</h1>
+            <h1 className="text-2xl font-bold text-white mb-1">
+              Welcome Back!
+            </h1>
             <p className="text-white/80 text-sm">
               Discover collaboration opportunities
             </p>

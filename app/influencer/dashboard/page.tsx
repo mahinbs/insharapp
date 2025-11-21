@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
+import logo_dark from "@/assetes/logo_dark.png";
 
 const barterOffers = [
   {
@@ -202,13 +203,15 @@ export default function InfluencerDashboard() {
         </div>
 
         {/* Logo Section */}
-        <div className="text-center mb-6">
-          <h1 className="font-['Pacifico'] text-2xl sm:text-3xl text-white mb-2 drop-shadow-lg">
-            Inshaar
-          </h1>
-          <p className="text-white/80 text-xs sm:text-sm">
+        <div className="h-8 w-40 flex flex-col items-center mx-auto mb-6">
+          <img 
+            src={logo_dark.src}
+            alt="Inshaar" 
+            className="h-full w-full object-cover mb-1"
+          />
+          <span className="text-white/80 text-xs sm:text-sm">
             Influencer Dashboard
-          </p>
+          </span>
         </div>
 
         {/* Location & Quick Actions */}

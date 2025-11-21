@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import logo_dark from "@/assetes/logo_dark.png";
 
 export default function AuthScreen() {
   const [userType, setUserType] = useState<'influencer' | 'business' | null>(null);
@@ -10,12 +11,14 @@ export default function AuthScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col">
       {/* Header */}
-      <div className="pt-12 pb-8 text-center">
-        <h1 className="font-['Pacifico'] text-4xl bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent mb-2">
-          Inshaar
-        </h1>
-        <p className="text-gray-600">Choose your path to collaboration</p>
-      </div>
+      <div className="h-full w-full flex flex-col justify-center py-4">
+            <img 
+              src={logo_dark.src}
+              alt="Inshaar" 
+              className="h-8 w-40 object-cover mb-1"
+            />
+            <span className="text-white/80 text-xs">Choose your path to collaboration</span>
+          </div>
 
       {/* User type selection */}
       {!userType && (

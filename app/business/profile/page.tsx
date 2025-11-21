@@ -4,6 +4,7 @@ import Link from "next/link";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import logo_dark from "@/assetes/logo_dark.png";
 
 const showcaseItems = [
   {
@@ -48,15 +49,19 @@ export default function BusinessProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-12 pb-6">
+      <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-4 pb-4">
         <div className="flex items-center justify-between mb-6">
           <Link href="/business/dashboard">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <div className="flex flex-col items-center">
-            <h1 className="font-['Pacifico'] text-2xl text-white mb-1">Inshaar</h1>
+          <div className=" h-8 w-40 flex flex-col items-center">
+            <img 
+              src={logo_dark.src}
+              alt="Inshaar" 
+              className="h-full w-full object-cover mb-1"
+            />
             <span className="text-white/80 text-sm">Business Profile</span>
           </div>
           <Link href="/help">

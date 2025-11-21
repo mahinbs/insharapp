@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../components/AdvancedBottomNav';
 import { usePathname } from 'next/navigation';
+import logo_dark from "@/assetes/logo_dark.png";
+
 
 const businessServices = [
   {
@@ -74,8 +76,12 @@ export default function ServicesPage() {
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div> 
           </Link>
-          <div className="flex flex-col items-center">
-            <h1 className="font-['Pacifico'] text-2xl text-white mb-1">Inshaar</h1>
+          <div className="h-8 w-40 flex flex-col items-center">
+            <img 
+              src={logo_dark.src}
+              alt="Inshaar" 
+              className="h-full w-full object-cover mb-1"
+            />
             <span className="text-white/80 text-sm">Services</span>
           </div>
           <div className="w-10"></div>
