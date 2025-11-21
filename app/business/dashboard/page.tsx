@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
+import logo_dark from "@/assetes/logo_dark.png";
 
 const myOffers = [
   {
@@ -59,8 +60,14 @@ export default function BusinessDashboard() {
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-4 pb-4">
         {/* Logo Section */}
-        <div className="text-center mb-6">
-          <h1 className="font-['Pacifico'] text-3xl text-white mb-2 drop-shadow-lg">Inshaar</h1>
+        <div className="flex flex-col items-center justify-center mb-6">
+            <div className="w-40 h-10">
+            <img 
+              src={logo_dark.src}
+              alt="Inshaar" 
+              className="h-full w-full object-cover mb-1"
+            />
+            </div>
           <p className="text-white/80 text-sm">Business Dashboard</p>
         </div>
         

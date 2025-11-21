@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../components/AdvancedBottomNav';
+import logo_dark from "@/assetes/logo_dark.png";
 
 // Mock video data for TikTok/Reels style feed
 const videoFeed = [
@@ -117,15 +118,19 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-black pb-20 overflow-hidden">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-2">
+      <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-4">
         <div className="flex items-center justify-between mb-2">
           <Link href="/influencer/dashboard">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <div className="flex flex-col items-center">
-            <h1 className="font-['Pacifico'] text-xl text-white mb-1">Inshaar</h1>
+          <div className="h-8 w-40 flex flex-col items-center">
+            <img 
+              src={logo_dark.src}
+              alt="Inshaar" 
+              className="h-full w-full object-cover mb-1"
+            />
             <span className="text-white/80 text-xs">Discover</span>
           </div>
           <Link href="/help">
