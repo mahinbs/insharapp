@@ -137,13 +137,13 @@ export default function BusinessServicesPage() {
           </p>
           <div className="flex space-x-3">
             <Link href="/business/chat">
-              <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+              <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
                 <i className="ri-message-line mr-2"></i>
                 Message Support
               </button>
             </Link>
             <a href="mailto:services@inshaar.app">
-              <button className="flex-1 bg-white border-2 border-purple-500 text-purple-600 py-3 rounded-xl font-semibold hover:bg-purple-50 transition-all duration-300">
+              <button className="flex-1 bg-white border-2 border-purple-500 text-purple-600 py-3 px-2 rounded-xl font-semibold hover:bg-purple-50 transition-all duration-300">
                 <i className="ri-mail-line mr-2"></i>
                 Email Us
               </button>

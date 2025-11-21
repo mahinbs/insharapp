@@ -117,8 +117,8 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-black pb-20 overflow-hidden">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-2">
+        <div className="flex items-center justify-between mb-2">
           <Link href="/influencer/dashboard">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>

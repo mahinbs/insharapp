@@ -3,6 +3,7 @@
 import Link from "next/link";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const showcaseItems = [
   {
@@ -41,6 +42,7 @@ const showcaseItems = [
 ];
 
 export default function BusinessProfilePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("about");
 
   return (
@@ -205,6 +207,54 @@ export default function BusinessProfilePage() {
           </div>
         )}
       </div>
+
+              {/* Settings */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Settings</h3>
+          <div className="space-y-4">
+          <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+            onClick={() => router.push('/business/services')}
+            >
+              <div className="flex items-center space-x-3">
+                <i className="ri-shield-line text-gray-600"></i>
+                <span className="text-gray-800">Services</span>
+              </div>
+              <i className="ri-arrow-right-s-line text-gray-400"></i>
+            </button>
+
+            <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <div className="flex items-center space-x-3">
+                <i className="ri-notification-line text-gray-600"></i>
+                <span className="text-gray-800">Notifications</span>
+              </div>
+              <i className="ri-arrow-right-s-line text-gray-400"></i>
+            </button>
+            
+            <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <div className="flex items-center space-x-3">
+                <i className="ri-shield-line text-gray-600"></i>
+                <span className="text-gray-800">Privacy</span>
+              </div>
+              <i className="ri-arrow-right-s-line text-gray-400"></i>
+            </button>
+            
+            <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <div className="flex items-center space-x-3">
+                <i className="ri-question-line text-gray-600"></i>
+                <span className="text-gray-800">Help & Support</span>
+              </div>
+              <i className="ri-arrow-right-s-line text-gray-400"></i>
+            </button>
+            
+            <button className="w-full flex items-center justify-between py-3 px-4 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+              <div className="flex items-center space-x-3">
+                <i className="ri-logout-box-line text-red-600"></i>
+                <span className="text-red-600">Sign Out</span>
+              </div>
+              <i className="ri-arrow-right-s-line text-red-400"></i>
+            </button>
+          </div>
+        </div>
 
       <AdvancedBottomNav userType="business" />
     </div>

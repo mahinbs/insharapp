@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../components/AdvancedBottomNav';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: 'Sarah Johnson',
@@ -126,7 +128,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-8">
+      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-4">
         <div className="flex items-center justify-between mb-6">
           <Link href="/influencer/dashboard">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -167,7 +169,7 @@ export default function ProfilePage() {
           <h2 className="text-white text-2xl font-bold mb-1">{profileData.name}</h2>
           <p className="text-white/80 mb-4">{profileData.username}</p>
           
-          {/* Stats */}
+          {/* Stats
           <div className="flex justify-center space-x-8">
             <div className="text-center">
               <div className="text-white text-xl font-bold">{profileData.followers}</div>
@@ -181,7 +183,7 @@ export default function ProfilePage() {
               <div className="text-white text-xl font-bold">{profileData.posts}</div>
               <div className="text-white/80 text-sm">Posts</div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -454,6 +456,16 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl p-6 shadow-lg">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Settings</h3>
           <div className="space-y-4">
+          <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+            onClick={() => router.push('/services')}
+            >
+              <div className="flex items-center space-x-3">
+                <i className="ri-shield-line text-gray-600"></i>
+                <span className="text-gray-800">Services</span>
+              </div>
+              <i className="ri-arrow-right-s-line text-gray-400"></i>
+            </button>
+
             <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
               <div className="flex items-center space-x-3">
                 <i className="ri-notification-line text-gray-600"></i>

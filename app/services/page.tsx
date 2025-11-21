@@ -67,12 +67,12 @@ export default function ServicesPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-4">
+        <div className="flex items-center justify-between">
           <Link href={userType === 'business' ? '/business/dashboard' : '/influencer/dashboard'}>
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>
-            </div>
+            </div> 
           </Link>
           <div className="flex flex-col items-center">
             <h1 className="font-['Pacifico'] text-2xl text-white mb-1">Inshaar</h1>
@@ -155,13 +155,13 @@ export default function ServicesPage() {
           </p>
           <div className="flex space-x-3">
             <Link href="/chat">
-              <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+              <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
                 <i className="ri-message-line mr-2"></i>
                 Message Support
               </button>
             </Link>
             <a href="mailto:services@inshaar.app">
-              <button className="flex-1 bg-white border-2 border-purple-500 text-purple-600 py-3 rounded-xl font-semibold hover:bg-purple-50 transition-all duration-300">
+              <button className="flex-1 bg-white border-2 border-purple-500 text-purple-600 py-3 px-2 rounded-xl font-semibold hover:bg-purple-50 transition-all duration-300">
                 <i className="ri-mail-line mr-2"></i>
                 Email Us
               </button>
