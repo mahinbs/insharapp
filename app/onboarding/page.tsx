@@ -41,11 +41,11 @@ export default function OnboardingScreen() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Logo */}
       <div className="flex justify-between items-center p-6">
-        <div className="h-8 w-40 flex items-center">
+        <div className=" flex items-center">
           <img 
             src={logo_dark.src}
             alt="Inshaar" 
-            className="h-full w-full object-cover"
+            className="h-8 w-40 object-cover"
           />
         </div>
         <Link href="/auth" className="text-gray-500 font-medium">

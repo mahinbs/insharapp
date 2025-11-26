@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import Link from "next/link";
 import logo_dark from "@/assetes/logo_dark.png";
 
@@ -57,6 +57,177 @@ const reviews = [
   },
 ];
 
+const creatorWorkExamples = [
+  {
+    id: 1,
+    creatorName: "Sarah Foodie",
+    username: "@sarahfoodie",
+    profileImage:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+    postImage:
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop",
+    likes: "2.3K",
+    engagement: "High",
+  },
+  {
+    id: 2,
+    creatorName: "Mike Tastes",
+    username: "@miketastes",
+    profileImage:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+    postImage:
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop",
+    likes: "1.8K",
+    engagement: "High",
+  },
+  {
+    id: 3,
+    creatorName: "Lifestyle Lux",
+    username: "@lifestylelux",
+    profileImage:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+    postImage:
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop",
+    likes: "3.1K",
+    engagement: "Very High",
+  },
+  {
+    id: 4,
+    creatorName: "Chef Stories",
+    username: "@chefstories",
+    profileImage:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+    postImage:
+      "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=400&fit=crop",
+    likes: "2.7K",
+    engagement: "High",
+  },
+  {
+    id: 5,
+    creatorName: "Dine & Design",
+    username: "@dineanddesign",
+    profileImage:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face",
+    postImage:
+      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=400&fit=crop",
+    likes: "1.9K",
+    engagement: "High",
+  },
+  {
+    id: 6,
+    creatorName: "Taste Buds",
+    username: "@tastebuds",
+    profileImage:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face",
+    postImage:
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop",
+    likes: "2.5K",
+    engagement: "High",
+  },
+];
+
+type RequestStatus = "pending" | "accepted" | "declined" | "cancelled";
+
+interface StoredRequest {
+  offerId: string;
+  businessName: string;
+  status: RequestStatus;
+  createdAt: string;
+}
+
+interface VideoSubmissionRecord {
+  offerId: string;
+  fileName: string;
+  dataUrl: string;
+  socialLink: string;
+  hasTaggedBusiness: boolean;
+  hasSentCollabRequest: boolean;
+  submittedAt: string;
+}
+
+const REQUEST_STORAGE_KEY = "inshaar_collab_requests";
+const VIDEO_STORAGE_KEY = "inshaar_video_submissions";
+
+const isBrowser = () => typeof window !== "undefined";
+
+const safeParse = <T,>(value: string | null, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch (error) {
+    console.warn("Failed to parse stored JSON", error);
+    return fallback;
+  }
+};
+
+const getStoredRequests = (): StoredRequest[] => {
+  if (!isBrowser()) return [];
+  return safeParse<StoredRequest[]>(localStorage.getItem(REQUEST_STORAGE_KEY), []);
+};
+
+const persistRequests = (requests: StoredRequest[]) => {
+  if (!isBrowser()) return;
+  localStorage.setItem(REQUEST_STORAGE_KEY, JSON.stringify(requests));
+  window.dispatchEvent(new Event("collab-request-updated"));
+};
+
+const persistRequestStatus = (
+  offerId: string,
+  businessName: string,
+  status: RequestStatus
+) => {
+  if (!isBrowser()) return;
+  const requests = getStoredRequests();
+  const index = requests.findIndex((req) => req.offerId === offerId);
+  const baseRecord: StoredRequest = {
+    offerId,
+    businessName,
+    status,
+    createdAt: new Date().toISOString(),
+  };
+
+  let updatedRequests =
+    index >= 0 ? requests.map((req) => (req.offerId === offerId ? { ...req, status } : req)) : [...requests, baseRecord];
+
+  if (status === "accepted") {
+    updatedRequests = updatedRequests.map((req) =>
+      req.offerId === offerId
+        ? req
+        : req.status === "pending"
+        ? { ...req, status: "cancelled" }
+        : req
+    );
+  }
+
+  persistRequests(updatedRequests);
+};
+
+const removeRequestRecord = (offerId: string) => {
+  if (!isBrowser()) return;
+  const remaining = getStoredRequests().filter((req) => req.offerId !== offerId);
+  persistRequests(remaining);
+};
+
+const getStoredVideoSubmissions = (): VideoSubmissionRecord[] => {
+  if (!isBrowser()) return [];
+  return safeParse<VideoSubmissionRecord[]>(localStorage.getItem(VIDEO_STORAGE_KEY), []);
+};
+
+const saveVideoSubmissionRecord = (record: VideoSubmissionRecord) => {
+  if (!isBrowser()) return;
+  const submissions = getStoredVideoSubmissions();
+  const index = submissions.findIndex((item) => item.offerId === record.offerId);
+  const next =
+    index >= 0
+      ? submissions.map((item) => (item.offerId === record.offerId ? record : item))
+      : [...submissions, record];
+  localStorage.setItem(VIDEO_STORAGE_KEY, JSON.stringify(next));
+};
+
+const getVideoSubmissionForOffer = (offerId: string) => {
+  return getStoredVideoSubmissions().find((item) => item.offerId === offerId);
+};
+
 interface OfferDetailsClientProps {
   offerId: string;
 }
@@ -70,6 +241,7 @@ export default function OfferDetailsClient({
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedPeople, setSelectedPeople] = useState<number>(0);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [acceptedConditions, setAcceptedConditions] = useState({
     checkDeal: false,
@@ -77,13 +249,23 @@ export default function OfferDetailsClient({
     postContent: false
   });
   const [bookingStatus, setBookingStatus] = useState<
-    "pending" | "accepted" | "declined" | null
+    RequestStatus | null
   >(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [notificationType, setNotificationType] = useState<
     "success" | "warning" | "error"
   >("success");
+  const [videoUploadStatus, setVideoUploadStatus] = useState<
+    "idle" | "uploading" | "uploaded"
+  >("idle");
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [videoFileName, setVideoFileName] = useState("");
+  const [socialLink, setSocialLink] = useState("");
+  const [hasTaggedBusiness, setHasTaggedBusiness] = useState(false);
+  const [hasSentCollabRequest, setHasSentCollabRequest] = useState(false);
+  const [proofSaved, setProofSaved] = useState(false);
+  const cancellationNoticeRef = useRef(false);
 
   // Generate available time slots
   const timeSlots = [
@@ -138,9 +320,145 @@ export default function OfferDetailsClient({
   const availableMonths = getAvailableMonths();
   const availableDates = getAvailableDatesForMonth();
 
+  useEffect(() => {
+    if (!isBrowser()) return;
+
+    const syncBookingState = () => {
+      const currentRecord = getStoredRequests().find(
+        (req) => req.offerId === offerId
+      );
+      if (currentRecord) {
+        setBookingStatus(currentRecord.status);
+        if (
+          currentRecord.status === "cancelled" &&
+          !cancellationNoticeRef.current
+        ) {
+          setNotificationMessage(
+            "This request was cancelled because another business accepted your collaboration first."
+          );
+          setNotificationType("warning");
+          setShowNotification(true);
+          cancellationNoticeRef.current = true;
+        }
+      } else {
+        setBookingStatus(null);
+      }
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === REQUEST_STORAGE_KEY) {
+        syncBookingState();
+      }
+    };
+
+    const handleCustomEvent = () => syncBookingState();
+
+    syncBookingState();
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("collab-request-updated", handleCustomEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("collab-request-updated", handleCustomEvent);
+    };
+  }, [offerId]);
+
+  useEffect(() => {
+    if (!isBrowser()) return;
+    const savedSubmission = getVideoSubmissionForOffer(offerId);
+    if (savedSubmission) {
+      setVideoPreviewUrl(savedSubmission.dataUrl);
+      setVideoUploadStatus("uploaded");
+      setVideoFileName(savedSubmission.fileName);
+      setSocialLink(savedSubmission.socialLink);
+      setHasTaggedBusiness(savedSubmission.hasTaggedBusiness);
+      setHasSentCollabRequest(savedSubmission.hasSentCollabRequest);
+      setProofSaved(true);
+    } else {
+      setVideoPreviewUrl(null);
+      setVideoUploadStatus("idle");
+      setVideoFileName("");
+      setProofSaved(false);
+      setHasTaggedBusiness(false);
+      setHasSentCollabRequest(false);
+    }
+  }, [offerId]);
+
+  const updateRequestStatus = (status: RequestStatus) => {
+    persistRequestStatus(offerId, offerDetails.businessName, status);
+  };
+
+  const resetCurrentRequest = () => {
+    removeRequestRecord(offerId);
+    setBookingStatus(null);
+    setSelectedPeople(0);
+    setSelectedMonth("");
+    setSelectedDate("");
+    setSelectedTime("");
+  };
+
+  const handleVideoSelection = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setVideoUploadStatus("uploading");
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result?.toString() ?? "";
+      setVideoPreviewUrl(result);
+      setVideoFileName(file.name);
+      setVideoUploadStatus("uploaded");
+      setProofSaved(false);
+    };
+    reader.onerror = () => {
+      setVideoUploadStatus("idle");
+      setNotificationMessage("Unable to read the selected video, please try a different file.");
+      setNotificationType("error");
+      setShowNotification(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleProofSubmission = () => {
+    if (videoUploadStatus !== "uploaded" || !videoPreviewUrl) {
+      setNotificationMessage("Please upload the collaboration video before submitting.");
+      setNotificationType("warning");
+      setShowNotification(true);
+      return;
+    }
+
+    if (!socialLink.trim()) {
+      setNotificationMessage("Add the social media post link that includes the tag and collaboration request.");
+      setNotificationType("warning");
+      setShowNotification(true);
+      return;
+    }
+
+    if (!hasTaggedBusiness || !hasSentCollabRequest) {
+      setNotificationMessage("Confirm that you tagged the business and sent the collaboration request on social media.");
+      setNotificationType("warning");
+      setShowNotification(true);
+      return;
+    }
+
+    saveVideoSubmissionRecord({
+      offerId,
+      fileName: videoFileName || "collaboration-video.mp4",
+      dataUrl: videoPreviewUrl,
+      socialLink: socialLink.trim(),
+      hasTaggedBusiness,
+      hasSentCollabRequest,
+      submittedAt: new Date().toISOString(),
+    });
+
+    setProofSaved(true);
+    setNotificationMessage("Great! Your video proof is stored and ready for the business to download.");
+    setNotificationType("success");
+    setShowNotification(true);
+  };
+
   const handleBookingSubmit = () => {
-    if (!selectedDate || !selectedTime) {
-      setNotificationMessage("Please select both date and time");
+    if (!selectedPeople || !selectedDate || !selectedTime) {
+      setNotificationMessage("Please select number of people, date, and time");
       setNotificationType("warning");
       setShowNotification(true);
       return;
@@ -162,6 +480,7 @@ export default function OfferDetailsClient({
 
     // Simulate booking submission
     setBookingStatus("pending");
+    updateRequestStatus("pending");
     setShowConfirmationModal(false);
     setNotificationMessage(
       "Booking request sent! Waiting for business confirmation."
@@ -179,10 +498,12 @@ export default function OfferDetailsClient({
     // Simulate business response after 3 seconds
     setTimeout(() => {
       const isAccepted = Math.random() > 0.3; // 70% acceptance rate
-      setBookingStatus(isAccepted ? "accepted" : "declined");
+      const nextStatus: RequestStatus = isAccepted ? "accepted" : "declined";
+      setBookingStatus(nextStatus);
+      updateRequestStatus(nextStatus);
       setNotificationMessage(
         isAccepted
-          ? "Great! Your booking has been confirmed by the business."
+          ? "Great! Your booking has been confirmed by the business. All other pending requests were cancelled automatically."
           : "Unfortunately, your booking request was declined by the business."
       );
       setNotificationType(isAccepted ? "success" : "error");
@@ -227,18 +548,18 @@ export default function OfferDetailsClient({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-4">
+      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-4">
         <div className="flex items-center justify-between">
           <Link href="/influencer/dashboard">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <div className="h-8 w-40 flex flex-col items-center">
+          <div className=" flex flex-col items-center">
             <img 
               src={logo_dark.src}
               alt="Inshaar" 
-              className="h-full w-full object-cover mb-1"
+              className="h-8 w-40 object-cover mb-1"
             />
             <span className="text-white/80 text-sm">Offer Details</span>
           </div>
@@ -351,7 +672,7 @@ export default function OfferDetailsClient({
         </div>
 
         {/* Reviews */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
           <h4 className="font-semibold text-gray-800 mb-4">Recent Reviews</h4>
           <div className="space-y-4">
             {reviews.map((review) => (
@@ -389,6 +710,229 @@ export default function OfferDetailsClient({
             ))}
           </div>
         </div>
+
+        {/* Creator Work Showcase */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-semibold text-gray-800">Creator Work Showcase</h4>
+            <span className="text-sm text-gray-500">{creatorWorkExamples.length} examples</span>
+          </div>
+          <p className="text-gray-600 text-sm mb-6">
+            See how other creators have showcased this collaboration
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            {creatorWorkExamples.map((work) => (
+              <div
+                key={work.id}
+                className="group relative overflow-hidden rounded-xl bg-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300"
+              >
+                {/* Post Image */}
+                <div className="aspect-square relative">
+                  <img
+                    src={work.postImage}
+                    alt={`${work.creatorName}'s work`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop&auto=format`;
+                    }}
+                  />
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <img
+                          src={work.profileImage}
+                          alt={work.creatorName}
+                          className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(work.creatorName)}&background=random&size=100`;
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-semibold truncate">
+                            {work.creatorName}
+                          </p>
+                          <p className="text-white/80 text-xs truncate">
+                            {work.username}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <i className="ri-heart-fill text-white text-sm"></i>
+                          <span className="text-white text-xs font-medium">
+                            {work.likes}
+                          </span>
+                        </div>
+                        <span className="text-white/90 text-xs bg-purple-500/80 px-2 py-0.5 rounded-full">
+                          {work.engagement}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Creator info (visible by default) */}
+                <div className="p-3 bg-white">
+                  <div className="flex items-center space-x-2">
+                    <img
+                      src={work.profileImage}
+                      alt={work.creatorName}
+                      className="w-6 h-6 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(work.creatorName)}&background=random&size=100`;
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-800 text-xs font-semibold truncate">
+                        {work.creatorName}
+                      </p>
+                      <p className="text-gray-500 text-xs truncate">
+                        {work.username}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-1 text-gray-400">
+                      <i className="ri-heart-line text-xs"></i>
+                      <span className="text-xs">{work.likes}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {bookingStatus === "accepted" && (
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h4 className="font-semibold text-gray-800">Content Delivery Hub</h4>
+                <p className="text-sm text-gray-500">
+                  Upload the final video and share your tagged social post for the business.
+                </p>
+              </div>
+              <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                Required
+              </span>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                Upload collaboration video
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={handleVideoSelection}
+                className="w-full border-2 border-dashed border-purple-200 rounded-2xl p-4 text-sm text-gray-600 cursor-pointer hover:border-purple-400 transition"
+              />
+              {videoUploadStatus === "uploading" && (
+                <p className="text-xs text-gray-500 mt-2">Processing video…</p>
+              )}
+
+              {videoPreviewUrl && (
+                <div className="mt-4 bg-gray-50 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {videoFileName || "collaboration-video.mp4"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Ready for businesses to download
+                      </p>
+                    </div>
+                    <a
+                      href={videoPreviewUrl}
+                      download={videoFileName || "collaboration-video.mp4"}
+                      className="text-xs font-semibold text-purple-600 hover:text-purple-700"
+                    >
+                      Download video
+                    </a>
+                  </div>
+                  <video
+                    src={videoPreviewUrl}
+                    controls
+                    className="w-full rounded-xl border border-gray-200"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                Social media post URL
+              </label>
+              <input
+                type="url"
+                value={socialLink}
+                onChange={(e) => setSocialLink(e.target.value)}
+                placeholder="https://instagram.com/p/..."
+                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                The post must tag @{offerDetails.businessName.replace(/\s+/g, "").toLowerCase()} and include “Collaboration requested via Inshaar.”
+              </p>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <label
+                className={`flex items-start space-x-3 rounded-2xl border-2 p-3 cursor-pointer transition ${
+                  hasTaggedBusiness ? "border-green-500 bg-green-50" : "border-gray-200"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={hasTaggedBusiness}
+                  onChange={(event) => setHasTaggedBusiness(event.target.checked)}
+                  className="mt-1 w-4 h-4 accent-green-500"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">
+                    I tagged the business account in my post
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Include both @handle and #InshaarCollab in the caption.
+                  </p>
+                </div>
+              </label>
+              <label
+                className={`flex items-start space-x-3 rounded-2xl border-2 p-3 cursor-pointer transition ${
+                  hasSentCollabRequest ? "border-green-500 bg-green-50" : "border-gray-200"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={hasSentCollabRequest}
+                  onChange={(event) => setHasSentCollabRequest(event.target.checked)}
+                  className="mt-1 w-4 h-4 accent-green-500"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">
+                    I sent the collaboration request on social media
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Use Instagram’s “Invite collaborator” or equivalent platform feature.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <button
+              onClick={handleProofSubmission}
+              className="w-full mt-6 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Submit content proof
+            </button>
+
+            {proofSaved && (
+              <p className="text-sm text-green-600 mt-3">
+                Submission saved! The business can now download your video and verify the tagged post.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Apply Button */}
@@ -401,13 +945,16 @@ export default function OfferDetailsClient({
             Book Service
           </button>
         ) : (
-          <div className="flex items-center justify-center space-x-3">
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <div className="flex items-center space-x-3">
             <div
               className={`w-3 h-3 rounded-full ${
                 bookingStatus === "pending"
                   ? "bg-yellow-500"
                   : bookingStatus === "accepted"
                   ? "bg-green-500"
+                  : bookingStatus === "cancelled"
+                  ? "bg-gray-400"
                   : "bg-red-500"
               }`}
             ></div>
@@ -417,6 +964,8 @@ export default function OfferDetailsClient({
                   ? "text-yellow-600"
                   : bookingStatus === "accepted"
                   ? "text-green-600"
+                  : bookingStatus === "cancelled"
+                  ? "text-gray-600"
                   : "text-red-600"
               }`}
             >
@@ -424,8 +973,19 @@ export default function OfferDetailsClient({
                 ? "Booking Pending..."
                 : bookingStatus === "accepted"
                 ? "Booking Confirmed!"
+                : bookingStatus === "cancelled"
+                ? "Request Cancelled after another acceptance"
                 : "Booking Declined"}
             </span>
+            </div>
+            {bookingStatus === "cancelled" && (
+              <button
+                onClick={resetCurrentRequest}
+                className="text-xs font-semibold text-purple-600 underline underline-offset-4"
+              >
+                Send a new request
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -437,7 +997,13 @@ export default function OfferDetailsClient({
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-800">Book Service</h3>
               <button
-                onClick={() => setShowBookingModal(false)}
+                onClick={() => {
+                  setShowBookingModal(false);
+                  setSelectedPeople(0);
+                  setSelectedMonth("");
+                  setSelectedDate("");
+                  setSelectedTime("");
+                }}
                 className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <i className="ri-close-line text-gray-600"></i>
@@ -455,7 +1021,30 @@ export default function OfferDetailsClient({
                 </p>
               </div>
 
-              {/* Month Selection */}
+              {/* People Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">
+                  Number of People
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setSelectedPeople(num)}
+                      className={`p-3 rounded-lg border-2 text-center transition-all duration-200 ${
+                        selectedPeople === num
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                      }`}
+                    >
+                      <div className="font-semibold text-lg">{num}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Month Selection - Only show if people is selected */}
+              {selectedPeople > 0 && (
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-3">
                   Select Month
@@ -479,6 +1068,7 @@ export default function OfferDetailsClient({
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Date Selection - Only show if month is selected */}
               {selectedMonth && (
@@ -545,6 +1135,10 @@ export default function OfferDetailsClient({
                   </h4>
                   <div className="space-y-1 text-sm">
                     <p>
+                      <span className="text-gray-600">Number of People:</span>{" "}
+                      {selectedPeople}
+                    </p>
+                    <p>
                       <span className="text-gray-600">Date:</span>{" "}
                       {new Date(selectedDate).toLocaleDateString("en-US", {
                         weekday: "long",
@@ -568,14 +1162,20 @@ export default function OfferDetailsClient({
               {/* Action Buttons */}
               <div className="flex space-x-3">
                 <button
-                  onClick={() => setShowBookingModal(false)}
+                  onClick={() => {
+                    setShowBookingModal(false);
+                    setSelectedPeople(0);
+                    setSelectedMonth("");
+                    setSelectedDate("");
+                    setSelectedTime("");
+                  }}
                   className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleBookingSubmit}
-                  disabled={!selectedDate || !selectedTime}
+                  disabled={!selectedPeople || !selectedDate || !selectedTime}
                   className="flex-1 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue
@@ -690,6 +1290,9 @@ export default function OfferDetailsClient({
                 <div className="bg-gray-50 rounded-xl p-4 mb-6">
                   <h5 className="font-semibold text-gray-800 mb-2 text-sm">Collaboration Summary</h5>
                   <div className="space-y-1 text-xs text-gray-600">
+                    <p>
+                      <span className="font-medium">Number of People:</span> {selectedPeople}
+                    </p>
                     <p>
                       <span className="font-medium">Date:</span>{" "}
                       {new Date(selectedDate).toLocaleDateString("en-US", {

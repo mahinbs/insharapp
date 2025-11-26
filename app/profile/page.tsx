@@ -1,507 +1,386 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import AdvancedBottomNav from '../../components/AdvancedBottomNav';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import AdvancedBottomNav from "../../components/AdvancedBottomNav";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts");
   const [profileData, setProfileData] = useState({
-    name: 'Sarah Johnson',
-    username: '@sarahstyles',
-    bio: 'Lifestyle & Fashion Influencer | Creating content that inspires | Collaborating with amazing brands',
-    followers: '25.2K',
-    following: '1.8K',
-    posts: '342',
-    location: 'Los Angeles, CA',
-    website: 'www.sarahstyles.com',
-    tiktok: '@sarahstyles',
-    instagram: '@sarahstyles'
+    name: "Sarah Johnson",
+    username: "sarahstyles",
+    bio: "Lifestyle & Fashion Influencer | Creating content that inspires ✨",
+    followers: "25.2K",
+    following: "1.8K",
+    posts: "342",
+    location: "Los Angeles, CA",
+    website: "sarahstyles.com",
+    tiktok: "@sarahstyles",
+    instagram: "@sarahstyles",
   });
 
-  const achievements = [
-    { icon: 'ri-trophy-line', title: 'Top Collaborator', description: '50+ successful partnerships' },
-    { icon: 'ri-star-line', title: '5-Star Rating', description: 'Excellent collaboration reviews' },
-    { icon: 'ri-heart-line', title: 'Community Favorite', description: 'Loved by 10K+ followers' },
-    { icon: 'ri-award-line', title: 'Verified Creator', description: 'Authentic content creator' }
-  ];
+  const nameParts = profileData.name.split(" ");
+  const firstName = nameParts[0] || profileData.name;
+  const formattedLastName = nameParts.slice(1).join(" ").toUpperCase();
+  const followerLabel = profileData.followers
+    ? `${profileData.followers} followers`
+    : "";
+  const contactEmail = `${profileData.username}@gmail.com`;
 
-  const recentCollaborations = [
+  const socialLinks = [
     {
-      id: 1,
-      businessName: 'Bella Vista Restaurant',
-      image: 'https://readdy.ai/api/search-image?query=Elegant%20restaurant%20interior%2C%20fine%20dining%20atmosphere%2C%20warm%20lighting%2C%20professional%20restaurant%20photography%2C%20luxury%20dining%20experience%2C%20modern%20restaurant%20design&width=80&height=80&seq=resto2&orientation=squarish',
-      rating: 5,
-      date: '2 weeks ago'
+      icon: "ri-tiktok-fill",
+      handle: profileData.tiktok,
+      stats: followerLabel ? `- ${followerLabel}` : "",
     },
     {
-      id: 2,
-      businessName: 'Urban Threads',
-      image: 'https://readdy.ai/api/search-image?query=Modern%20fashion%20boutique%20storefront%2C%20trendy%20clothing%20store%2C%20stylish%20retail%20space%2C%20contemporary%20fashion%20display%2C%20urban%20fashion%20brand&width=80&height=80&seq=fashion2&orientation=squarish',
-      rating: 5,
-      date: '1 month ago'
+      icon: "ri-instagram-line",
+      handle: profileData.instagram,
+      stats: followerLabel ? `- ${followerLabel}` : "",
     },
-    {
-      id: 3,
-      businessName: 'Luxe Beauty Salon',
-      image: 'https://readdy.ai/api/search-image?query=Luxury%20beauty%20salon%20interior%2C%20elegant%20spa%20environment%2C%20professional%20beauty%20services%2C%20modern%20salon%20design%2C%20premium%20wellness%20space&width=80&height=80&seq=salon2&orientation=squarish',
-      rating: 4,
-      date: '2 months ago'
-    }
   ];
 
-  // Check if user has pending collaboration videos not uploaded
-  const hasPendingUploads = false; // This would be fetched from backend
-  const canStartNewCollaboration = !hasPendingUploads;
+  const detailList = [
+    { icon: "ri-camera-3-line", text: profileData.bio },
+    { icon: "ri-map-pin-line", text: profileData.location },
+    { icon: "ri-mail-line", text: contactEmail },
+    ...(profileData.website
+      ? [{ icon: "ri-store-2-line", text: `Founder of ${profileData.website}` }]
+      : []),
+  ];
 
   const portfolioItems = [
     {
       id: 1,
-      type: 'video',
-      title: 'Bella Vista Restaurant Collaboration',
-      business: 'Bella Vista Restaurant',
-      thumbnail: 'https://readdy.ai/api/search-image?query=Food%20influencer%20video%20thumbnail%2C%20restaurant%20review%2C%20fine%20dining%20content%2C%20professional%20food%20photography%2C%20elegant%20restaurant%20atmosphere&width=300&height=200&seq=video1&orientation=landscape',
-      duration: '2:34',
-      views: '12.5K',
-      likes: '1.2K',
-      date: '2 weeks ago',
-      platform: 'Instagram Reels',
+      type: "video",
+      title: "Bella Vista Restaurant Collaboration",
+      business: "Bella Vista Restaurant",
+      thumbnail:
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop",
+      duration: "2:34",
+      views: "12.5K",
+      likes: "1.2K",
+      date: "2 weeks ago",
+      platform: "Instagram Reels",
       isCollaboration: true,
-      autoAdded: true // Videos from completed collaborations are automatically added
+      autoAdded: true,
     },
     {
       id: 2,
-      type: 'video',
-      title: 'Urban Threads Fashion Haul',
-      business: 'Urban Threads',
-      thumbnail: 'https://readdy.ai/api/search-image?query=Fashion%20influencer%20video%20thumbnail%2C%20clothing%20haul%2C%20style%20content%2C%20fashion%20boutique%20collaboration%2C%20trendy%20outfit%20showcase&width=300&height=200&seq=video2&orientation=landscape',
-      duration: '3:12',
-      views: '8.7K',
-      likes: '890',
-      date: '1 month ago',
-      platform: 'TikTok',
-      isCollaboration: true
+      type: "video",
+      title: "Urban Threads Fashion Haul",
+      business: "Urban Threads",
+      thumbnail:
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop",
+      duration: "3:12",
+      views: "8.7K",
+      likes: "890",
+      date: "1 month ago",
+      platform: "TikTok",
+      isCollaboration: true,
     },
     {
       id: 3,
-      type: 'video',
-      title: 'Luxe Beauty Salon Makeover',
-      business: 'Luxe Beauty Salon',
-      thumbnail: 'https://readdy.ai/api/search-image?query=Beauty%20influencer%20video%20thumbnail%2C%20salon%20makeover%2C%20beauty%20transformation%2C%20professional%20styling%2C%20luxury%20beauty%20services&width=300&height=200&seq=video3&orientation=landscape',
-      duration: '4:56',
-      views: '15.2K',
-      likes: '2.1K',
-      date: '2 months ago',
-      platform: 'Instagram Reels',
-      isCollaboration: true
+      type: "video",
+      title: "Luxe Beauty Salon Makeover",
+      business: "Luxe Beauty Salon",
+      thumbnail:
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=400&fit=crop",
+      duration: "4:56",
+      views: "15.2K",
+      likes: "2.1K",
+      date: "2 months ago",
+      platform: "Instagram Reels",
+      isCollaboration: true,
     },
     {
       id: 4,
-      type: 'video',
-      title: 'Morning Routine Vlog',
+      type: "video",
+      title: "Morning Routine Vlog",
       business: null,
-      thumbnail: 'https://readdy.ai/api/search-image?query=Lifestyle%20influencer%20video%20thumbnail%2C%20morning%20routine%2C%20personal%20vlog%2C%20daily%20lifestyle%20content%2C%20authentic%20influencer%20life&width=300&height=200&seq=video4&orientation=landscape',
-      duration: '5:23',
-      views: '6.8K',
-      likes: '456',
-      date: '3 weeks ago',
-      platform: 'YouTube',
-      isCollaboration: false
+      thumbnail:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+      duration: "5:23",
+      views: "6.8K",
+      likes: "456",
+      date: "3 weeks ago",
+      platform: "YouTube",
+      isCollaboration: false,
     },
     {
       id: 5,
-      type: 'image',
-      title: 'Fashion OOTD',
+      type: "image",
+      title: "Fashion OOTD",
       business: null,
-      thumbnail: 'https://readdy.ai/api/search-image?query=Fashion%20influencer%20photo%2C%20outfit%20of%20the%20day%2C%20style%20post%2C%20fashion%20photography%2C%20lifestyle%20content&width=300&height=300&seq=image1&orientation=squarish',
+      thumbnail:
+        "https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&h=400&fit=crop",
       duration: null,
-      views: '4.2K',
-      likes: '234',
-      date: '1 week ago',
-      platform: 'Instagram',
-      isCollaboration: false
-    }
+      views: "4.2K",
+      likes: "234",
+      date: "1 week ago",
+      platform: "Instagram",
+      isCollaboration: false,
+    },
+    {
+      id: 6,
+      type: "image",
+      title: "Summer Vibes",
+      business: null,
+      thumbnail:
+        "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=400&h=400&fit=crop",
+      duration: null,
+      views: "3.8K",
+      likes: "198",
+      date: "4 days ago",
+      platform: "Instagram",
+      isCollaboration: false,
+    },
+  ];
+
+  const highlights = [
+    {
+      id: 1,
+      title: "Collaborations",
+      image:
+        "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=100&h=100&fit=crop&crop=center",
+    },
+    {
+      id: 2,
+      title: "Fashion",
+      image:
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop&crop=center",
+    },
+    {
+      id: 3,
+      title: "Beauty",
+      image:
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=100&h=100&fit=crop&crop=center",
+    },
+    {
+      id: 4,
+      title: "Travel",
+      image:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=100&fit=crop&crop=center",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-4">
+    <div className="min-h-screen bg-white pb-24">
+      <div className="px-5 pt-6">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/influencer/dashboard">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <i className="ri-arrow-left-line text-white text-xl"></i>
+          <div>
+            <div className="flex items-end space-x-2">
+              <h1 className="text-3xl font-extrabold text-gray-900">
+                {firstName}
+              </h1>
+              {formattedLastName && (
+                <span className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                  {formattedLastName}
+                </span>
+              )}
+              <i className="ri-verified-badge-fill text-pink-500 text-2xl"></i>
             </div>
-          </Link>
-          <h1 className="text-white font-semibold text-lg">Profile</h1>
-          <div className="flex items-center space-x-2">
-            <Link href="/help">
-              <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                <i className="ri-question-line text-white text-xl"></i>
-              </button>
-            </Link>
-            <button 
-              onClick={() => setIsEditing(!isEditing)}
-              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+          </div>
+          <div className="flex items-center space-x-3">
+            <button className="relative text-gray-700 hover:text-black transition-colors">
+              <i className="ri-notification-3-line text-2xl"></i>
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-pink-500"></span>
+            </button>
+            <button
+              className="text-gray-700 hover:text-black transition-colors"
+              onClick={() => router.push("/help")}
             >
-              <i className={`${isEditing ? 'ri-close-line' : 'ri-edit-line'} text-white text-xl`}></i>
+              <i className="ri-information-line text-2xl"></i>
+            </button>
+            <button
+              className="text-gray-700 hover:text-black transition-colors"
+              onClick={() => router.push("/settings")}
+            >
+              <i className="ri-settings-3-line text-2xl"></i>
             </button>
           </div>
         </div>
 
-        {/* Profile Header */}
-        <div className="text-center">
-          <div className="relative inline-block mb-4">
-            <img 
-              src="https://readdy.ai/api/search-image?query=Young%20female%20lifestyle%20influencer%2C%20professional%20headshot%2C%20confident%20smile%2C%20modern%20portrait%20photography%2C%20bright%20natural%20lighting%2C%20social%20media%20personality%2C%20fashion%20blogger&width=120&height=120&seq=profile2&orientation=squarish"
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border-4 border-white/30"
-            />
-            {isEditing && (
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <i className="ri-camera-line text-gray-600"></i>
-              </button>
-            )}
-          </div>
-          
-          <h2 className="text-white text-2xl font-bold mb-1">{profileData.name}</h2>
-          <p className="text-white/80 mb-4">{profileData.username}</p>
-          
-          {/* Stats
-          <div className="flex justify-center space-x-8">
-            <div className="text-center">
-              <div className="text-white text-xl font-bold">{profileData.followers}</div>
-              <div className="text-white/80 text-sm">Followers</div>
+        <div className="flex flex-col justify-center items-center space-x-4 mb-6">
+          <div className="w-full flex justify-around items-center">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full border-4 border-black overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=face"
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      profileData.name
+                    )}&background=random&size=160`;
+                  }}
+                />
+              </div>
+               <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-pink-500 rounded-full flex items-center justify-center border-2 border-white">
+                <i className="ri-check-line text-white text-sm"></i>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-white text-xl font-bold">{profileData.following}</div>
-              <div className="text-white/80 text-sm">Following</div>
-            </div>
-            <div className="text-center">
-              <div className="text-white text-xl font-bold">{profileData.posts}</div>
-              <div className="text-white/80 text-sm">Posts</div>
-            </div>
-          </div> */}
-        </div>
-      </div>
 
-      <div className="px-6 py-6 space-y-6">
-        {/* Bio Section */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">About</h3>
-            {isEditing && (
-              <button className="text-purple-600 text-sm font-medium">Edit</button>
-            )}
-          </div>
-          <p className="text-gray-600 leading-relaxed">{profileData.bio}</p>
-        </div>
-
-        {/* Social Media Links */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Social Media</h3>
-            {isEditing && (
-              <button className="text-purple-600 text-sm font-medium">Edit</button>
-            )}
-          </div>
-          
-          <div className="space-y-4">
-            <a 
-              href={`https://www.tiktok.com/${profileData.tiktok.replace('@', '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl hover:from-pink-100 hover:to-purple-100 transition-all duration-300 group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <i className="ri-tiktok-line text-white text-xl"></i>
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-800 font-medium">{profileData.tiktok}</p>
-                <p className="text-gray-500 text-sm">TikTok Profile</p>
-              </div>
-              <i className="ri-external-link-line text-gray-400 group-hover:text-purple-500 transition-colors"></i>
-            </a>
-            
-            <a 
-              href={`https://www.instagram.com/${profileData.instagram.replace('@', '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-3 p-3 bg-gradient-to-r from-pink-50 to-orange-50 rounded-xl hover:from-pink-100 hover:to-orange-100 transition-all duration-300 group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <i className="ri-instagram-line text-white text-xl"></i>
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-800 font-medium">{profileData.instagram}</p>
-                <p className="text-gray-500 text-sm">Instagram Profile</p>
-              </div>
-              <i className="ri-external-link-line text-gray-400 group-hover:text-pink-500 transition-colors"></i>
-            </a>
-            
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                <i className="ri-map-pin-line text-gray-600"></i>
-              </div>
-              <div>
-                <p className="text-gray-800 font-medium">{profileData.location}</p>
-                <p className="text-gray-500 text-sm">Location</p>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-
-        {/* Portfolio Section */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Portfolio</h3>
-              <p className="text-gray-500 text-xs mt-1">Videos from completed collaborations are automatically added</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center space-x-1">
-                <i className="ri-upload-line"></i>
-                <span>Upload</span>
-              </button>
-              <button className="text-purple-600 text-sm font-medium">Manage</button>
-            </div>
-          </div>
-
-          {!canStartNewCollaboration && (
-            <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl p-4">
-              <div className="flex items-center space-x-2">
-                <i className="ri-alert-line text-orange-600"></i>
-                <p className="text-orange-800 text-sm font-medium">
-                  You cannot start a new collaboration until you upload videos from your completed collaborations to your portfolio.
+              <div className="flex  flex-col mb-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-400 tracking-[0.35em]">
+                    {profileData.username.toUpperCase()}
+                  </p>
+                  <div className="flex items-center bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white px-3 py-1 rounded-xl space-x-2 shadow-md">
+                    <i className="ri-star-fill text-sm"></i>
+                    <span className="text-sm font-semibold">5.0</span>
+                  </div>
+                </div>
+                <p className="text-sm font-semibold text-gray-900">
+                  Member since 2024
                 </p>
               </div>
-            </div>
-          )}
-
-          {/* Portfolio Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{portfolioItems.length}</div>
-              <div className="text-gray-500 text-sm">Total Posts</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-pink-600">
-                {portfolioItems.filter(item => item.isCollaboration).length}
-              </div>
-              <div className="text-gray-500 text-sm">Collaborations</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {portfolioItems.reduce((sum, item) => sum + parseFloat(item.views.replace('K', '')), 0).toFixed(1)}K
-              </div>
-              <div className="text-gray-500 text-sm">Total Views</div>
-            </div>
           </div>
 
-          {/* Portfolio Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {portfolioItems.map((item) => (
-              <div key={item.id} className="relative group cursor-pointer">
-                <div className="relative overflow-hidden rounded-xl bg-gray-100">
-                  <img 
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+          <div>
+            <div className="space-y-2 mb-4">
+              {socialLinks.map((item) => (
+                <div
+                  key={item.icon}
+                  className="flex items-center text-sm text-gray-900"
+                >
+                  <i className={`${item.icon} text-lg text-gray-700 mr-2`}></i>
+                  <span className="font-semibold">{item.handle}</span>
+                  <span className="text-gray-500 ml-1">{item.stats}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-1 text-sm text-gray-800 mb-4">
+              {detailList.map((detail) => (
+                <div key={detail.text} className="flex items-center space-x-2">
+                  <i className={`${detail.icon} text-gray-600`}></i>
+                  <span>{detail.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <button className="w-full border-2 border-purple-500 text-purple-600 font-semibold py-3 rounded-xl text-sm tracking-wide hover:bg-gradient-to-r hover:from-pink-500 hover:via-purple-500 hover:to-orange-500 hover:text-white transition-all duration-300">
+                Edit My Information
+              </button>
+              <button className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white font-semibold py-3 rounded-xl text-sm tracking-wide hover:shadow-lg transition-all duration-300">
+                Update Portfolio
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
+            {highlights.map((highlight) => (
+              <div
+                key={highlight.id}
+                className="flex flex-col items-center space-y-1"
+              >
+                <div className="w-16 h-16 rounded-full border-2 border-gray-200 p-0.5">
+                  <img
+                    src={highlight.image}
+                    alt={highlight.title}
+                    className="w-full h-full rounded-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        highlight.title
+                      )}&background=random&size=100`;
+                    }}
                   />
-                  
-                  {/* Video Duration */}
-                  {item.type === 'video' && item.duration && (
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                      {item.duration}
-                    </div>
-                  )}
-                  
-                  {/* Platform Badge */}
-                  <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      item.platform === 'Instagram' || item.platform === 'Instagram Reels' 
-                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                        : item.platform === 'TikTok'
-                        ? 'bg-black text-white'
-                        : 'bg-red-500 text-white'
-                    }`}>
-                      {item.platform}
-                    </span>
-                  </div>
-                  
-                  {/* Collaboration Badge */}
-                  {item.isCollaboration && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                        <i className="ri-handshake-line text-white text-xs"></i>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Auto-added Badge */}
-                  {item.autoAdded && (
-                    <div className="absolute bottom-2 left-2">
-                      <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                        Auto-added
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Overlay on Hover */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <i className="ri-play-circle-line text-3xl mb-2"></i>
-                      <p className="text-sm font-medium">View Content</p>
-                    </div>
-                  </div>
                 </div>
-                
-                {/* Content Info */}
-                <div className="mt-2">
-                  <h4 className="font-medium text-gray-800 text-sm mb-1 line-clamp-1">{item.title}</h4>
-                  {item.business && (
-                    <p className="text-purple-600 text-xs mb-1">with {item.business}</p>
-                  )}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <div className="flex items-center space-x-3">
-                      <span className="flex items-center space-x-1">
-                        <i className="ri-eye-line"></i>
-                        <span>{item.views}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <i className="ri-heart-line"></i>
-                        <span>{item.likes}</span>
-                      </span>
-                    </div>
-                    <span>{item.date}</span>
-                  </div>
-                </div>
+                <span className="text-xs text-gray-600 uppercase tracking-wide">
+                  {highlight.title}
+                </span>
               </div>
             ))}
-          </div>
-
-          {/* Upload Area (when no content) */}
-          {portfolioItems.length === 0 && (
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-              <i className="ri-video-add-line text-4xl text-gray-400 mb-4"></i>
-              <h4 className="text-lg font-semibold text-gray-600 mb-2">No Content Yet</h4>
-              <p className="text-gray-500 mb-4">Upload your first video or image to showcase your work</p>
-              <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
-                Upload Content
-              </button>
-            </div>
-          )}
-
-          {/* View All Button */}
-          {portfolioItems.length > 0 && (
-            <div className="text-center mt-6">
-              <button className="text-purple-600 font-medium text-sm hover:text-purple-700 transition-colors">
-                View All Portfolio Items →
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Achievements */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Achievements</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {achievements.map((achievement, index) => (
-              <div key={index} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className={`${achievement.icon} text-white text-xl`}></i>
-                </div>
-                <h4 className="font-semibold text-gray-800 text-sm mb-1">{achievement.title}</h4>
-                <p className="text-gray-600 text-xs">{achievement.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Collaborations */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Recent Collaborations</h3>
-            <Link href="/collaborations">
-              <button className="text-purple-600 text-sm font-medium">View All</button>
-            </Link>
-          </div>
-          
-          <div className="space-y-4">
-            {recentCollaborations.map((collab) => (
-              <div key={collab.id} className="flex items-center space-x-4">
-                <img 
-                  src={collab.image}
-                  alt={collab.businessName}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-800">{collab.businessName}</h4>
-                  <p className="text-gray-500 text-sm">{collab.date}</p>
-                </div>
-                <div className="flex items-center space-x-1">
-                  {[...Array(collab.rating)].map((_, i) => (
-                    <i key={i} className="ri-star-fill text-yellow-400 text-sm"></i>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Settings</h3>
-          <div className="space-y-4">
-          <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-            onClick={() => router.push('/services')}
-            >
-              <div className="flex items-center space-x-3">
-                <i className="ri-shield-line text-gray-600"></i>
-                <span className="text-gray-800">Services</span>
-              </div>
-              <i className="ri-arrow-right-s-line text-gray-400"></i>
-            </button>
-
-            <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-              <div className="flex items-center space-x-3">
-                <i className="ri-notification-line text-gray-600"></i>
-                <span className="text-gray-800">Notifications</span>
-              </div>
-              <i className="ri-arrow-right-s-line text-gray-400"></i>
-            </button>
-            
-            <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-              <div className="flex items-center space-x-3">
-                <i className="ri-shield-line text-gray-600"></i>
-                <span className="text-gray-800">Privacy</span>
-              </div>
-              <i className="ri-arrow-right-s-line text-gray-400"></i>
-            </button>
-            
-            <button className="w-full flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-              <div className="flex items-center space-x-3">
-                <i className="ri-question-line text-gray-600"></i>
-                <span className="text-gray-800">Help & Support</span>
-              </div>
-              <i className="ri-arrow-right-s-line text-gray-400"></i>
-            </button>
-            
-            <button className="w-full flex items-center justify-between py-3 px-4 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
-              <div className="flex items-center space-x-3">
-                <i className="ri-logout-box-line text-red-600"></i>
-                <span className="text-red-600">Sign Out</span>
-              </div>
-              <i className="ri-arrow-right-s-line text-red-400"></i>
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Advanced Bottom Navigation */}
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mt-4">
+        <div className="flex">
+          {[
+            { key: "posts", label: "Publications", icon: "ri-grid-fill" },
+            { key: "reels", label: "Favorites", icon: "ri-bookmark-2-line" },
+            { key: "tagged", label: "Saved", icon: "ri-user-line" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 py-3 text-[11px] font-bold tracking-wide uppercase flex items-center justify-center space-x-1 border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? "border-pink-500 text-pink-500"
+                  : "border-transparent text-gray-400"
+              }`}
+            >
+              <i className={`${tab.icon} text-sm`}></i>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content Grid */}
+      <div className="grid grid-cols-3 gap-0.5">
+        {portfolioItems.map((item) => (
+          <div
+            key={item.id}
+            className="aspect-square relative group cursor-pointer"
+          >
+            <img
+              src={item.thumbnail}
+              alt={item.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop&auto=format`;
+              }}
+            />
+
+            {/* Video Overlay */}
+            {item.type === "video" && (
+              <div className="absolute top-2 right-2">
+                <i className="ri-play-fill text-white text-lg drop-shadow-md"></i>
+              </div>
+            )}
+
+            {/* Collaboration Badge */}
+            {item.isCollaboration && (
+              <div className="absolute top-2 left-2">
+                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                  <i className="ri-handshake-line text-white text-xs"></i>
+                </div>
+              </div>
+            )}
+
+            {/* Stats Overlay on Hover */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <div className="text-white text-center">
+                <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center space-x-1">
+                    <i className="ri-heart-fill"></i>
+                    <span>{item.likes}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <i className="ri-eye-fill"></i>
+                    <span>{item.views}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* App Bottom Navigation */}
       <AdvancedBottomNav userType="influencer" />
     </div>
   );
