@@ -57,11 +57,11 @@ export default function BusinessServicesPage() {
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <div className=" h-8 w-40 flex flex-col items-center">
+          <div className=" flex flex-col items-center">
             <img 
               src={logo_dark.src}
               alt="Inshaar" 
-              className="h-full w-full object-cover mb-1"
+              className="h-8 w-40 object-cover mb-1"
             />
             <span className="text-white/80 text-sm">Business Services</span>
           </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
 
@@ -18,8 +19,7 @@ const barterOffers = [
     location: "Downtown",
     rating: 4.9,
     applications: 156,
-    duration: "2 weeks",
-    value: "$150",
+    duration: "2 weeks"
   },
   {
     id: 2,
@@ -33,8 +33,7 @@ const barterOffers = [
     location: "Uptown",
     rating: 4.8,
     applications: 89,
-    duration: "1 week",
-    value: "$250",
+    duration: "1 week"
   },
   {
     id: 3,
@@ -48,8 +47,7 @@ const barterOffers = [
     location: "Mall District",
     rating: 4.7,
     applications: 67,
-    duration: "3 weeks",
-    value: "$300",
+    duration: "3 weeks"
   },
 ];
 
@@ -70,8 +68,7 @@ const top10Offers = [
     category: "Restaurant",
     rating: 4.9,
     applications: 156,
-    image: "https://picsum.photos/seed/top-restaurant-1/200/200",
-    value: "$150",
+    image: "https://picsum.photos/seed/top-restaurant-1/200/200"
   },
   {
     id: 2,
@@ -80,8 +77,7 @@ const top10Offers = [
     category: "Beauty",
     rating: 4.8,
     applications: 89,
-    image: "https://picsum.photos/seed/top-beauty-1/200/200",
-    value: "$250",
+    image: "https://picsum.photos/seed/top-beauty-1/200/200"
   },
   {
     id: 3,
@@ -90,8 +86,7 @@ const top10Offers = [
     category: "Fashion",
     rating: 4.7,
     applications: 67,
-    image: "https://picsum.photos/seed/top-fashion-1/200/200",
-    value: "$300",
+    image: "https://picsum.photos/seed/top-fashion-1/200/200"
   },
 ];
 
@@ -155,10 +150,46 @@ const trendingBusinesses = [
   },
 ];
 
+const categoryDetails = {
+  "Restaurant": {
+    types: ["Classic", "Fast Food", "World Cuisine", "Fine Dining", "Cafe", "Food Truck"]
+  },
+  "Beauty": {
+    types: ["Hair Salon", "Nail Salon", "Spa", "Skincare", "Makeup", "Barber Shop"]
+  },
+  "Fashion": {
+    types: ["Clothing", "Accessories", "Shoes", "Jewelry", "Vintage", "Luxury"]
+  },
+  "Fitness": {
+    types: ["Gym", "Yoga", "Pilates", "CrossFit", "Dance", "Martial Arts"]
+  },
+  "Travel": {
+    types: ["Hotels", "Tourism", "Adventure", "Luxury", "Budget", "Eco-Tourism"]
+  }
+};
+
 export default function InfluencerDashboard() {
   const [activeTab, setActiveTab] = useState("available");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [tempSelectedCategory, setTempSelectedCategory] = useState("");
   const [userLocation, setUserLocation] = useState("Downtown, NYC");
+  const router = useRouter();
+
+  const handleCategoryClick = (categoryName: string) => {
+    if (categoryName === "All") {
+      setSelectedCategory("All");
+      setShowCategoryModal(false);
+    } else {
+      setTempSelectedCategory(categoryName);
+      setShowCategoryModal(true);
+    }
+  };
+
+  const handleCategoryTypeSelect = (category: string, type: string) => {
+    setShowCategoryModal(false);
+    router.push(`/category/${category.toLowerCase()}?type=${type.toLowerCase()}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50/60 pb-18">
@@ -203,11 +234,11 @@ export default function InfluencerDashboard() {
         </div>
 
         {/* Logo Section */}
-        <div className="h-8 w-40 flex flex-col items-center mx-auto mb-6">
+        <div className=" flex flex-col items-center mx-auto mb-6">
           <img 
             src={logo_dark.src}
             alt="Inshaar" 
-            className="h-full w-full object-cover mb-1"
+            className="h-8 w-40 object-cover mb-1"
           />
           <span className="text-white/80 text-xs sm:text-sm">
             Influencer Dashboard
@@ -257,41 +288,43 @@ export default function InfluencerDashboard() {
       <div className="px-4 py-6 sm:px-6">
         {activeTab === "available" && (
           <div className="space-y-8 max-w-4xl mx-auto">
-            {/* Categories */}
+            {/* Categories - UPDATED */}
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-2">
-                Categories
-              </h2>
+              <div className="flex items-center justify-between mb-4 px-2">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+                  Categories
+                </h2>
+                <span className="text-gray-500 text-sm">Category &gt;</span>
+              </div>
+              
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-2">
-                {categories
-                  .filter((cat) => cat.name !== "All")
-                  .map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.name)}
-                      className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl transition-all duration-300 border-2 ${
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategoryClick(category.name)}
+                    className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl transition-all duration-300 border-2 ${
+                      selectedCategory === category.name
+                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-purple-500/25 border-transparent scale-105"
+                        : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border-gray-100 hover:border-gray-200"
+                    }`}
+                  >
+                    <i
+                      className={`${category.icon} text-xl sm:text-2xl mb-2`}
+                    ></i>
+                    <span className="text-xs sm:text-sm font-semibold">
+                      {category.name}
+                    </span>
+                    <span
+                      className={`text-xs mt-1 ${
                         selectedCategory === category.name
-                          ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-purple-500/25 border-transparent scale-105"
-                          : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border-gray-100 hover:border-gray-200"
+                          ? "text-white/80"
+                          : "text-gray-500"
                       }`}
                     >
-                      <i
-                        className={`${category.icon} text-xl sm:text-2xl mb-2`}
-                      ></i>
-                      <span className="text-xs sm:text-sm font-semibold">
-                        {category.name}
-                      </span>
-                      <span
-                        className={`text-xs mt-1 ${
-                          selectedCategory === category.name
-                            ? "text-white/80"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {category.count} offers
-                      </span>
-                    </button>
-                  ))}
+                      {category.count} offers
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -344,9 +377,6 @@ export default function InfluencerDashboard() {
                         <h4 className="font-bold text-gray-800 text-sm sm:text-base flex-1 pr-2">
                           {offer.businessName}
                         </h4>
-                        <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">
-                          {offer.value}
-                        </span>
                       </div>
                       <p className="text-gray-600 text-xs">{offer.title}</p>
                       <div className="flex items-center justify-between">
@@ -556,9 +586,6 @@ export default function InfluencerDashboard() {
                             <span className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
                               {offer.category}
                             </span>
-                            <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
-                              Value: {offer.value}
-                            </span>
                           </div>
 
                           {/* Bottom Gradient Content */}
@@ -610,10 +637,6 @@ export default function InfluencerDashboard() {
                                 <i className="ri-time-line"></i>
                                 <span>{offer.duration}</span>
                               </div>
-                              <div className="flex items-center space-x-1">
-                                <i className="ri-money-dollar-circle-line"></i>
-                                <span>{offer.value} value</span>
-                              </div>
                             </div>
                           </div>
 
@@ -635,7 +658,53 @@ export default function InfluencerDashboard() {
         )}
       </div>
 
-      {/* Advanced Bottom Navigation */}
+      {/* Category Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-800">
+                  {tempSelectedCategory} Types
+                </h3>
+                <button
+                  onClick={() => setShowCategoryModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  &times;
+                </button>
+              </div>
+              <p className="text-gray-500 text-sm mt-1">
+                Choose a specific type to explore offers
+              </p>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-96">
+              <div className="grid grid-cols-2 gap-3">
+                {categoryDetails[tempSelectedCategory as keyof typeof categoryDetails]?.types.map((type, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleCategoryTypeSelect(tempSelectedCategory, type)}
+                    className="bg-gray-50 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white text-gray-700 p-4 rounded-2xl text-center transition-all duration-300 hover:scale-105"
+                  >
+                    <span className="font-semibold text-sm">{type}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-gray-100">
+              <button
+                onClick={() => setShowCategoryModal(false)}
+                className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AdvancedBottomNav userType="influencer" />
     </div>
   );
