@@ -63,7 +63,7 @@ export default function HelpCenterPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-12 pb-6">
+      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-6 pb-6">
         <div className="flex items-center justify-between mb-6">
           <Link href="/influencer/dashboard">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">

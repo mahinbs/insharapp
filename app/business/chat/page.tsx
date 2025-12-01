@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 import logo_dark from "../../../assetes/logo_dark.png";
+import { RiCustomerService2Fill } from "react-icons/ri";
 
 const chatList = [
   {
@@ -81,7 +82,7 @@ export default function BusinessChatList() {
           </div>
           <Link href="/help">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-              <i className="ri-question-line text-white text-xl"></i>
+            <RiCustomerService2Fill className="text-white text-xl" />
             </div>
           </Link>
         </div>
