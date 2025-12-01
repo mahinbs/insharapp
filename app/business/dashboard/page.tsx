@@ -211,7 +211,7 @@ export default function BusinessDashboard() {
         ))}
       </div>
 
-      <div className="mt-6 px-4 sticky top-[105px] z-40">
+      <div className="mt-6 px-4 sticky top-[140px] z-40">
         <div className="flex rounded-3xl bg-white p-1 shadow-inner overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
