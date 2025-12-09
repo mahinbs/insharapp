@@ -271,7 +271,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
             {highlights.map((highlight) => (
               <div
@@ -297,7 +297,7 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Tabs */}
