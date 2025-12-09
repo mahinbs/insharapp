@@ -16,7 +16,8 @@ const barterOffers = [
     description:
       "Promote our new seasonal menu and get a complimentary 3-course dining experience for two",
     category: "Restaurant",
-    location: "Downtown",
+    location: "Downtown, New York",
+    city: "New York",
     rating: 4.9,
     applications: 156,
     duration: "2 weeks"
@@ -30,7 +31,8 @@ const barterOffers = [
     description:
       "Hair cut, color & styling package worth $250. Perfect for influencers in beauty niche",
     category: "Beauty",
-    location: "Uptown",
+    location: "Uptown, Los Angeles",
+    city: "Los Angeles",
     rating: 4.8,
     applications: 89,
     duration: "1 week"
@@ -44,7 +46,8 @@ const barterOffers = [
     description:
       "Complete outfit worth $300 from our new collection. Style and share your looks",
     category: "Fashion",
-    location: "Mall District",
+    location: "Mall District, Chicago",
+    city: "Chicago",
     rating: 4.7,
     applications: 67,
     duration: "3 weeks"
@@ -58,6 +61,61 @@ const categories = [
   { id: 4, name: "Fashion", icon: "ri-shirt-line", count: 15 },
   { id: 5, name: "Fitness", icon: "ri-run-line", count: 6 },
   { id: 6, name: "Travel", icon: "ri-plane-line", count: 4 },
+  { id: 7, name: "Activities", icon: "ri-gamepad-line", count: 10 },
+];
+
+// List of cities for filtering
+const cities = [
+  "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia",
+  "San Antonio", "San Diego", "Dallas", "San Jose", "Austin", "Jacksonville",
+  "Fort Worth", "Columbus", "Charlotte", "San Francisco", "Indianapolis",
+  "Seattle", "Denver", "Washington", "Boston", "El Paso", "Nashville",
+  "Detroit", "Oklahoma City", "Portland", "Las Vegas", "Memphis", "Louisville",
+  "Baltimore", "Milwaukee", "Albuquerque", "Tucson", "Fresno", "Sacramento",
+  "Kansas City", "Mesa", "Atlanta", "Omaha", "Colorado Springs", "Raleigh",
+  "Virginia Beach", "Miami", "Oakland", "Minneapolis", "Tulsa", "Cleveland",
+  "Wichita", "Arlington", "Tampa", "New Orleans", "Honolulu", "Anaheim",
+  "Santa Ana", "St. Louis", "Riverside", "Corpus Christi", "Lexington",
+  "Henderson", "Stockton", "Saint Paul", "St. Petersburg", "Cincinnati",
+  "St. Louis", "Pittsburgh", "Greensboro", "Lincoln", "Anchorage", "Plano",
+  "Orlando", "Irvine", "Newark", "Durham", "Chula Vista", "Toledo", "Fort Wayne",
+  "St. Petersburg", "Laredo", "Jersey City", "Chandler", "Madison", "Lubbock",
+  "Scottsdale", "Reno", "Buffalo", "Gilbert", "Glendale", "North Las Vegas",
+  "Winston-Salem", "Chesapeake", "Norfolk", "Fremont", "Garland", "Irving",
+  "Hialeah", "Richmond", "Boise", "Spokane", "Baton Rouge", "Tacoma",
+  "San Bernardino", "Modesto", "Fontana", "Santa Clarita", "Birmingham",
+  "Oxnard", "Fayetteville", "Moreno Valley", "Rochester", "Glendale",
+  "Huntington Beach", "Salt Lake City", "Grand Rapids", "Amarillo", "Yonkers",
+  "Aurora", "Montgomery", "Akron", "Little Rock", "Huntsville", "Augusta",
+  "Port St. Lucie", "Grand Prairie", "Columbus", "Tallahassee", "Overland Park",
+  "Tempe", "McKinney", "Mobile", "Cape Coral", "Shreveport", "Frisco",
+  "Knoxville", "Worcester", "Brownsville", "Vancouver", "Fort Lauderdale",
+  "Sioux Falls", "Ontario", "Chattanooga", "Providence", "Newport News",
+  "Rancho Cucamonga", "Santa Rosa", "Oceanside", "Salem", "Elk Grove",
+  "Garden Grove", "Pembroke Pines", "Peoria", "Eugene", "Corona", "Cary",
+  "Springfield", "Fort Collins", "Jackson", "Alexandria", "Hayward", "Lancaster",
+  "Lakewood", "Lafayette", "Palmdale", "Hollywood", "Brooklyn", "Paterson",
+  "Naperville", "Pomona", "Joliet", "Torrance", "Gainesville", "McAllen",
+  "Syracuse", "Concord", "Fort Smith", "Coral Springs", "Lakewood", "Pembroke Pines",
+  "Hollywood", "Pasadena", "Killeen", "Macon", "Kansas City", "Bellevue",
+  "Surprise", "Roseville", "Thornton", "Odessa", "Denton", "Waco", "St. George",
+  "Carrollton", "Midland", "Norman", "Athens", "Abilene", "Beaumont", "Round Rock",
+  "Allentown", "Evansville", "Richardson", "Odessa", "Arvada", "Cambridge",
+  "Sugar Land", "Pearland", "Palm Bay", "Columbia", "Harlingen", "Pueblo",
+  "Tyler", "Stamford", "Topeka", "Wichita Falls", "Green Bay", "Thousand Oaks",
+  "El Monte", "McKinney", "West Valley City", "Clearwater", "Waterbury",
+  "Costa Mesa", "Westminster", "Santa Monica", "Everett", "Downey", "Lowell",
+  "Gresham", "Inglewood", "Richmond", "Jurupa Valley", "Rialto", "Daly City",
+  "Compton", "Burbank", "San Mateo", "Renton", "Antioch", "High Point",
+  "Round Rock", "Lakewood", "Brockton", "Westminster", "South Gate", "Norwalk",
+  "Daly City", "Burbank", "Renton", "Inglewood", "Vacaville", "Edinburg",
+  "Carmel", "Spokane Valley", "San Angelo", "La Crosse", "Bellingham",
+  "Kenosha", "Racine", "Appleton", "Eau Claire", "Janesville", "Oshkosh",
+  "Waukesha", "Fond du Lac", "Sheboygan", "Wausau", "Stevens Point", "Superior",
+  "Beloit", "Fitchburg", "Neenah", "Menasha", "Beaver Dam", "Marshfield",
+  "Wisconsin Rapids", "Baraboo", "Portage", "Watertown", "Oconomowoc",
+  "Cudahy", "South Milwaukee", "St. Francis", "Greendale", "Oak Creek",
+  "Franklin", "Muskego", "New Berlin", "Greenfield", "West Allis", "Wauwatosa"
 ];
 
 const top10Offers = [
@@ -165,13 +223,65 @@ const categoryDetails = {
   },
   "Travel": {
     types: ["Hotels", "Tourism", "Adventure", "Luxury", "Budget", "Eco-Tourism"]
+  },
+  "Activities": {
+    types: ["Entertainment", "Sports", "Outdoor", "Indoor", "Events", "Tours"]
   }
 };
+
+// Dynamic announcements data - can be fetched from API later
+const dynamicAnnouncements = [
+  {
+    id: 1,
+    type: "restaurant",
+    message: "New: Bella Vista Restaurant joins!",
+    icon: "ri-store-line",
+    color: "text-pink-300"
+  },
+  {
+    id: 2,
+    type: "influencer",
+    message: "Welcome 500+ new influencers this month!",
+    icon: "ri-user-star-line",
+    color: "text-purple-300"
+  },
+  {
+    id: 3,
+    type: "event",
+    message: "Influencer Meetup Saturday",
+    icon: "ri-calendar-event-line",
+    color: "text-purple-300"
+  },
+  {
+    id: 4,
+    type: "special",
+    message: "Limited Time: Exclusive Restaurant Partnerships",
+    icon: "ri-gift-line",
+    color: "text-orange-300"
+  },
+  {
+    id: 5,
+    type: "milestone",
+    message: "1000+ successful collabs!",
+    icon: "ri-trophy-line",
+    color: "text-purple-300"
+  },
+  {
+    id: 6,
+    type: "restaurant",
+    message: "New: Luxe Beauty Salon joins!",
+    icon: "ri-store-line",
+    color: "text-pink-300"
+  }
+];
 
 export default function InfluencerDashboard() {
   const [activeTab, setActiveTab] = useState("available");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCityFilter, setShowCityFilter] = useState(false);
+  const [citySearchQuery, setCitySearchQuery] = useState("");
   const [tempSelectedCategory, setTempSelectedCategory] = useState("");
   const [userLocation, setUserLocation] = useState("Downtown, NYC");
   const router = useRouter();
@@ -188,8 +298,20 @@ export default function InfluencerDashboard() {
 
   const handleCategoryTypeSelect = (category: string, type: string) => {
     setShowCategoryModal(false);
-    router.push(`/category/${category.toLowerCase()}?type=${type.toLowerCase()}`);
+    const cityParam = selectedCity ? `&city=${encodeURIComponent(selectedCity)}` : '';
+    router.push(`/category/${category.toLowerCase()}?type=${type.toLowerCase()}${cityParam}`);
   };
+
+  const handleCitySelect = (city: string) => {
+    setSelectedCity(city === selectedCity ? null : city);
+    setShowCityFilter(false);
+  };
+
+  const filteredOffers = barterOffers.filter((offer) => {
+    const categoryMatch = selectedCategory === "All" || offer.category === selectedCategory;
+    const cityMatch = !selectedCity || (offer.city && offer.city.toLowerCase() === selectedCity.toLowerCase());
+    return categoryMatch && cityMatch;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50/60 pb-18">
@@ -202,30 +324,14 @@ export default function InfluencerDashboard() {
               <div className="flex space-x-6 sm:space-x-8 whitespace-nowrap">
                 {[...Array(2)].map((_, setIndex) => (
                   <div key={setIndex} className="flex space-x-6 sm:space-x-8">
-                    <div className="flex items-center space-x-2 text-white/90">
-                      <i className="ri-store-line text-pink-300 text-sm sm:text-base"></i>
-                      <span className="text-xs sm:text-sm font-medium">
-                        New: Luxe Beauty Salon joins!
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-white/90">
-                      <i className="ri-calendar-event-line text-purple-300 text-sm sm:text-base"></i>
-                      <span className="text-xs sm:text-sm font-medium">
-                        Influencer Meetup Saturday
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-white/90">
-                      <i className="ri-gift-line text-orange-300 text-sm sm:text-base"></i>
-                      <span className="text-xs sm:text-sm font-medium">
-                        50% off first collaboration
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-white/90">
-                      <i className="ri-trophy-line text-purple-300 text-sm sm:text-base"></i>
-                      <span className="text-xs sm:text-sm font-medium">
-                        1000+ successful collabs!
-                      </span>
-                    </div>
+                    {dynamicAnnouncements.map((announcement) => (
+                      <div key={`${setIndex}-${announcement.id}`} className="flex items-center space-x-2 text-white/90">
+                        <i className={`${announcement.icon} ${announcement.color} text-sm sm:text-base`}></i>
+                        <span className="text-xs sm:text-sm font-medium">
+                          {announcement.message}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
@@ -238,7 +344,7 @@ export default function InfluencerDashboard() {
           <img 
             src={logo_dark.src}
             alt="Inshaar" 
-            className="h-8 w-40 object-cover mb-1"
+            className="h-10 w-40 object-cover mb-1"
           />
           <span className="text-white/80 text-xs sm:text-sm">
             Influencer Dashboard
@@ -294,8 +400,92 @@ export default function InfluencerDashboard() {
                 <h2 className="text-lg sm:text-xl font-bold text-gray-800">
                   Categories
                 </h2>
-                <span className="text-gray-500 text-sm">Category &gt;</span>
+                <div className="flex items-center space-x-3">
+                  {/* City Filter Button */}
+                  <button
+                    onClick={() => setShowCityFilter(!showCityFilter)}
+                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                      selectedCity
+                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    <i className="ri-map-pin-line"></i>
+                    <span>{selectedCity || "All Cities"}</span>
+                    {selectedCity && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCity(null);
+                        }}
+                        className="ml-1 hover:bg-white/20 rounded-full p-0.5"
+                      >
+                        <i className="ri-close-line text-xs"></i>
+                      </button>
+                    )}
+                  </button>
+                  <span className="text-gray-500 text-sm">Category &gt;</span>
+                </div>
               </div>
+
+              {/* City Filter Dropdown */}
+              {showCityFilter && (
+                <div className="mb-4 px-2">
+                  <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 max-h-64 overflow-y-auto">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-bold text-gray-800">Select City</h3>
+                      <button
+                        onClick={() => {
+                          setShowCityFilter(false);
+                          setCitySearchQuery("");
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <i className="ri-close-line text-lg"></i>
+                      </button>
+                    </div>
+                    {/* City Search Input */}
+                    <div className="mb-3">
+                      <div className="relative">
+                        <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input
+                          type="text"
+                          placeholder="Search city..."
+                          value={citySearchQuery}
+                          onChange={(e) => setCitySearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {cities
+                        .filter((city) =>
+                          city.toLowerCase().includes(citySearchQuery.toLowerCase())
+                        )
+                        .map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => handleCitySelect(city)}
+                            className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 ${
+                              selectedCity === city
+                                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
+                                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                            }`}
+                          >
+                            {city}
+                          </button>
+                        ))}
+                    </div>
+                    {cities.filter((city) =>
+                      city.toLowerCase().includes(citySearchQuery.toLowerCase())
+                    ).length === 0 && (
+                      <div className="text-center py-4 text-gray-500 text-sm">
+                        No cities found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-2">
                 {categories.map((category) => (
@@ -328,8 +518,8 @@ export default function InfluencerDashboard() {
               </div>
             </div>
 
-            {/* Top 10 Offers - Modern Card Design */}
-            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xl border border-gray-100">
+            {/* Top 10 Offers - Carousel Design */}
+            <div className="bg-white rounded-lg p-5 sm:p-6 shadow-xl border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -351,53 +541,56 @@ export default function InfluencerDashboard() {
                   View All
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {top10Offers.map((offer, index) => (
-                  <div
-                    key={offer.id}
-                    className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 group"
-                  >
-                    <div className="relative mb-4">
-                      <img
-                        src={offer.image}
-                        alt={offer.businessName}
-                        className="w-full h-32 sm:h-28 rounded-xl object-cover shadow-md"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg">
-                          {index + 1}
+              <div className="overflow-x-auto scrollbar-hide -mx-5 sm:-mx-6 px-5 sm:px-6">
+                <div className="flex space-x-4 pb-2" style={{ scrollSnapType: 'x mandatory' }}>
+                  {top10Offers.map((offer, index) => (
+                    <div
+                      key={offer.id}
+                      className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 group flex-shrink-0 w-[280px] sm:w-[300px]"
+                      style={{ scrollSnapAlign: 'start' }}
+                    >
+                      <div className="relative mb-4">
+                        <img
+                          src={offer.image}
+                          alt={offer.businessName}
+                          className="w-full h-32 sm:h-28 rounded-xl object-cover shadow-md"
+                        />
+                        <div className="absolute top-3 left-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg">
+                            {index + 1}
+                          </div>
+                        </div>
+                        <div className="absolute top-3 right-3 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
+                          {offer.applications} applied
                         </div>
                       </div>
-                      <div className="absolute top-3 right-3 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
-                        {offer.applications} applied
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <h4 className="font-bold text-gray-800 text-sm sm:text-base flex-1 pr-2">
-                          {offer.businessName}
-                        </h4>
-                      </div>
-                      <p className="text-gray-600 text-xs">{offer.title}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <i className="ri-star-fill text-yellow-400 text-sm"></i>
-                          <span className="text-xs text-gray-600 font-semibold">
-                            {offer.rating}
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between">
+                          <h4 className="font-bold text-gray-800 text-sm sm:text-base flex-1 pr-2">
+                            {offer.businessName}
+                          </h4>
+                        </div>
+                        <p className="text-gray-600 text-xs">{offer.title}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-1">
+                            <i className="ri-star-fill text-yellow-400 text-sm"></i>
+                            <span className="text-xs text-gray-600 font-semibold">
+                              {offer.rating}
+                            </span>
+                          </div>
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">
+                            {offer.category}
                           </span>
                         </div>
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">
-                          {offer.category}
-                        </span>
                       </div>
+                      <Link href={`/offer-details/${offer.id}`}>
+                        <button className="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95">
+                          Apply Now
+                        </button>
+                      </Link>
                     </div>
-                    <Link href={`/offer-details/${offer.id}`}>
-                      <button className="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95">
-                        Apply Now
-                      </button>
-                    </Link>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -565,8 +758,7 @@ export default function InfluencerDashboard() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-6">
-                  {barterOffers
-                    .filter((offer) => offer.category === selectedCategory)
+                  {filteredOffers
                     .map((offer) => (
                       <div
                         key={offer.id}

@@ -45,7 +45,7 @@ export default function OnboardingScreen() {
           <img 
             src={logo_dark.src}
             alt="Inshaar" 
-            className="h-8 w-40 object-cover"
+            className="h-10 w-40 object-cover"
           />
         </div>
         <Link href="/auth" className="text-gray-500 font-medium">

@@ -65,16 +65,16 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
       label: 'Home'
     },
     {
-      href: '/business/explore',
-      icon: 'ri-compass-line',
-      activeIcon: 'ri-compass-fill',
-      label: 'Explore'
-    },
-    {
       href: '/business/chat',
       icon: 'ri-message-line',
       activeIcon: 'ri-message-fill',
       label: 'messages'
+    },
+    {
+      href: '/business/services',
+      icon: 'ri-briefcase-line',
+      activeIcon: 'ri-briefcase-fill',
+      label: 'Services'
     },
     {
       href: '/business/dashboard',
