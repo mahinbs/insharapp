@@ -181,7 +181,6 @@ export default function ProfilePage() {
                   {formattedLastName}
                 </span>
               )}
-              <i className="ri-verified-badge-fill text-pink-500 text-2xl"></i>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -219,9 +218,6 @@ export default function ProfilePage() {
                     )}&background=random&size=160`;
                   }}
                 />
-              </div>
-               <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-pink-500 rounded-full flex items-center justify-center border-2 border-white">
-                <i className="ri-check-line text-white text-sm"></i>
               </div>
             </div>
 
@@ -310,7 +306,6 @@ export default function ProfilePage() {
           {[
             { key: "posts", label: "Publications", icon: "ri-grid-fill" },
             { key: "reels", label: "Favorites", icon: "ri-bookmark-2-line" },
-            { key: "tagged", label: "Saved", icon: "ri-user-line" },
           ].map((tab) => (
             <button
               key={tab.key}

@@ -15,7 +15,7 @@ export default function SplashScreen() {
           <img
             src={logo_dark.src}
             alt="Inshaar"
-            className="h-8 w-40 object-cover mb-1"
+            className="h-10 w-40 object-cover mb-1"
           />
         </div>
 

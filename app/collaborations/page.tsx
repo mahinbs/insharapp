@@ -82,7 +82,7 @@ export default function CollaborationsPage() {
             <img 
               src={logo_dark.src}
               alt="Inshaar" 
-              className="h-8 w-40 object-cover mb-1"
+              className="h-10 w-40 object-cover mb-1"
             />
             <span className="text-white/80 text-sm">My Collaborations</span>
           </div>

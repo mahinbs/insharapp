@@ -36,3 +36,18 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+/* Hide scrollbar for carousel */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Smooth scrolling for carousel */
+.scrollbar-hide {
+  scroll-behavior: smooth;
+}
