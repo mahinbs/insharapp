@@ -37,7 +37,7 @@ export default function PostOffer() {
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-12 pb-6">
         <div className="flex items-center justify-between">
-          <Link href="/business/dashboard">
+          <Link href="/business/home">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>

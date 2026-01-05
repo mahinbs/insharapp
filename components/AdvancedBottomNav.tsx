@@ -60,15 +60,21 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
   const businessNavItems: NavItem[] = [
     {
       href: '/business/home',
-      icon: 'ri-dashboard-line',
-      activeIcon: 'ri-dashboard-fill',
+      icon: 'ri-home-line',
+      activeIcon: 'ri-home-fill',
       label: 'Home'
+    },
+    {
+      href: '/business/agenda',
+      icon: 'ri-calendar-line',
+      activeIcon: 'ri-calendar-fill',
+      label: 'Agenda'
     },
     {
       href: '/business/chat',
       icon: 'ri-message-line',
       activeIcon: 'ri-message-fill',
-      label: 'messages'
+      label: 'Messages'
     },
     {
       href: '/business/services',
@@ -77,12 +83,11 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
       label: 'Services'
     },
     {
-      href: '/business/dashboard',
+      href: '/business/profile',
       icon: 'ri-user-line',
       activeIcon: 'ri-user-fill',
       label: 'Profile'
     },
-
   ];
 
   const navItems = userType === 'influencer' ? influencerNavItems : businessNavItems;
@@ -108,7 +113,7 @@ export default function AdvancedBottomNav({ userType }: AdvancedBottomNavProps) 
   }, [lastScrollY]);
 
   const isActive = (href: string) => {
-    if (href === '/influencer/dashboard' || href === '/business/dashboard') {
+    if (href === '/influencer/dashboard' || href === '/business/home') {
       return pathname === href;
     }
     return pathname.startsWith(href);

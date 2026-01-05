@@ -1,84 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import Link from "next/link";
 import AdvancedBottomNav from "../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
 
-const activeCollaborations = [
+interface Collaboration {
+  id: number;
+  businessName: string;
+  businessLogo: string;
+  title: string;
+  date: string;
+  status: "pending" | "approved" | "expired";
+  uploadedImage?: string;
+}
+
+const initialCollaborations: Collaboration[] = [
   {
     id: 1,
+    businessName: "Bella Vista Restaurant",
+    businessLogo:
+      "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20logo%2C%20modern%20dining%20establishment%2C%20sophisticated%20branding%2C%20clean%20minimalist%20design%2C%20professional%20restaurant%20identity%2C%20upscale%20dining%20logo&width=60&height=60&seq=resto3&orientation=squarish",
+    title: "Free 3-Course Dinner",
+    date: "Dec 15, 2024",
+    status: "pending",
+  },
+  {
+    id: 2,
     businessName: "Café Mocha",
     businessLogo:
       "https://readdy.ai/api/search-image?query=Modern%20coffee%20shop%20logo%2C%20elegant%20caf%C3%A9%20branding%2C%20minimalist%20coffee%20brand%20identity%2C%20sophisticated%20caf%C3%A9%20logo%20design%2C%20premium%20coffee%20house%20branding&width=60&height=60&seq=cafe1&orientation=squarish",
     title: "Weekend Brunch Feature",
-    startDate: "Dec 15, 2024",
-    deadline: "Dec 22, 2024",
-    status: "In Progress",
-    requirements: [
-      "Post 2 Instagram stories ✓",
-      "Create 1 Instagram post ✓",
-      "Tag @cafemocha ✓",
-      "Visit and review (Pending)",
-    ],
+    date: "Dec 10, 2024",
+    status: "pending",
   },
-  {
-    id: 2,
-    businessName: "Fitness Plus",
-    businessLogo:
-      "https://readdy.ai/api/search-image?query=Modern%20fitness%20gym%20logo%2C%20athletic%20training%20brand%20identity%2C%20professional%20fitness%20center%20branding%2C%20sports%20club%20logo%20design%2C%20health%20wellness%20branding&width=60&height=60&seq=gym1&orientation=squarish",
-    title: "30-Day Membership Trial",
-    startDate: "Dec 10, 2024",
-    deadline: "Jan 10, 2025",
-    status: "In Progress",
-    requirements: [
-      "Post workout stories ✓",
-      "Create transformation post (Pending)",
-      "Tag @fitnessplus (Pending)",
-      "Complete 30-day challenge (Pending)",
-    ],
-  },
-];
-
-const completedCollaborations = [
   {
     id: 3,
-    businessName: "Bella Vista Restaurant",
+    businessName: "Luxe Beauty Salon",
     businessLogo:
-      "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20logo%2C%20modern%20dining%20establishment%2C%20sophisticated%20branding%2C%20clean%20minimalist%20design%2C%20professional%20restaurant%20identity%2C%20upscale%20dining%20logo&width=60&height=60&seq=resto3&orientation=squarish",
-    title: "3-Course Dinner Experience",
-    completedDate: "2 weeks ago",
-    rating: 5,
-    review:
-      "Amazing collaboration! The food was incredible and the team was very professional.",
+      "https://readdy.ai/api/search-image?query=Modern%20beauty%20salon%20logo%2C%20elegant%20spa%20branding%2C%20luxury%20beauty%20brand%20identity%2C%20sophisticated%20salon%20logo%20design%2C%20premium%20beauty%20house%20branding&width=60&height=60&seq=beauty1&orientation=squarish",
+    title: "Complete Hair Makeover",
+    date: "Dec 5, 2024",
+    status: "approved",
   },
   {
     id: 4,
     businessName: "Urban Threads",
     businessLogo:
       "https://readdy.ai/api/search-image?query=Modern%20fashion%20boutique%20logo%2C%20trendy%20clothing%20brand%20identity%2C%20urban%20fashion%20logo%2C%20stylish%20apparel%20branding%2C%20contemporary%20fashion%20design&width=60&height=60&seq=fashion2&orientation=squarish",
-    title: "Summer Collection Showcase",
-    completedDate: "1 month ago",
-    rating: 4,
-    review:
-      "Great experience working with Urban Threads. Love the outfit selection!",
+    title: "Designer Outfit Package",
+    date: "Nov 20, 2024",
+    status: "expired",
   },
 ];
 
 export default function CollaborationsPage() {
-  const [activeTab, setActiveTab] = useState("active");
+  const [collaborations, setCollaborations] = useState<Collaboration[]>(initialCollaborations);
+  const [selectedCollab, setSelectedCollab] = useState<Collaboration | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+
+  const pendingCollabs = collaborations.filter(c => c.status === "pending" && !c.uploadedImage);
+  const approvedCollabs = collaborations.filter(c => c.status === "approved" && !c.uploadedImage);
+  const expiredCollabs = collaborations.filter(c => c.status === "expired");
+  const completedCollabs = collaborations.filter(c => c.uploadedImage);
+
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result?.toString() ?? "";
+      setUploadedImage(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitImage = () => {
+    if (!uploadedImage || !selectedCollab) return;
+
+    setCollaborations(prev =>
+      prev.map(collab =>
+        collab.id === selectedCollab.id
+          ? { ...collab, uploadedImage, status: "approved" as const }
+          : collab
+      )
+    );
+
+    setShowUploadModal(false);
+    setSelectedCollab(null);
+    setUploadedImage(null);
+  };
+
+  const handlePendingClick = (collab: Collaboration) => {
+    setSelectedCollab(collab);
+    setShowUploadModal(true);
+    setUploadedImage(collab.uploadedImage || null);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const styles = {
+      pending: "bg-yellow-100 text-yellow-700 border-yellow-300",
+      approved: "bg-green-100 text-green-700 border-green-300",
+      expired: "bg-red-100 text-red-700 border-red-300",
+    };
+    return styles[status as keyof typeof styles] || styles.pending;
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-white pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-4">
+      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-6 pt-4 pb-6">
         <div className="flex items-center justify-between mb-6">
           <Link href="/influencer/dashboard">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
           </Link>
-          <div className=" flex flex-col items-center">
+          <div className="flex flex-col items-center">
             <img 
               src={logo_dark.src}
               alt="Inshaar" 
@@ -86,278 +126,318 @@ export default function CollaborationsPage() {
             />
             <span className="text-white/80 text-sm">My Collaborations</span>
           </div>
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <i className="ri-more-line text-white text-xl"></i>
-          </div>
+          <div className="w-10 h-10"></div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">
-              {activeCollaborations.length}
-            </div>
-            <div className="text-white/80 text-sm">Active</div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-center border border-white/30">
+            <div className="text-white text-2xl font-bold">{pendingCollabs.length}</div>
+            <div className="text-white/80 text-xs">Pending</div>
           </div>
-          <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">
-              {completedCollaborations.length}
-            </div>
-            <div className="text-white/80 text-sm">Completed</div>
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-center border border-white/30">
+            <div className="text-white text-2xl font-bold">{approvedCollabs.length}</div>
+            <div className="text-white/80 text-xs">Approved</div>
           </div>
-          <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">4.8</div>
-            <div className="text-white/80 text-sm">Avg Rating</div>
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-center border border-white/30">
+            <div className="text-white text-2xl font-bold">{completedCollabs.length}</div>
+            <div className="text-white/80 text-xs">Completed</div>
           </div>
-        </div>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="bg-white px-6 py-4 shadow-sm">
-        <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
-          <button
-            onClick={() => setActiveTab("active")}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === "active"
-                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            Active ({activeCollaborations.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("completed")}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === "completed"
-                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            Completed ({completedCollaborations.length})
-          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-6 py-6">
-        {activeTab === "active" && (
-          <div className="space-y-4">
-            {activeCollaborations.map((collab) => (
+      <div className="px-4 py-6 space-y-8 max-w-4xl mx-auto">
+        {/* Pending Section - First */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              <span>Pending ({pendingCollabs.length})</span>
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {pendingCollabs.map((collab) => (
               <div
                 key={collab.id}
-                className="bg-white rounded-2xl p-6 shadow-lg"
+                onClick={() => handlePendingClick(collab)}
+                className="bg-white rounded-2xl p-5 shadow-lg border-2 border-gray-100 hover:border-pink-300 hover:shadow-xl transition-all duration-300 cursor-pointer group"
               >
-                <div className="flex items-center space-x-4 mb-4">
+                <div className="flex items-center space-x-4">
                   <img
                     src={collab.businessLogo}
                     alt={collab.businessName}
-                    className="w-16 h-16 rounded-full object-cover"
+                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-gray-100 group-hover:ring-pink-200 transition-all"
                   />
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-800">
+                    <h3 className="font-bold text-lg text-gray-800 group-hover:text-pink-600 transition-colors">
                       {collab.businessName}
                     </h3>
-                    <p className="text-gray-600 mb-1">{collab.title}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
+                    <p className="text-gray-600 text-sm mt-1">{collab.title}</p>
+                    <div className="flex items-center space-x-3 mt-2">
+                      <span className="text-xs text-gray-500 flex items-center space-x-1">
                         <i className="ri-calendar-line"></i>
-                        <span>Started: {collab.startDate}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <i className="ri-time-line"></i>
-                        <span>Due: {collab.deadline}</span>
-                      </div>
+                        <span>{collab.date}</span>
+                      </span>
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      collab.status === 'In Progress' 
-                        ? 'bg-blue-100 text-blue-700' 
-                        : 'bg-green-100 text-green-700'
-                    }`}>
-                      {collab.status}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Timeline Info */}
-                <div className="mb-4">
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <i className="ri-calendar-check-line text-blue-600"></i>
-                        <span className="text-sm font-medium text-gray-700">Collaboration Timeline</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">{collab.startDate}</span> - <span className="font-medium">{collab.deadline}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Requirements Checklist */}
-                <div className="mb-4">
-                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center space-x-2">
-                    <i className="ri-task-line text-purple-600"></i>
-                    <span>Collaboration Tasks</span>
-                  </h4>
-                  <div className="space-y-2">
-                    {collab.requirements.map((req, index) => (
-                      <div
-                        key={index}
-                        className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 ${
-                          req.includes("✓")
-                            ? "bg-green-50 border border-green-200"
-                            : "bg-orange-50 border border-orange-200"
-                        }`}
-                      >
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          req.includes("✓")
-                            ? "bg-green-500"
-                            : "bg-orange-500"
-                        }`}>
-                          <i
-                            className={`text-white text-sm ${
-                              req.includes("✓")
-                                ? "ri-check-line"
-                                : "ri-time-line"
-                            }`}
-                          ></i>
-                        </div>
-                        <span
-                          className={`text-sm font-medium ${
-                            req.includes("✓")
-                              ? "text-green-700 line-through"
-                              : "text-orange-700"
-                          }`}
-                        >
-                          {req.replace(" ✓", "").replace(" (Pending)", "")}
+                  <div className="flex flex-col items-end space-y-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
+                      {collab.status.toUpperCase()}
                         </span>
-                        {req.includes("✓") && (
-                          <span className="ml-auto text-green-600 text-xs font-medium">
-                            Completed
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                    <i className="ri-arrow-right-line text-gray-400 group-hover:text-pink-500 transition-colors"></i>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-3">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
-                    <i className="ri-eye-line"></i>
-                    <span>View Details</span>
-                  </button>
-                  <Link href="/chat">
-                    <button className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2">
-                      <i className="ri-message-3-line"></i>
-                      <span>Message Business</span>
-                    </button>
-                  </Link>
                 </div>
               </div>
             ))}
-
-            {activeCollaborations.length === 0 && (
-              <div className="text-center py-12">
-                <i className="ri-handshake-line text-6xl text-gray-300 mb-4"></i>
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                  No Active Collaborations
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Start applying to offers to see your collaborations here
-                </p>
-                <Link href="/search">
-                  <button className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-3 rounded-xl font-semibold">
-                    Discover Offers
-                  </button>
-                </Link>
+            {pendingCollabs.length === 0 && (
+              <div className="text-center py-8 bg-gray-50 rounded-2xl">
+                <i className="ri-inbox-line text-4xl text-gray-300 mb-2"></i>
+                <p className="text-gray-500 text-sm">No pending collaborations</p>
               </div>
             )}
           </div>
-        )}
+        </div>
 
-        {activeTab === "completed" && (
-          <div className="space-y-4">
-            {completedCollaborations.map((collab) => (
+        {/* Approved Section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>Approved ({approvedCollabs.length})</span>
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {approvedCollabs.map((collab) => (
               <div
                 key={collab.id}
-                className="bg-white rounded-2xl p-6 shadow-lg"
+                className="bg-white rounded-2xl p-5 shadow-lg border-2 border-gray-100 hover:shadow-xl transition-all duration-300"
               >
-                <div className="flex items-center space-x-4 mb-4">
+                <div className="flex items-center space-x-4">
                   <img
                     src={collab.businessLogo}
                     alt={collab.businessName}
-                    className="w-16 h-16 rounded-full object-cover"
+                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-green-100"
                   />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-gray-800">
                       {collab.businessName}
                     </h3>
-                    <p className="text-gray-600 mb-2">{collab.title}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <i className="ri-calendar-check-line"></i>
-                        <span>Completed: {collab.completedDate}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <i className="ri-star-fill text-yellow-400"></i>
-                        <span>{collab.rating}/5 Rating</span>
-                      </div>
+                    <p className="text-gray-600 text-sm mt-1">{collab.title}</p>
+                    <div className="flex items-center space-x-3 mt-2">
+                      <span className="text-xs text-gray-500 flex items-center space-x-1">
+                        <i className="ri-calendar-line"></i>
+                        <span>{collab.date}</span>
+                      </span>
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                      Completed
-                    </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
+                    {collab.status.toUpperCase()}
+                  </span>
+                </div>
+                {collab.uploadedImage && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <img
+                      src={collab.uploadedImage}
+                      alt="Uploaded proof"
+                      className="w-full h-48 object-cover rounded-xl"
+                    />
                   </div>
-                </div>
-
-                {/* Review */}
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 mb-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <i className="ri-star-fill text-yellow-400"></i>
-                    <h4 className="font-semibold text-gray-800">My Review</h4>
-                    <div className="flex items-center space-x-1 ml-auto">
-                      {[...Array(collab.rating)].map((_, i) => (
-                        <i key={i} className="ri-star-fill text-yellow-400 text-sm"></i>
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">{collab.review}</p>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-3">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
-                    <i className="ri-image-line"></i>
-                    <span>View Portfolio</span>
-                  </button>
-                  <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2">
-                    <i className="ri-refresh-line"></i>
-                    <span>Collaborate Again</span>
-                  </button>
-                </div>
+                )}
               </div>
             ))}
-
-            {completedCollaborations.length === 0 && (
-              <div className="text-center py-12">
-                <i className="ri-trophy-line text-6xl text-gray-300 mb-4"></i>
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                  No Completed Collaborations Yet
-                </h3>
-                <p className="text-gray-500">
-                  Your completed collaborations will appear here
-                </p>
+            {approvedCollabs.length === 0 && (
+              <div className="text-center py-8 bg-gray-50 rounded-2xl">
+                <i className="ri-checkbox-circle-line text-4xl text-gray-300 mb-2"></i>
+                <p className="text-gray-500 text-sm">No approved collaborations</p>
               </div>
             )}
           </div>
+        </div>
+
+        {/* Completed Section */}
+        {completedCollabs.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span>Completed ({completedCollabs.length})</span>
+              </h2>
+                      </div>
+            <div className="space-y-3">
+              {completedCollabs.map((collab) => (
+                <div
+                  key={collab.id}
+                  className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-5 shadow-lg border-2 border-purple-100"
+                >
+                  <div className="flex items-center space-x-4 mb-4">
+                    <img
+                      src={collab.businessLogo}
+                      alt={collab.businessName}
+                      className="w-16 h-16 rounded-2xl object-cover ring-2 ring-purple-200"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg text-gray-800">
+                        {collab.businessName}
+                      </h3>
+                      <p className="text-gray-600 text-sm mt-1">{collab.title}</p>
+                      <div className="flex items-center space-x-3 mt-2">
+                        <span className="text-xs text-gray-500 flex items-center space-x-1">
+                          <i className="ri-calendar-line"></i>
+                          <span>{collab.date}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border-2 border-green-300">
+                      COMPLETED
+                    </span>
+                  </div>
+                  {collab.uploadedImage && (
+                    <div className="mt-4 pt-4 border-t border-purple-100">
+                      <p className="text-xs text-gray-500 mb-2 font-medium">Uploaded Proof:</p>
+                      <img
+                        src={collab.uploadedImage}
+                        alt="Uploaded proof"
+                        className="w-full h-48 object-cover rounded-xl shadow-md"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
+
+        {/* Expired Section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <span>Expired ({expiredCollabs.length})</span>
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {expiredCollabs.map((collab) => (
+              <div
+                key={collab.id}
+                className="bg-white rounded-2xl p-5 shadow-lg border-2 border-gray-100 opacity-75"
+              >
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={collab.businessLogo}
+                    alt={collab.businessName}
+                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-red-100 grayscale"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-gray-600">
+                      {collab.businessName}
+                    </h3>
+                    <p className="text-gray-500 text-sm mt-1">{collab.title}</p>
+                    <div className="flex items-center space-x-3 mt-2">
+                      <span className="text-xs text-gray-400 flex items-center space-x-1">
+                        <i className="ri-calendar-line"></i>
+                        <span>{collab.date}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
+                    {collab.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {expiredCollabs.length === 0 && (
+              <div className="text-center py-8 bg-gray-50 rounded-2xl">
+                <i className="ri-time-line text-4xl text-gray-300 mb-2"></i>
+                <p className="text-gray-500 text-sm">No expired collaborations</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Upload Image Modal */}
+      {showUploadModal && selectedCollab && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">Upload Proof</h3>
+                <p className="text-gray-500 text-sm mt-1">{selectedCollab.businessName}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setSelectedCollab(null);
+                  setUploadedImage(null);
+                }}
+                className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <i className="ri-close-line text-gray-600"></i>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl p-4 mb-4">
+                <h4 className="font-semibold text-gray-800 mb-2">{selectedCollab.title}</h4>
+                <p className="text-gray-600 text-sm">{selectedCollab.businessName}</p>
+                <p className="text-gray-500 text-xs mt-2">Date: {selectedCollab.date}</p>
+              </div>
+
+              <label className="block mb-3">
+                <span className="text-sm font-semibold text-gray-800 mb-2 block">Upload Image</span>
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-pink-400 transition-colors cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload" className="cursor-pointer">
+                    {uploadedImage ? (
+                      <div>
+                        <img
+                          src={uploadedImage}
+                          alt="Uploaded"
+                          className="w-full h-64 object-cover rounded-xl mb-4"
+                        />
+                        <p className="text-sm text-green-600 font-medium">Image uploaded successfully!</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <i className="ri-image-add-line text-4xl text-gray-400 mb-3"></i>
+                        <p className="text-gray-600 font-medium mb-1">Tap to upload image</p>
+                        <p className="text-gray-400 text-xs">Upload your collaboration proof</p>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setSelectedCollab(null);
+                  setUploadedImage(null);
+                }}
+                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitImage}
+                disabled={!uploadedImage}
+                className="flex-1 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Advanced Bottom Navigation */}
       <AdvancedBottomNav userType="influencer" />

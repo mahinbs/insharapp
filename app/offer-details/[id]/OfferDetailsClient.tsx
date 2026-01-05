@@ -57,6 +57,56 @@ const reviews = [
   },
 ];
 
+// Business Dashboard Data
+const socialLinks = [
+  { id: 'website', icon: 'ri-earth-line', label: 'www.bellavista.com', href: 'https://www.bellavista.com/' },
+  { id: 'instagram', icon: 'ri-instagram-line', label: '@bellavista', href: 'https://www.instagram.com/bellavista' },
+  { id: 'tiktok', icon: 'ri-tiktok-fill', label: '@bellavista', href: 'https://www.tiktok.com/@bellavista' },
+];
+
+const contentHighlights = [
+  { title: 'Seasonal Menu', description: 'Locally sourced ingredients with innovative culinary techniques.' },
+  { title: 'Wine Pairing', description: 'Expertly curated wine selection to complement each course.' },
+  { title: 'Fine Dining Experience', description: 'Elegant atmosphere with exceptional service.' },
+];
+
+const galleryItems = [
+  'https://readdy.ai/api/search-image?query=Gourmet%20restaurant%20meal%2C%20beautifully%20plated%20fine%20dining%20dish%2C%20elegant%20food%20presentation%2C%20professional%20food%20photography%2C%20warm%20restaurant%20lighting%2C%20luxury%20dining%20experience&width=900&height=900&seq=gallery1&orientation=square',
+  'https://readdy.ai/api/search-image?query=Elegant%20restaurant%20interior%2C%20fine%20dining%20atmosphere%2C%20sophisticated%20table%20setting%2C%20warm%20ambient%20lighting%2C%20luxury%20restaurant%20decor%2C%20upscale%20dining%20room&width=900&height=900&seq=gallery2&orientation=square',
+  'https://readdy.ai/api/search-image?query=Professional%20chef%20preparing%20gourmet%20dish%2C%20culinary%20artistry%2C%20kitchen%20expertise%2C%20fine%20dining%20preparation%2C%20chef%20at%20work%20in%20restaurant%20kitchen&width=900&height=900&seq=gallery3&orientation=square',
+  'https://readdy.ai/api/search-image?query=Beautiful%20restaurant%20dessert%2C%20artisanal%20pastry%2C%20fine%20dining%20presentation%2C%20elegant%20plating%2C%20luxury%20culinary%20experience&width=900&height=900&seq=gallery4&orientation=square',
+];
+
+const videoShowcase = [
+  'https://player.vimeo.com/video/76979871?h=8272103f6e',
+  'https://player.vimeo.com/video/22439234?h=7d45d2d4d3',
+];
+
+const weeklyTimings = [
+  { day: 'Monday', value: '11:00 - 22:00' },
+  { day: 'Tuesday', value: '11:00 - 22:00' },
+  { day: 'Wednesday', value: '11:00 - 22:00' },
+  { day: 'Thursday', value: '11:00 - 23:00' },
+  { day: 'Friday', value: '11:00 - 23:00' },
+  { day: 'Saturday', value: '12:00 - 23:00' },
+  { day: 'Sunday', value: '12:00 - 21:00' },
+];
+
+const establishments = [
+  {
+    id: 'downtown',
+    title: 'Bella Vista Restaurant • Downtown',
+    address: '123 Main Street, Downtown Plaza',
+    contact: '+1 (555) 123-4567',
+  },
+  {
+    id: 'uptown',
+    title: 'Bella Vista Restaurant • Uptown',
+    address: '456 Park Avenue, Uptown District',
+    contact: '+1 (555) 987-6543',
+  },
+];
+
 const creatorWorkExamples = [
   {
     id: 1,
@@ -232,6 +282,25 @@ interface OfferDetailsClientProps {
   offerId: string;
 }
 
+type SectionId =
+  | 'offers'
+  | 'information'
+  | 'content'
+  | 'gallery'
+  | 'location'
+  | 'timing'
+  | 'establishment';
+
+const sectionOrder: SectionId[] = [
+  'information',
+  'content',
+  'offers',
+  'gallery',
+  'location',
+  'timing',
+  'establishment',
+];
+
 export default function OfferDetailsClient({
   offerId,
 }: OfferDetailsClientProps) {
@@ -266,6 +335,17 @@ export default function OfferDetailsClient({
   const [hasSentCollabRequest, setHasSentCollabRequest] = useState(false);
   const [proofSaved, setProofSaved] = useState(false);
   const cancellationNoticeRef = useRef(false);
+  const [activeTab, setActiveTab] = useState<SectionId>('information');
+  const sectionsRef = useRef<Record<SectionId, HTMLDivElement | null>>({
+    offers: null,
+    information: null,
+    content: null,
+    gallery: null,
+    location: null,
+    timing: null,
+    establishment: null,
+  });
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Generate available time slots
   const timeSlots = [
@@ -383,6 +463,51 @@ export default function OfferDetailsClient({
       setHasSentCollabRequest(false);
     }
   }, [offerId]);
+
+  const handleTabClick = (id: SectionId) => {
+    const section = sectionsRef.current[id];
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setActiveTab(id);
+  };
+
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => sectionOrder.indexOf(a.target.id as SectionId) - sectionOrder.indexOf(b.target.id as SectionId));
+        if (visible[0]) {
+          const visibleId = visible[0].target.id as SectionId;
+          setActiveTab(visibleId);
+        }
+      },
+      {
+        rootMargin: '-40% 0px -40% 0px',
+        threshold: 0.2,
+      }
+    );
+
+    sectionOrder.forEach((id) => {
+      const section = sectionsRef.current[id];
+      if (section) {
+        observerRef.current?.observe(section);
+      }
+    });
+
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  const registerSectionRef = (id: SectionId) => (el: HTMLDivElement | null) => {
+    sectionsRef.current[id] = el;
+  };
+
+  const sectionClasses = 'rounded-3xl bg-white/90 backdrop-blur px-5 py-6 shadow-lg border border-white/60 mb-4';
 
   const updateRequestStatus = (status: RequestStatus) => {
     persistRequestStatus(offerId, offerDetails.businessName, status);
@@ -593,10 +718,9 @@ export default function OfferDetailsClient({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-6 py-6 pb-24">
-        {/* Business Info */}
-        <div className="flex items-center space-x-4 mb-6">
+      {/* Business Info Header */}
+      <div className="px-6 py-4 bg-white border-b border-gray-200">
+        <div className="flex items-center space-x-4">
           <img
             src={offerDetails.businessLogo}
             alt={offerDetails.businessName}
@@ -625,53 +749,202 @@ export default function OfferDetailsClient({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Offer Title */}
-        <h3 className="text-2xl font-bold text-gray-800 mb-4">
-          {offerDetails.title}
-        </h3>
-
-        {/* Description */}
-        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-          <h4 className="font-semibold text-gray-800 mb-3">What You'll Get</h4>
-          <p className="text-gray-600 leading-relaxed">
-            {offerDetails.description}
-          </p>
-        </div>
-
-        {/* Requirements */}
-        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-          <h4 className="font-semibold text-gray-800 mb-3">Requirements</h4>
-          <div className="space-y-2">
-            {offerDetails.requirements.map((req, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <i className="ri-check-line text-green-500"></i>
-                <span className="text-gray-600">{req}</span>
-              </div>
+      {/* Tab Navigation */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
+        <div className="px-4 py-2">
+          <div className="flex rounded-3xl bg-gray-100 p-1 shadow-inner overflow-x-auto no-scrollbar">
+            {[
+              { id: 'information', label: 'Information' },
+              { id: 'content', label: 'Content' },
+              { id: 'offers', label: 'Offers' },
+              { id: 'gallery', label: 'Gallery' },
+              { id: 'location', label: 'Location' },
+              { id: 'timing', label: 'Timing' },
+              { id: 'establishment', label: 'Establishment' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id as SectionId)}
+                className={`flex-1 whitespace-nowrap rounded-2xl py-3 px-2 text-xs font-semibold transition ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white shadow-lg'
+                    : 'text-gray-500'
+                }`}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Business Stats */}
-        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-          <h4 className="font-semibold text-gray-800 mb-4">Business Info</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {offerDetails.businessInfo.collaborations}
-              </div>
-              <div className="text-gray-500 text-sm">Collaborations</div>
+      {/* Content with Tabs */}
+      <div className="px-4 py-5 pb-24 bg-gray-50/60">
+        {/* Information Section */}
+        <section id="information" ref={registerSectionRef('information')} className={sectionClasses}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Information</p>
+              <h3 className="text-xl font-semibold text-slate-900">About {offerDetails.businessName}</h3>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-pink-600">
-                {offerDetails.businessInfo.responseTime}
+            <span className="rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-medium px-3 py-1">
+              Open
+            </span>
+          </div>
+          <p className="text-sm text-slate-600 leading-6">
+            {offerDetails.businessName} is a premium {offerDetails.category.toLowerCase()} located in {offerDetails.location}, 
+            specializing in {offerDetails.description.split('.')[0].toLowerCase()}.
+          </p>
+          <div className="mt-5 grid gap-3">
+            {socialLinks.map((item) => (
+              <a
+                href={item.href}
+                key={item.id}
+                className="flex items-center justify-between rounded-2xl border border-white/40 px-4 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white"
+                target="_blank"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 rounded-2xl bg-white/20 text-white flex items-center justify-center">
+                    <i className={`${item.icon} text-lg`}></i>
+                  </div>
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+                <i className="ri-arrow-right-up-line text-xs text-white/80"></i>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Content Section */}
+        <section id="content" ref={registerSectionRef('content')} className={sectionClasses}>
+          <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Content</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Signature Offerings</h3>
+          <div className="grid gap-4">
+            {contentHighlights.map((item) => (
+              <div key={item.title} className="rounded-2xl bg-gray-50 p-4 border border-gray-100">
+                <h4 className="text-sm font-semibold text-gray-900">{item.title}</h4>
+                <p className="text-xs text-gray-500 mt-1">{item.description}</p>
               </div>
-              <div className="text-gray-500 text-sm">Response Time</div>
+            ))}
+          </div>
+        </section>
+
+        {/* Offers Section */}
+        <section id="offers" ref={registerSectionRef('offers')} className={sectionClasses}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Offers</p>
+              <h3 className="text-xl font-semibold text-slate-900">{offerDetails.title}</h3>
             </div>
           </div>
-        </div>
 
-        {/* Reviews */}
+          {/* What You'll Get */}
+          <div className="mb-6">
+            <h4 className="font-semibold text-gray-800 mb-3">What You'll Get</h4>
+            <p className="text-gray-600 leading-relaxed text-sm">
+              {offerDetails.description}
+            </p>
+          </div>
+
+          {/* Requirements */}
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-3">Requirements</h4>
+            <div className="space-y-2">
+              {offerDetails.requirements.map((req, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <i className="ri-check-line text-green-500"></i>
+                  <span className="text-gray-600 text-sm">{req}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Gallery Section */}
+        <section id="gallery" ref={registerSectionRef('gallery')} className={sectionClasses}>
+          <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Gallery</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Visual Showcase</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {galleryItems.map((src, idx) => (
+              <div key={idx} className="relative overflow-hidden rounded-2xl ring-1 ring-black/5">
+                <img
+                  src={src}
+                  className="w-full h-32 sm:h-36 object-cover"
+                  alt={`Gallery item ${idx + 1}`}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://picsum.photos/seed/gallery-${idx + 1}/400/400`;
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-4">
+            {videoShowcase.map((video, idx) => (
+              <div key={video} className="rounded-2xl overflow-hidden border border-slate-100" style={{ maxHeight: '200px' }}>
+                <iframe
+                  src={video}
+                  className="w-full"
+                  style={{ height: '200px' }}
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  title={`Business video ${idx + 1}`}
+                ></iframe>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Location Section */}
+        <section id="location" ref={registerSectionRef('location')} className={sectionClasses}>
+          <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Location</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Find Us on Maps</h3>
+          <div className="rounded-2xl overflow-hidden ring-1 ring-black/5">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.184133894887!2d-73.98811768459387!3d40.74844097932681!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus"
+              width="100%"
+              height="240"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+          <div className="mt-4 text-sm text-slate-600">
+            <p className="font-semibold text-slate-900">{offerDetails.location}</p>
+            <p>Easy access via public transport • Parking available</p>
+          </div>
+        </section>
+
+        {/* Timing Section */}
+        <section id="timing" ref={registerSectionRef('timing')} className={sectionClasses}>
+          <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Timing</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Weekly Schedule</h3>
+          <div className="divide-y divide-slate-100">
+            {weeklyTimings.map((slot) => (
+              <div key={slot.day} className="flex items-center justify-between py-3">
+                <span className="text-sm font-medium text-slate-700">{slot.day}</span>
+                <span className="text-sm text-slate-500">{slot.value}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Establishment Section */}
+        <section id="establishment" ref={registerSectionRef('establishment')} className={sectionClasses}>
+          <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Establishment</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Other Locations</h3>
+          <div className="space-y-3">
+            {establishments.map((loc) => (
+              <div key={loc.id} className="p-4 rounded-2xl border border-white/60 bg-gradient-to-r from-white to-pink-50">
+                <h4 className="text-sm font-semibold text-gray-900">{loc.title}</h4>
+                <p className="text-xs text-gray-500 mt-1">{loc.address}</p>
+                <p className="text-xs text-gray-500 mt-1">Call: {loc.contact}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Reviews Section - Keep existing reviews */}
         <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
           <h4 className="font-semibold text-gray-800 mb-4">Recent Reviews</h4>
           <div className="space-y-4">

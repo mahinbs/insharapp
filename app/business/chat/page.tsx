@@ -67,7 +67,7 @@ export default function BusinessChatList() {
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-4 pb-4">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/business/dashboard">
+          <Link href="/business/home">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="ri-arrow-left-line text-white text-xl"></i>
             </div>
