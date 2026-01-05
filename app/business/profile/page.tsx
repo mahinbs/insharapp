@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import logo_dark from '@/assetes/logo_dark.png';
 import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 import { useRouter } from 'next/navigation';
+import QRCodeGenerator from '../../../components/QRCodeGenerator';
 
 type SectionId =
   | 'information'
@@ -12,6 +13,7 @@ type SectionId =
   | 'location'
   | 'timing'
   | 'establishment'
+  | 'qrcode'
   | 'statistics';
 
 const sectionOrder: SectionId[] = [
@@ -21,6 +23,7 @@ const sectionOrder: SectionId[] = [
   'location',
   'timing',
   'establishment',
+  'qrcode',
   'statistics',
 ];
 
@@ -36,6 +39,7 @@ export default function BusinessProfile() {
     location: null,
     timing: null,
     establishment: null,
+    qrcode: null,
     statistics: null,
   });
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -48,6 +52,7 @@ export default function BusinessProfile() {
       { id: 'location', label: 'Location' },
       { id: 'timing', label: 'Timing' },
       { id: 'establishment', label: 'Establishment' },
+      { id: 'qrcode', label: 'QR Code' },
       { id: 'statistics', label: 'Statistics' },
     ],
     []
@@ -391,6 +396,13 @@ const establishments = [
               </div>
             ))}
           </div>
+        </section>
+
+        <section id="qrcode" ref={registerSectionRef('qrcode')} className={sectionClasses}>
+          <QRCodeGenerator 
+            businessId="business-17th-beauty-001" 
+            businessName={businessInfo.name}
+          />
         </section>
 
         <section id="statistics" ref={registerSectionRef('statistics')} className={sectionClasses}>
