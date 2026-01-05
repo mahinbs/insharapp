@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import logo_dark from "@/assetes/logo_dark.png";
+import logo_colorful from "@/assetes/Logo3 (1).png";
 
 const onboardingSlides = [
   {
@@ -43,7 +43,7 @@ export default function OnboardingScreen() {
       <div className="flex justify-between items-center p-6">
         <div className=" flex items-center">
           <img 
-            src={logo_dark.src}
+            src={logo_colorful.src}
             alt="Inshaar" 
             className="h-10 w-40 object-cover"
           />

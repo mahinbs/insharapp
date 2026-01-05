@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import logo_dark from "@/assetes/logo_dark.png";
+import logo_colorful from "@/assetes/Logo3 (1).png";
 
 export default function AuthScreen() {
   const [userType, setUserType] = useState<'influencer' | 'business' | null>(null);
@@ -13,7 +13,7 @@ export default function AuthScreen() {
       {/* Header */}
       <div className="h-full w-full flex flex-col justify-center py-4">
             <img 
-              src={logo_dark.src}
+              src={logo_colorful.src}
               alt="Inshaar" 
               className="h-10 w-40 object-cover mb-1"
             />
@@ -95,7 +95,7 @@ export default function AuthScreen() {
                 className="w-full px-4 py-4 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
               />
 
-              <Link href={userType === 'influencer' ? '/influencer/dashboard' : '/business/dashboard'}>
+              <Link href={userType === 'influencer' ? '/influencer/dashboard' : '/business/home'}>
                 <button className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300">
                   {isLogin ? 'Sign In' : 'Create Account'}
                 </button>

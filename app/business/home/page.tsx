@@ -25,6 +25,8 @@ const businessMessages = [
       "https://readdy.ai/api/search-image?query=Young%20female%20lifestyle%20influencer%2C%20professional%20headshot%2C%20confident%20smile%2C%20modern%20portrait%20photography%2C%20bright%20natural%20lighting%2C%20social%20media%20personality&width=60&height=60&seq=influencer1&orientation=squarish",
     messageCount: 3,
     unread: true,
+    lastMessage: "Hi! I'm interested in collaborating with your restaurant. Would love to discuss details!",
+    timestamp: "2 hours ago",
   },
   {
     id: 2,
@@ -34,6 +36,8 @@ const businessMessages = [
       "https://readdy.ai/api/search-image?query=Young%20male%20food%20influencer%2C%20professional%20headshot%2C%20friendly%20expression%2C%20modern%20portrait%20photography%2C%20natural%20lighting%2C%20food%20blogger%20personality&width=60&height=60&seq=influencer2&orientation=squarish",
     messageCount: 1,
     unread: false,
+    lastMessage: "Thanks for the opportunity! Looking forward to working together.",
+    timestamp: "1 day ago",
   },
   {
     id: 3,
@@ -43,8 +47,21 @@ const businessMessages = [
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=face",
     messageCount: 5,
     unread: true,
+    lastMessage: "Can we schedule a call to discuss the collaboration details?",
+    timestamp: "30 minutes ago",
   },
 ];
+
+// Brief Statistics Data
+const briefStats = {
+  today: 8,
+  thisWeek: 150,
+  thisMonth: 642,
+  previousMonth: 598,
+  total: 168,
+  accepted: 142,
+  rejected: 26,
+};
 
 const businessInfo = {
   name: "Bella Vista Restaurant",
@@ -107,9 +124,6 @@ const influencerRequests = [
 ];
 
 export default function BusinessDashboard() {
-  const [activeSection, setActiveSection] = useState<"statistics" | "agenda">(
-    "agenda"
-  );
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -141,36 +155,9 @@ export default function BusinessDashboard() {
         </div>
       </div>
 
-      {/* Section Tabs */}
-      <div className="bg-white px-6 py-4 shadow-sm -mt-4">
-        <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
-          <button
-            onClick={() => setActiveSection("agenda")}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeSection === "agenda"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            Agenda
-          </button>
-
-          <button
-            onClick={() => setActiveSection("statistics")}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeSection === "statistics"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            Statistics
-          </button>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="px-4 sm:px-6 py-6">
-        {activeSection === "statistics" && (
+        {false && (
           <div className="space-y-6 max-w-6xl mx-auto">
 
 
@@ -504,7 +491,7 @@ export default function BusinessDashboard() {
           </div>
         )}
 
-        {activeSection === "agenda" && (
+        {true && (
           <div className="space-y-6 max-w-6xl mx-auto">
             {/* Greeting Section - Elegant */}
             <div className="relative bg-gradient-to-br from-pink-500 via-purple-500 to-orange-500 rounded-3xl p-8 sm:p-10 shadow-2xl overflow-hidden">
@@ -517,22 +504,10 @@ export default function BusinessDashboard() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                   <div className="mb-4 sm:mb-0">
                     <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 shadow-lg">
+                      {/* <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 shadow-lg">
                         <i className="ri-store-3-line text-white text-2xl"></i>
-                      </div>
-                      <div>
-                        <p className="text-white/80 text-sm font-medium">
-                          Welcome Back
-                        </p>
-                        <p className="text-white/60 text-xs">
-                          {new Date().toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
+                      </div> */}
+
                     </div>
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-2 leading-tight">
                       Hello,{" "}
@@ -542,7 +517,7 @@ export default function BusinessDashboard() {
                       !
                     </h1>
                     <p className="text-white/90 text-base sm:text-lg max-w-2xl leading-relaxed">
-                      Here's your comprehensive agenda for today. Stay on top of
+                      Here's your comprehensive dashboard for today. Stay on top of
                       your collaborations, manage your business activities, and
                       grow your partnerships seamlessly.
                     </p>
@@ -556,7 +531,7 @@ export default function BusinessDashboard() {
                           <p className="text-white/80 text-xs font-medium">
                             Today's Activity
                           </p>
-                          <p className="text-2xl font-bold text-white">8</p>
+                          <p className="text-2xl font-bold text-white">{briefStats.today}</p>
                         </div>
                         <i className="ri-calendar-check-line text-white/80 text-xl"></i>
                       </div>
@@ -579,62 +554,163 @@ export default function BusinessDashboard() {
               </div>
             </div>
 
-            {/* Messages Section */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            {/* Business Information */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Messages</h2>
+                <h2 className="text-xl font-bold text-gray-800">Business Information</h2>
+                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl flex items-center justify-center">
+                  <i className="ri-building-line text-white text-lg"></i>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    <i className="ri-store-line text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Business Name</p>
+                    <p className="font-semibold text-gray-800">
+                      {businessInfo.name}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    <i className="ri-map-pin-line text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Location</p>
+                    <p className="font-semibold text-gray-800">
+                      {businessInfo.location}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-100 hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    <i className="ri-star-fill text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Rating</p>
+                    <p className="font-semibold text-gray-800">
+                      {businessInfo.rating} / 5.0
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    <i className="ri-calendar-check-line text-white text-xl"></i>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Reservations</p>
+                    <p className="font-semibold text-gray-800">
+                      {businessInfo.totalReservations}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <i className="ri-message-3-line text-white text-lg"></i>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800">Messages</h2>
+                </div>
                 <Link href="/business/chat">
-                  <button className="text-purple-600 text-sm font-semibold hover:text-purple-700 transition-colors">
-                    View All
+                  <button className="text-purple-600 text-sm font-semibold hover:text-purple-700 transition-colors flex items-center space-x-1">
+                    <span>View All</span>
+                    <i className="ri-arrow-right-line"></i>
                   </button>
                 </Link>
               </div>
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="space-y-3">
                 {businessMessages.map((msg) => (
                   <Link
                     key={msg.id}
                     href="/business/chat"
-                    className="relative group cursor-pointer"
+                    className="block"
                   >
-                    <div className="relative">
-                      <div
-                        className={`w-16 h-16 rounded-full overflow-hidden border-4 transition-all duration-300 group-hover:scale-110 ${
-                          msg.unread
-                            ? "border-purple-500 shadow-lg shadow-purple-500/50"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        <img
-                          src={msg.profileImage}
-                          alt={msg.sender}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                              msg.sender
-                            )}&background=random&size=64`;
-                          }}
-                        />
+                    <div className={`relative bg-white rounded-xl p-4 border-2 transition-all duration-300 hover:shadow-md ${
+                      msg.unread 
+                        ? "border-purple-200 bg-purple-50/50" 
+                        : "border-gray-100 hover:border-gray-200"
+                    }`}>
+                      <div className="flex items-start space-x-3">
+                        {/* Profile Image */}
+                        <div className="relative flex-shrink-0">
+                          <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${
+                            msg.unread 
+                              ? "border-purple-500" 
+                              : "border-gray-300"
+                          }`}>
+                            <img
+                              src={msg.profileImage}
+                              alt={msg.sender}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                  msg.sender
+                                )}&background=random&size=64`;
+                              }}
+                            />
+                          </div>
+                          {/* Unread Indicator */}
+                          {msg.unread && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                          )}
+                        </div>
+
+                        {/* Message Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-semibold text-gray-800 text-sm">{msg.sender}</h3>
+                              <span className="text-gray-500 text-xs">{msg.username}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {msg.unread && (
+                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                              )}
+                              <span className="text-gray-400 text-xs">{msg.timestamp}</span>
+                            </div>
+                          </div>
+                          <p className={`text-sm mb-2 line-clamp-2 ${
+                            msg.unread ? "text-gray-800 font-medium" : "text-gray-600"
+                          }`}>
+                            {msg.lastMessage}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              {msg.messageCount > 1 && (
+                                <span className="text-xs text-gray-500">
+                                  {msg.messageCount} messages
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                // Handle reply action
+                              }}
+                              className="text-purple-600 hover:text-purple-700 text-xs font-semibold flex items-center space-x-1 transition-colors"
+                            >
+                              <i className="ri-reply-line"></i>
+                              <span>Reply</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Message Count Badge */}
+                        {msg.unread && msg.messageCount > 0 && (
+                          <div className="absolute top-3 right-3 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
+                            {msg.messageCount}
+                          </div>
+                        )}
                       </div>
-                      {/* Message Count Badge */}
-                      <div
-                        className={`absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg ${
-                          msg.unread
-                            ? "bg-red-500 animate-pulse"
-                            : "bg-gray-500"
-                        }`}
-                      >
-                        {msg.messageCount}
-                      </div>
-                      {/* Unread Indicator */}
-                      {msg.unread && (
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-md"></div>
-                      )}
-                    </div>
-                    {/* Tooltip on hover */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
-                      {msg.sender}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                     </div>
                   </Link>
                 ))}
@@ -647,58 +723,65 @@ export default function BusinessDashboard() {
               )}
             </div>
 
-            {/* Business Information */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
-                Business Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                    <i className="ri-store-line text-white text-xl"></i>
+            {/* Brief Statistics Section */}
+            <Link href="/business/profile#statistics">
+              <div className="mt-6 bg-gradient-to-br from-pink-500 via-purple-500 to-orange-500 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group transform hover:scale-[1.02]">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white">Quick Statistics</h2>
+                  <i className="ri-arrow-right-line text-white text-2xl group-hover:translate-x-1 transition-transform"></i>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/30 transition-all">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <i className="ri-calendar-todo-line text-white text-lg"></i>
+                      <p className="text-white/80 text-xs font-medium">Today</p>
+                    </div>
+                    <p className="text-3xl font-bold text-white">{briefStats.today}</p>
+                    <p className="text-white/70 text-xs mt-1">bookings</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Business Name</p>
-                    <p className="font-semibold text-gray-800">
-                      {businessInfo.name}
-                    </p>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/30 transition-all">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <i className="ri-calendar-week-line text-white text-lg"></i>
+                      <p className="text-white/80 text-xs font-medium">This Week</p>
+                    </div>
+                    <p className="text-3xl font-bold text-white">{briefStats.thisWeek}</p>
+                    <p className="text-white/70 text-xs mt-1">bookings</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/30 transition-all">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <i className="ri-calendar-month-line text-white text-lg"></i>
+                      <p className="text-white/80 text-xs font-medium">This Month</p>
+                    </div>
+                    <p className="text-3xl font-bold text-white">{briefStats.thisMonth}</p>
+                    <p className="text-white/70 text-xs mt-1">bookings</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/30 transition-all">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <i className="ri-bar-chart-line text-white text-lg"></i>
+                      <p className="text-white/80 text-xs font-medium">Previous</p>
+                    </div>
+                    <p className="text-3xl font-bold text-white">{briefStats.previousMonth}</p>
+                    <p className="text-white/70 text-xs mt-1">last month</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                    <i className="ri-map-pin-line text-white text-xl"></i>
+                <div className="mt-4 pt-4 border-t border-white/30 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-white">{briefStats.accepted}</p>
+                      <p className="text-white/80 text-xs">Accepted</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-white">{briefStats.rejected}</p>
+                      <p className="text-white/80 text-xs">Rejected</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Location</p>
-                    <p className="font-semibold text-gray-800">
-                      {businessInfo.location}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
-                    <i className="ri-star-fill text-white text-xl"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Rating</p>
-                    <p className="font-semibold text-gray-800">
-                      {businessInfo.rating} / 5.0
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                    <i className="ri-calendar-check-line text-white text-xl"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Reservations</p>
-                    <p className="font-semibold text-gray-800">
-                      {businessInfo.totalReservations}
-                    </p>
+                  <div className="text-right">
+                    <p className="text-white/80 text-xs mb-1">Total</p>
+                    <p className="text-3xl font-bold text-white">{briefStats.total}</p>
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Offers & Applications Section */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
