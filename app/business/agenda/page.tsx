@@ -15,6 +15,11 @@ const thisWeekCollabs = [
     date: "Dec 18, 2024",
     time: "7:00 PM",
     status: "confirmed",
+    visitInfo: {
+      arrivalTime: "2024-12-18T19:05:00Z",
+      isOnTime: true,
+      checkedIn: true,
+    },
   },
   {
     id: 2,
@@ -180,14 +185,37 @@ export default function BusinessAgendaPage() {
                         <span>{collab.time}</span>
                       </span>
                     </div>
+                    {collab.visitInfo?.checkedIn && (
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className={`text-xs px-2 py-1 rounded-full flex items-center space-x-1 ${
+                          collab.visitInfo.isOnTime 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-orange-100 text-orange-700'
+                        }`}>
+                          <i className={`ri-${collab.visitInfo.isOnTime ? 'check' : 'time'}-line`}></i>
+                          <span>{collab.visitInfo.isOnTime ? 'On Time' : 'Late Arrival'}</span>
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Arrived: {new Date(collab.visitInfo.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    collab.status === "confirmed" 
-                      ? "bg-green-100 text-green-700" 
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}>
-                    {collab.status.toUpperCase()}
-                  </span>
+                  <div className="flex flex-col items-end space-y-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      collab.status === "confirmed" 
+                        ? "bg-green-100 text-green-700" 
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {collab.status.toUpperCase()}
+                    </span>
+                    {!collab.visitInfo?.checkedIn && collab.status === "confirmed" && (
+                      <span className="text-xs text-gray-500 flex items-center space-x-1">
+                        <i className="ri-time-line"></i>
+                        <span>Awaiting check-in</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

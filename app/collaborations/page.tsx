@@ -4,6 +4,7 @@ import { useState, ChangeEvent } from "react";
 import Link from "next/link";
 import AdvancedBottomNav from "../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
+import QRScanner from "../../components/QRScanner";
 
 interface Collaboration {
   id: number;
@@ -11,8 +12,15 @@ interface Collaboration {
   businessLogo: string;
   title: string;
   date: string;
+  time?: string;
   status: "pending" | "approved" | "expired";
   uploadedImage?: string;
+  businessId?: string;
+  visitInfo?: {
+    arrivalTime: string;
+    isOnTime: boolean;
+    checkedIn: boolean;
+  };
 }
 
 const initialCollaborations: Collaboration[] = [
@@ -23,7 +31,9 @@ const initialCollaborations: Collaboration[] = [
       "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20logo%2C%20modern%20dining%20establishment%2C%20sophisticated%20branding%2C%20clean%20minimalist%20design%2C%20professional%20restaurant%20identity%2C%20upscale%20dining%20logo&width=60&height=60&seq=resto3&orientation=squarish",
     title: "Free 3-Course Dinner",
     date: "Dec 15, 2024",
+    time: "7:00 PM",
     status: "pending",
+    businessId: "business-bella-vista-001",
   },
   {
     id: 2,
@@ -32,7 +42,9 @@ const initialCollaborations: Collaboration[] = [
       "https://readdy.ai/api/search-image?query=Modern%20coffee%20shop%20logo%2C%20elegant%20caf%C3%A9%20branding%2C%20minimalist%20coffee%20brand%20identity%2C%20sophisticated%20caf%C3%A9%20logo%20design%2C%20premium%20coffee%20house%20branding&width=60&height=60&seq=cafe1&orientation=squarish",
     title: "Weekend Brunch Feature",
     date: "Dec 10, 2024",
+    time: "11:00 AM",
     status: "pending",
+    businessId: "business-cafe-mocha-001",
   },
   {
     id: 3,
@@ -41,7 +53,9 @@ const initialCollaborations: Collaboration[] = [
       "https://readdy.ai/api/search-image?query=Modern%20beauty%20salon%20logo%2C%20elegant%20spa%20branding%2C%20luxury%20beauty%20brand%20identity%2C%20sophisticated%20salon%20logo%20design%2C%20premium%20beauty%20house%20branding&width=60&height=60&seq=beauty1&orientation=squarish",
     title: "Complete Hair Makeover",
     date: "Dec 5, 2024",
+    time: "2:00 PM",
     status: "approved",
+    businessId: "business-luxe-beauty-001",
   },
   {
     id: 4,
@@ -51,6 +65,7 @@ const initialCollaborations: Collaboration[] = [
     title: "Designer Outfit Package",
     date: "Nov 20, 2024",
     status: "expired",
+    businessId: "business-urban-threads-001",
   },
 ];
 
@@ -59,6 +74,8 @@ export default function CollaborationsPage() {
   const [selectedCollab, setSelectedCollab] = useState<Collaboration | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [scannerCollab, setScannerCollab] = useState<Collaboration | null>(null);
 
   const pendingCollabs = collaborations.filter(c => c.status === "pending" && !c.uploadedImage);
   const approvedCollabs = collaborations.filter(c => c.status === "approved" && !c.uploadedImage);
@@ -91,6 +108,41 @@ export default function CollaborationsPage() {
     setShowUploadModal(false);
     setSelectedCollab(null);
     setUploadedImage(null);
+  };
+
+  const handleScanQR = (collab: Collaboration) => {
+    if (!collab.businessId) {
+      alert('Business ID not found for this collaboration');
+      return;
+    }
+    setScannerCollab(collab);
+    setShowQRScanner(true);
+  };
+
+  const handleScanSuccess = (data: {
+    businessId: string;
+    arrivalTime: string;
+    isOnTime: boolean;
+  }) => {
+    if (!scannerCollab) return;
+
+    setCollaborations(prev =>
+      prev.map(collab =>
+        collab.id === scannerCollab.id
+          ? {
+              ...collab,
+              visitInfo: {
+                arrivalTime: data.arrivalTime,
+                isOnTime: data.isOnTime,
+                checkedIn: true,
+              }
+            }
+          : collab
+      )
+    );
+
+    setShowQRScanner(false);
+    setScannerCollab(null);
   };
 
   const handlePendingClick = (collab: Collaboration) => {
@@ -229,11 +281,43 @@ export default function CollaborationsPage() {
                         <i className="ri-calendar-line"></i>
                         <span>{collab.date}</span>
                       </span>
+                      {collab.time && (
+                        <span className="text-xs text-gray-500 flex items-center space-x-1">
+                          <i className="ri-time-line"></i>
+                          <span>{collab.time}</span>
+                        </span>
+                      )}
                     </div>
+                    {collab.visitInfo?.checkedIn && (
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          collab.visitInfo.isOnTime 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-orange-100 text-orange-700'
+                        }`}>
+                          <i className={`ri-${collab.visitInfo.isOnTime ? 'check' : 'time'}-line mr-1`}></i>
+                          {collab.visitInfo.isOnTime ? 'Checked In (On Time)' : 'Checked In (Late)'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(collab.visitInfo.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
-                    {collab.status.toUpperCase()}
-                  </span>
+                  <div className="flex flex-col items-end space-y-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
+                      {collab.status.toUpperCase()}
+                    </span>
+                    {collab.status === "approved" && !collab.visitInfo?.checkedIn && collab.businessId && (
+                      <button
+                        onClick={() => handleScanQR(collab)}
+                        className="px-3 py-1.5 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full text-xs font-semibold hover:shadow-lg transition-all flex items-center space-x-1"
+                      >
+                        <i className="ri-qr-scan-line"></i>
+                        <span>Scan QR</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {collab.uploadedImage && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
@@ -437,6 +521,22 @@ export default function CollaborationsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && scannerCollab && scannerCollab.businessId && (
+        <QRScanner
+          collaborationId={scannerCollab.id.toString()}
+          businessId={scannerCollab.businessId}
+          scheduledTime={scannerCollab.date && scannerCollab.time 
+            ? new Date(`${scannerCollab.date} ${scannerCollab.time}`).toISOString()
+            : undefined}
+          onScanSuccess={handleScanSuccess}
+          onClose={() => {
+            setShowQRScanner(false);
+            setScannerCollab(null);
+          }}
+        />
       )}
 
       {/* Advanced Bottom Navigation */}
