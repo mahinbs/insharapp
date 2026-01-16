@@ -1,56 +1,304 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AdvancedBottomNav from "../../components/AdvancedBottomNav";
+import { getCurrentUserProfile, updateProfile, type Profile } from "@/lib/supabase-profile";
+import { supabase } from "@/lib/supabase";
+import { uploadImage } from "@/lib/supabase-examples";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
-  const [profileData, setProfileData] = useState({
-    name: "Sarah Johnson",
-    username: "sarahstyles",
-    bio: "Lifestyle & Fashion Influencer | Creating content that inspires ✨",
-    followers: "25.2K",
-    following: "1.8K",
-    posts: "342",
-    location: "Los Angeles, CA",
-    website: "sarahstyles.com",
-    tiktok: "@sarahstyles",
-    instagram: "@sarahstyles",
+  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState<Profile | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    full_name: '',
+    username: '',
+    bio: '',
+    phone: '',
+    location: '',
+    website_url: '',
+    followers_count: '',
+    engagement_rate: '',
+    niche: '',
+    instagram_handle: '',
+    tiktok_handle: '',
+    avatar: null as File | null,
+    avatarPreview: ''
   });
 
-  const nameParts = profileData.name.split(" ");
-  const firstName = nameParts[0] || profileData.name;
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        // First check if user is authenticated
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push('/auth');
+          return;
+        }
+
+        const { data, error } = await getCurrentUserProfile();
+        if (error) {
+          // If profile doesn't exist, show a message but don't redirect
+          if (error.message === 'Profile not found') {
+            console.warn('Profile not found, user may need to complete signup');
+            setLoading(false);
+            return;
+          }
+          console.error('Error loading profile:', error);
+          // Only redirect on auth errors, not profile errors
+          if (error.message === 'Not authenticated') {
+            router.push('/auth');
+            return;
+          }
+        }
+        
+        if (data) {
+          setProfileData(data);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        // Don't redirect on errors, just show loading state
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProfile();
+  }, [router]);
+
+  // Update form data when modal opens
+  useEffect(() => {
+    if (showEditModal && profileData) {
+      setEditFormData({
+        full_name: profileData.full_name || '',
+        username: profileData.username || '',
+        bio: profileData.bio || '',
+        phone: profileData.phone || '',
+        location: profileData.location || '',
+        website_url: profileData.website_url || '',
+        followers_count: profileData.followers_count?.toString() || '',
+        engagement_rate: profileData.engagement_rate?.toString() || '',
+        niche: profileData.niche || '',
+        instagram_handle: profileData.instagram_handle || '',
+        tiktok_handle: profileData.tiktok_handle || '',
+        avatar: null,
+        avatarPreview: profileData.avatar_url || ''
+      });
+    }
+  }, [showEditModal, profileData]);
+
+  const handleSaveProfile = async () => {
+    if (!profileData) return;
+
+    setSaving(true);
+    try {
+      let avatarUrl = editFormData.avatarPreview;
+
+      // Upload new avatar if selected
+      if (editFormData.avatar) {
+        try {
+          const uploadResult = await uploadImage(editFormData.avatar, 'images');
+          avatarUrl = uploadResult.publicUrl;
+        } catch (uploadError) {
+          console.error('Avatar upload error:', uploadError);
+          // Continue with existing avatar if upload fails
+        }
+      }
+
+      // Prepare update data - parse numeric fields (handle string inputs)
+      let followersCount: number | null = null;
+      if (editFormData.followers_count && editFormData.followers_count.trim() !== '') {
+        const cleaned = editFormData.followers_count.replace(/[^0-9.]/g, '');
+        const parsed = parseInt(cleaned);
+        followersCount = isNaN(parsed) ? null : parsed;
+      }
+      
+      let engagementRate: number | null = null;
+      if (editFormData.engagement_rate && editFormData.engagement_rate.trim() !== '') {
+        const cleaned = editFormData.engagement_rate.replace('%', '').trim();
+        const parsed = parseFloat(cleaned);
+        engagementRate = isNaN(parsed) ? null : parsed;
+      }
+
+      // Build update data object - include ALL fields from the form
+      // Process handles carefully - preserve @ symbols and trim whitespace
+      const processHandle = (handle: string | undefined): string | undefined => {
+        if (!handle) return undefined;
+        const trimmed = handle.trim();
+        return trimmed === '' ? undefined : trimmed;
+      };
+
+      const updateData: Partial<Profile> = {
+        full_name: editFormData.full_name?.trim() || undefined,
+        username: editFormData.username?.trim() || undefined,
+        bio: editFormData.bio?.trim() || undefined,
+        phone: editFormData.phone?.trim() || undefined,
+        location: editFormData.location?.trim() || undefined,
+        website_url: editFormData.website_url?.trim() || undefined,
+        niche: editFormData.niche?.trim() || undefined,
+        instagram_handle: processHandle(editFormData.instagram_handle),
+        tiktok_handle: processHandle(editFormData.tiktok_handle),
+      };
+      
+      // Include numeric fields (use undefined if not provided, 0 if explicitly set to 0)
+      updateData.followers_count = followersCount !== null ? followersCount : undefined;
+      updateData.engagement_rate = engagementRate !== null ? engagementRate : undefined;
+      
+      // Include avatar if uploaded or if we have a preview (existing avatar)
+      if (avatarUrl) {
+        updateData.avatar_url = avatarUrl;
+      }
+
+      console.log('Updating profile with data:', updateData);
+      console.log('Instagram handle:', updateData.instagram_handle);
+      console.log('TikTok handle:', updateData.tiktok_handle);
+      
+      try {
+        const updatePromise = updateProfile(updateData);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Update timeout after 10 seconds')), 10000)
+        );
+        
+        const { data: updatedProfile, error } = await Promise.race([
+          updatePromise,
+          timeoutPromise
+        ]) as { data: any, error: any };
+
+        if (error) {
+          console.error('Error updating profile:', error);
+          const errorMessage = error?.message || 'Unknown error occurred';
+          alert(`Failed to update profile: ${errorMessage}. Please try again.`);
+          setSaving(false);
+          return;
+        }
+
+        if (updatedProfile) {
+          console.log('Profile updated successfully:', updatedProfile);
+          // Update local state with new profile data immediately
+          setProfileData(updatedProfile);
+          
+          // Reload profile in background (don't block on it)
+          getCurrentUserProfile()
+            .then(({ data: freshProfile }) => {
+              if (freshProfile) {
+                console.log('Profile reloaded:', freshProfile);
+                setProfileData(freshProfile);
+              }
+            })
+            .catch((reloadError) => {
+              console.error('Error reloading profile:', reloadError);
+              // Don't block on reload error, we already have updatedProfile
+            });
+          
+          setSaving(false);
+          setShowEditModal(false);
+          // Show success message
+          alert('Profile updated successfully!');
+        } else {
+          console.error('No profile data returned from update');
+          setSaving(false);
+          alert('Profile update completed but no data returned. Please refresh the page.');
+        }
+      } catch (timeoutError: any) {
+        console.error('Update timeout or error:', timeoutError);
+        setSaving(false);
+        alert(`Update timed out or failed: ${timeoutError?.message || 'Unknown error'}. Please try again.`);
+      }
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <i className="ri-loader-4-line text-4xl text-pink-500 animate-spin mb-4"></i>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileData && !loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-24">
+        <div className="text-center px-6">
+          <i className="ri-user-add-line text-4xl text-gray-400 mb-4"></i>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Profile Setup Required</h3>
+          <p className="text-gray-600 mb-6">Your profile is being set up. Please wait a moment and refresh, or complete your profile setup.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white font-semibold px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300"
+          >
+            Refresh Page
+          </button>
+        </div>
+        <AdvancedBottomNav userType="influencer" />
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
+
+  const nameParts = (profileData.full_name || 'User').split(" ");
+  const firstName = nameParts[0] || profileData.full_name || 'User';
   const formattedLastName = nameParts.slice(1).join(" ").toUpperCase();
-  const followerLabel = profileData.followers
-    ? `${profileData.followers} followers`
+  const followersCount = profileData.followers_count || 0;
+  const followersLabel = followersCount > 0 
+    ? `${followersCount >= 1000 ? (followersCount / 1000).toFixed(1) + 'K' : followersCount} followers`
     : "";
-  const contactEmail = `${profileData.username}@gmail.com`;
 
-  const socialLinks = [
-    {
+  const socialLinks = [];
+  if (profileData.tiktok_handle) {
+    socialLinks.push({
       icon: "ri-tiktok-fill",
-      handle: profileData.tiktok,
-      stats: followerLabel ? `- ${followerLabel}` : "",
-    },
-    {
+      handle: profileData.tiktok_handle,
+      stats: followersLabel ? `- ${followersLabel}` : "",
+    });
+  }
+  if (profileData.instagram_handle) {
+    socialLinks.push({
       icon: "ri-instagram-line",
-      handle: profileData.instagram,
-      stats: followerLabel ? `- ${followerLabel}` : "",
-    },
-  ];
+      handle: profileData.instagram_handle,
+      stats: followersLabel ? `- ${followersLabel}` : "",
+    });
+  }
 
-  const detailList = [
-    { icon: "ri-camera-3-line", text: profileData.bio },
-    { icon: "ri-map-pin-line", text: profileData.location },
-    { icon: "ri-mail-line", text: contactEmail },
-    ...(profileData.website
-      ? [{ icon: "ri-store-2-line", text: `Founder of ${profileData.website}` }]
-      : []),
-  ];
+  const detailList = [];
+  if (profileData.bio) {
+    detailList.push({ icon: "ri-camera-3-line", text: profileData.bio });
+  }
+  if (profileData.location) {
+    detailList.push({ icon: "ri-map-pin-line", text: profileData.location });
+  }
+  if (profileData.phone) {
+    detailList.push({ icon: "ri-phone-line", text: profileData.phone });
+  }
+  if (profileData.website_url) {
+    detailList.push({ icon: "ri-store-2-line", text: profileData.website_url });
+  }
+  if (profileData.niche) {
+    detailList.push({ icon: "ri-hashtag", text: profileData.niche });
+  }
+  if (profileData.engagement_rate) {
+    detailList.push({ icon: "ri-line-chart-line", text: `${profileData.engagement_rate}% engagement` });
+  }
 
   const portfolioItems = [
     {
@@ -208,13 +456,15 @@ export default function ProfilePage() {
             <div className="relative">
               <div className="w-24 h-24 rounded-full border-4 border-black overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=face"
+                  src={profileData.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    profileData.full_name || 'User'
+                  )}&background=random&size=160`}
                   alt="Profile"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      profileData.name
+                      profileData.full_name || 'User'
                     )}&background=random&size=160`;
                   }}
                 />
@@ -224,7 +474,7 @@ export default function ProfilePage() {
               <div className="flex  flex-col mb-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-gray-400 tracking-[0.35em]">
-                    {profileData.username.toUpperCase()}
+                    {profileData.username?.toUpperCase() || 'USER'}
                   </p>
                   <div className="flex items-center bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white px-3 py-1 rounded-xl space-x-2 shadow-md">
                     <i className="ri-star-fill text-sm"></i>
@@ -232,7 +482,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
-                  Member since 2024
+                  Member since {new Date(profileData.created_at).getFullYear()}
                 </p>
               </div>
           </div>
@@ -261,7 +511,10 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-3">
-              <button className="w-full border-2 border-purple-500 text-purple-600 font-semibold py-3 rounded-xl text-sm tracking-wide hover:bg-gradient-to-r hover:from-pink-500 hover:via-purple-500 hover:to-orange-500 hover:text-white transition-all duration-300">
+              <button 
+                onClick={() => setShowEditModal(true)}
+                className="w-full border-2 border-purple-500 text-purple-600 font-semibold py-3 rounded-xl text-sm tracking-wide hover:bg-gradient-to-r hover:from-pink-500 hover:via-purple-500 hover:to-orange-500 hover:text-white transition-all duration-300"
+              >
                 Edit My Information
               </button>
               <button className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white font-semibold py-3 rounded-xl text-sm tracking-wide hover:shadow-lg transition-all duration-300">
@@ -374,6 +627,242 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
+
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-0 sm:p-4 z-50">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full h-full sm:h-auto sm:max-h-[90vh] flex flex-col sm:max-w-2xl">
+            {/* Fixed Header */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b flex-shrink-0">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Edit Profile</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <i className="ri-close-line text-gray-600 text-xl"></i>
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
+              <div className="space-y-6 pb-4">
+              {/* Avatar Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Profile Picture
+                </label>
+                <div className="flex items-center space-x-4">
+                  {editFormData.avatarPreview && (
+                    <img
+                      src={editFormData.avatarPreview}
+                      alt="Preview"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  )}
+                  <label className="flex-1 cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setEditFormData({ ...editFormData, avatar: file });
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setEditFormData(prev => ({ ...prev, avatarPreview: reader.result as string }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <div className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 text-center text-sm text-gray-600 hover:border-pink-400 transition-colors">
+                      {editFormData.avatar ? 'Change Photo' : 'Upload Photo'}
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Full Name */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.full_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                  required
+                />
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.username}
+                  onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                />
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Bio
+                </label>
+                <textarea
+                  value={editFormData.bio}
+                  onChange={(e) => setEditFormData({ ...editFormData, bio: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800 resize-none"
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
+
+              {/* Phone and Location */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={editFormData.phone}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.location}
+                    onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                  />
+                </div>
+              </div>
+
+              {/* Website */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Website URL
+                </label>
+                <input
+                  type="url"
+                  value={editFormData.website_url}
+                  onChange={(e) => setEditFormData({ ...editFormData, website_url: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                  placeholder="https://..."
+                />
+              </div>
+
+              {/* Followers and Engagement */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Followers Count
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.followers_count}
+                    onChange={(e) => setEditFormData({ ...editFormData, followers_count: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                    placeholder="e.g., 10000 or 10K"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Engagement Rate (%)
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.engagement_rate}
+                    onChange={(e) => setEditFormData({ ...editFormData, engagement_rate: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                    placeholder="e.g., 4.2"
+                  />
+                </div>
+              </div>
+
+              {/* Niche */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Niche
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.niche}
+                  onChange={(e) => setEditFormData({ ...editFormData, niche: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                  placeholder="e.g., Fashion, Food, Lifestyle"
+                />
+              </div>
+
+              {/* Social Handles */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Instagram Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.instagram_handle}
+                    onChange={(e) => setEditFormData({ ...editFormData, instagram_handle: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                    placeholder="@username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    TikTok Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.tiktok_handle}
+                    onChange={(e) => setEditFormData({ ...editFormData, tiktok_handle: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-pink-500 outline-none text-gray-800"
+                    placeholder="@username"
+                  />
+                </div>
+              </div>
+            </div>
+            </div>
+
+            {/* Fixed Bottom Action Buttons */}
+            <div className="flex space-x-3 p-4 sm:p-6 pb-20 sm:pb-6 border-t bg-white rounded-b-3xl flex-shrink-0">
+              <button
+                onClick={() => setShowEditModal(false)}
+                disabled={saving}
+                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving || !editFormData.full_name}
+                className="flex-1 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {saving ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin mr-2"></i>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* App Bottom Navigation */}
       <AdvancedBottomNav userType="influencer" />

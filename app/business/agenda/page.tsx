@@ -1,75 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
-
-const thisWeekCollabs = [
-  {
-    id: 1,
-    influencerName: "Emma Wilson",
-    username: "@emmastyle",
-    profileImage: "https://readdy.ai/api/search-image?query=Young%20female%20lifestyle%20influencer%2C%20professional%20headshot%2C%20confident%20smile%2C%20modern%20portrait%20photography%2C%20bright%20natural%20lighting%2C%20social%20media%20personality&width=60&height=60&seq=influencer1&orientation=squarish",
-    offerTitle: "Free 3-Course Dinner",
-    date: "Dec 18, 2024",
-    time: "7:00 PM",
-    status: "confirmed",
-    visitInfo: {
-      arrivalTime: "2024-12-18T19:05:00Z",
-      isOnTime: true,
-      checkedIn: true,
-    },
-  },
-  {
-    id: 2,
-    influencerName: "Alex Chen",
-    username: "@alexeats",
-    profileImage: "https://readdy.ai/api/search-image?query=Young%20male%20food%20influencer%2C%20professional%20headshot%2C%20friendly%20expression%2C%20modern%20portrait%20photography%2C%20natural%20lighting%2C%20food%20blogger%20personality&width=60&height=60&seq=influencer2&orientation=squarish",
-    offerTitle: "Weekend Brunch Package",
-    date: "Dec 20, 2024",
-    time: "11:00 AM",
-    status: "pending",
-  },
-];
-
-const upcomingCollabs = [
-  {
-    id: 3,
-    influencerName: "Sarah Johnson",
-    username: "@sarahstyles",
-    profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=face",
-    offerTitle: "Designer Outfit Package",
-    date: "Dec 25, 2024",
-    time: "2:00 PM",
-    status: "confirmed",
-  },
-];
-
-const pastCollabs = [
-  {
-    id: 4,
-    influencerName: "Mike Tastes",
-    username: "@miketastes",
-    profileImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    offerTitle: "3-Course Dinner Experience",
-    date: "Dec 5, 2024",
-    time: "7:00 PM",
-    status: "completed",
-    rating: 5,
-  },
-  {
-    id: 5,
-    influencerName: "Lifestyle Lux",
-    username: "@lifestylelux",
-    profileImage: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-    offerTitle: "Weekend Brunch Feature",
-    date: "Nov 28, 2024",
-    time: "11:00 AM",
-    status: "completed",
-    rating: 4,
-  },
-];
+import { useBusinessData } from "@/contexts/BusinessDataContext";
+import { supabase } from "@/lib/supabase";
 
 // Get current week dates
 const getWeekDates = () => {
@@ -94,8 +31,93 @@ const getWeekDates = () => {
 };
 
 export default function BusinessAgendaPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"thisWeek" | "upcoming" | "past">("thisWeek");
   const weekDates = getWeekDates();
+  const { collaborations, refreshCollaborations } = useBusinessData();
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push('/auth');
+          return;
+        }
+
+        // Load collaborations - context handles caching
+        await refreshCollaborations();
+      } catch (error) {
+        console.error('Error loading agenda data:', error);
+      }
+    };
+
+    loadData();
+  }, [router, refreshCollaborations]);
+
+  // Get current week start (Monday)
+  const getWeekStart = () => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(today.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  };
+
+  const weekStart = getWeekStart();
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  // Filter collaborations by status and date
+  const thisWeekCollabs = useMemo(() => {
+    return (collaborations || []).filter((collab: any) => {
+      const collabDate = new Date(collab.scheduled_date);
+      return collabDate >= weekStart && collabDate <= weekEnd && collab.status === 'active';
+    }).map((collab: any) => ({
+      id: collab.id,
+      influencerName: collab.influencer?.full_name || 'Influencer',
+      username: collab.influencer?.username || '@influencer',
+      profileImage: collab.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.influencer?.full_name || 'Influencer')}&background=random&size=64`,
+      offerTitle: collab.offer?.title || 'Offer',
+      date: new Date(collab.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: collab.scheduled_time ? new Date(`2000-01-01T${collab.scheduled_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD',
+      status: collab.status === 'active' ? 'confirmed' : collab.status,
+    }));
+  }, [collaborations, weekStart, weekEnd]);
+
+  const upcomingCollabs = useMemo(() => {
+    return (collaborations || []).filter((collab: any) => {
+      const collabDate = new Date(collab.scheduled_date);
+      return collabDate > weekEnd && collab.status === 'active';
+    }).map((collab: any) => ({
+      id: collab.id,
+      influencerName: collab.influencer?.full_name || 'Influencer',
+      username: collab.influencer?.username || '@influencer',
+      profileImage: collab.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.influencer?.full_name || 'Influencer')}&background=random&size=64`,
+      offerTitle: collab.offer?.title || 'Offer',
+      date: new Date(collab.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: collab.scheduled_time ? new Date(`2000-01-01T${collab.scheduled_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD',
+      status: 'confirmed',
+    }));
+  }, [collaborations, weekEnd]);
+
+  const pastCollabs = useMemo(() => {
+    return (collaborations || []).filter((collab: any) => {
+      return collab.status === 'completed';
+    }).map((collab: any) => ({
+      id: collab.id,
+      influencerName: collab.influencer?.full_name || 'Influencer',
+      username: collab.influencer?.username || '@influencer',
+      profileImage: collab.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.influencer?.full_name || 'Influencer')}&background=random&size=64`,
+      offerTitle: collab.offer?.title || 'Offer',
+      date: new Date(collab.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: collab.scheduled_time ? new Date(`2000-01-01T${collab.scheduled_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD',
+      status: 'completed',
+      rating: 5, // Default rating - can be added to collaborations table later
+    }));
+  }, [collaborations]);
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -185,21 +207,6 @@ export default function BusinessAgendaPage() {
                         <span>{collab.time}</span>
                       </span>
                     </div>
-                    {collab.visitInfo?.checkedIn && (
-                      <div className="mt-2 flex items-center space-x-2">
-                        <span className={`text-xs px-2 py-1 rounded-full flex items-center space-x-1 ${
-                          collab.visitInfo.isOnTime 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-orange-100 text-orange-700'
-                        }`}>
-                          <i className={`ri-${collab.visitInfo.isOnTime ? 'check' : 'time'}-line`}></i>
-                          <span>{collab.visitInfo.isOnTime ? 'On Time' : 'Late Arrival'}</span>
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          Arrived: {new Date(collab.visitInfo.arrivalTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    )}
                   </div>
                   <div className="flex flex-col items-end space-y-2">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -209,7 +216,7 @@ export default function BusinessAgendaPage() {
                     }`}>
                       {collab.status.toUpperCase()}
                     </span>
-                    {!collab.visitInfo?.checkedIn && collab.status === "confirmed" && (
+                    {collab.status === "confirmed" && (
                       <span className="text-xs text-gray-500 flex items-center space-x-1">
                         <i className="ri-time-line"></i>
                         <span>Awaiting check-in</span>

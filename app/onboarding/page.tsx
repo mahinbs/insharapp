@@ -73,7 +73,7 @@ export default function OnboardingScreen() {
 
         {/* Dots indicator */}
         <div className="flex space-x-2 mb-8">
-          {onboardingSlides.map((_, index) => (
+          {onboardingSlides.map((_: any, index: number) => (
             <div
               key={index}
               className={`w-3 h-3 rounded-full transition-all duration-300 \${

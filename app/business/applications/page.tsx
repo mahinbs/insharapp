@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 import logo_dark from "../../../assetes/logo_dark.png";
+import { acceptApplication, declineApplication } from '@/lib/supabase-business';
+import { supabase } from '@/lib/supabase';
+import { useBusinessData } from '@/contexts/BusinessDataContext';
 
 const applications = [
   {
@@ -60,24 +64,146 @@ const applications = [
   }
 ];
 
-export default function BusinessApplications() {
+function BusinessApplicationsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const offerIdFilter = searchParams.get('offer');
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const {
+    applications,
+    stats,
+    applicationsLoading,
+    statsLoading,
+    refreshApplications,
+    refreshStats,
+    refreshCollaborations,
+  } = useBusinessData();
+  
+  // Don't block on loading - show cached data immediately
+  const loading = false;
 
-  const filteredApplications = applications.filter(app => {
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push('/auth');
+          return;
+        }
+
+        // Load data - context handles caching
+        await Promise.allSettled([
+          refreshApplications(offerIdFilter ? { offerId: offerIdFilter } : undefined),
+          refreshStats(),
+        ]);
+      } catch (error) {
+        console.error('Error loading applications:', error);
+      }
+    };
+
+    loadData();
+  }, [router, offerIdFilter, refreshApplications, refreshStats]);
+
+  // Transform applications to display format
+  const transformedApplications = applications.map((app: any) => ({
+    id: app.id,
+    influencerName: app.influencer?.full_name || 'Influencer',
+    username: app.influencer?.username || '@influencer',
+    followers: app.influencer?.followers_count ? `${Math.floor(app.influencer.followers_count / 1000)}K` : '0K',
+    engagement: app.influencer?.engagement_rate ? `${app.influencer.engagement_rate}%` : '0%',
+    niche: app.influencer?.niche || 'General',
+    profileImage: app.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.influencer?.full_name || 'Influencer')}&background=random&size=64`,
+    offerTitle: app.offer?.title || 'Offer',
+    appliedDate: app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'Recently',
+    status: app.status || 'pending',
+    message: app.message || 'No message provided',
+    influencer: app.influencer, // Keep full influencer object for modal
+  }));
+
+  const filteredApplications = transformedApplications.filter(app => {
     if (activeFilter === 'all') return true;
     return app.status === activeFilter;
   });
 
-  const handleAccept = (id: number) => {
-    // Handle accept logic
-    console.log('Accepted application:', id);
+  const handleAccept = async (id: string) => {
+    try {
+      // Check session before attempting to accept
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('You must be logged in to accept applications. Please log in and try again.');
+        router.push('/auth');
+        return;
+      }
+
+      const { data, error } = await acceptApplication(id);
+      if (error) {
+        console.error('Accept application error:', error);
+        // Provide more helpful error messages
+        if (error.message === 'Not authenticated') {
+          alert('Your session has expired. Please log in again.');
+          router.push('/auth');
+        } else if (error.message?.includes('authorized') || error.message?.includes('permission')) {
+          alert('You do not have permission to accept this application.');
+        } else {
+          alert('Failed to accept application: ' + (error.message || 'Unknown error'));
+        }
+        return;
+      }
+      
+      // Refresh applications, stats, and collaborations to get updated data
+      await Promise.allSettled([
+        refreshApplications(offerIdFilter ? { offerId: offerIdFilter } : undefined),
+        refreshStats(),
+        refreshCollaborations(),
+      ]);
+      
+      setSelectedApplication(null);
+      
+      // Move to accepted tab
+      setActiveFilter('accepted');
+      
+      alert('Application accepted! Collaboration created.');
+    } catch (err: any) {
+      console.error('Error accepting application:', err);
+      alert('Error: ' + (err.message || 'Failed to accept application. Please try again.'));
+    }
   };
 
-  const handleDecline = (id: number) => {
-    // Handle decline logic
-    console.log('Declined application:', id);
+  const handleDecline = async (id: string) => {
+    if (!confirm('Are you sure you want to decline this application?')) return;
+    
+    try {
+      const { data, error } = await declineApplication(id);
+      if (error) {
+        alert('Failed to decline application: ' + error.message);
+        return;
+      }
+      
+      // Refresh applications and stats to get updated data
+      await Promise.all([
+        refreshApplications(offerIdFilter ? { offerId: offerIdFilter } : undefined),
+        refreshStats(),
+      ]);
+      
+      setSelectedApplication(null);
+      
+      // Move to declined tab
+      setActiveFilter('declined');
+      
+      alert('Application declined.');
+    } catch (err: any) {
+      alert('Error: ' + (err.message || 'Failed to decline application'));
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -95,7 +221,9 @@ export default function BusinessApplications() {
               alt="Inshaar" 
               className="h-10 w-40 object-cover mb-1"
             />
-            <span className="text-white/80 text-sm">Applications</span>
+            <span className="text-white/80 text-sm">
+              {offerIdFilter ? 'Offer Applications' : 'Applications'}
+            </span>
           </div>
           <div className="w-10"></div>
         </div>
@@ -103,19 +231,19 @@ export default function BusinessApplications() {
         {/* Stats */}
         <div className="grid grid-cols-4 gap-3">
           <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">26</div>
+            <div className="text-white text-xl font-bold">{stats?.total_applications || 0}</div>
             <div className="text-white/80 text-xs">Total</div>
           </div>
           <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">15</div>
+            <div className="text-white text-xl font-bold">{stats?.pending_applications || 0}</div>
             <div className="text-white/80 text-xs">Pending</div>
           </div>
           <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">8</div>
+            <div className="text-white text-xl font-bold">{stats?.accepted_applications || 0}</div>
             <div className="text-white/80 text-xs">Accepted</div>
           </div>
           <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">3</div>
+            <div className="text-white text-xl font-bold">{(stats?.total_applications || 0) - (stats?.accepted_applications || 0) - (stats?.pending_applications || 0)}</div>
             <div className="text-white/80 text-xs">Declined</div>
           </div>
         </div>
@@ -177,6 +305,10 @@ export default function BusinessApplications() {
                   src={application.profileImage}
                   alt={application.influencerName}
                   className="w-16 h-16 rounded-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(application.influencerName)}&background=random&size=64`;
+                  }}
                 />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
@@ -212,7 +344,9 @@ export default function BusinessApplications() {
                   </div>
                   
                   <p className="text-gray-600 text-sm mb-2">Applied for: <span className="font-medium">{application.offerTitle}</span></p>
-                  <p className="text-gray-600 text-sm mb-4 italic">"{application.message}"</p>
+                  {application.message && (
+                    <p className="text-gray-600 text-sm mb-4 italic">"{application.message}"</p>
+                  )}
                   
                   {application.status === 'pending' && (
                     <div className="flex space-x-2">
@@ -289,38 +423,60 @@ export default function BusinessApplications() {
             
             <div className="text-center mb-6">
               <img 
-                src={selectedApplication.profileImage}
-                alt={selectedApplication.influencerName}
+                src={selectedApplication.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedApplication.influencer?.full_name || 'Influencer')}&background=random&size=80`}
+                alt={selectedApplication.influencer?.full_name}
                 className="w-20 h-20 rounded-full object-cover mx-auto mb-4"
               />
-              <h4 className="font-bold text-lg text-gray-800">{selectedApplication.influencerName}</h4>
-              <p className="text-purple-600">{selectedApplication.username}</p>
+              <h4 className="font-bold text-lg text-gray-800">{selectedApplication.influencer?.full_name || 'Influencer'}</h4>
+              <p className="text-purple-600">{selectedApplication.influencer?.username || '@influencer'}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{selectedApplication.followers}</div>
+                <div className="text-2xl font-bold text-purple-600">{selectedApplication.influencer?.followers_count ? `${Math.floor(selectedApplication.influencer.followers_count / 1000)}K` : '0K'}</div>
                 <div className="text-gray-500 text-sm">Followers</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-pink-600">{selectedApplication.engagement}</div>
+                <div className="text-2xl font-bold text-pink-600">{selectedApplication.influencer?.engagement_rate ? `${selectedApplication.influencer.engagement_rate}%` : '0%'}</div>
                 <div className="text-gray-500 text-sm">Engagement</div>
               </div>
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={() => handleAccept(selectedApplication.id)}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-semibold"
+              <Link
+                href={`/profile/${selectedApplication.influencer?.id || selectedApplication.id}`}
+                className="block w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-center hover:bg-gray-200 transition-colors"
               >
-                Accept Application
-              </button>
-              <button
-                onClick={() => handleDecline(selectedApplication.id)}
-                className="w-full bg-red-100 text-red-600 py-3 rounded-xl font-semibold"
-              >
-                Decline Application
-              </button>
+                View Full Profile
+              </Link>
+              {selectedApplication.status === 'pending' && (
+                <>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await handleAccept(selectedApplication.id);
+                      } catch (err) {
+                        console.error('Error in accept handler:', err);
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+                  >
+                    Accept Application
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await handleDecline(selectedApplication.id);
+                      } catch (err) {
+                        console.error('Error in decline handler:', err);
+                      }
+                    }}
+                    className="w-full bg-red-100 text-red-600 py-3 rounded-xl font-semibold hover:bg-red-200 transition-colors"
+                  >
+                    Decline Application
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -329,5 +485,17 @@ export default function BusinessApplications() {
       {/* Advanced Bottom Navigation */}
       <AdvancedBottomNav userType="business" />
     </div>
+  );
+}
+
+export default function BusinessApplications() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    }>
+      <BusinessApplicationsContent />
+    </Suspense>
   );
 }

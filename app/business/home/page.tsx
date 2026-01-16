@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessData } from "@/contexts/BusinessDataContext";
+import { acceptApplication, declineApplication } from "@/lib/supabase-business";
+import { supabase } from "@/lib/supabase";
 
 // Sample statistics data
 const weeklyReservations = [
@@ -124,6 +129,130 @@ const influencerRequests = [
 ];
 
 export default function BusinessDashboard() {
+  const router = useRouter();
+  const { user, loading: authLoading, session, isInitialized } = useAuth();
+  const {
+    profile: businessProfile,
+    stats,
+    offers: allOffers,
+    applications: allApplications,
+    conversations: allMessages,
+    collaborations: allCollaborations,
+    profileLoading,
+    statsLoading,
+    offersLoading,
+    applicationsLoading,
+    conversationsLoading,
+    collaborationsLoading,
+    refreshOffers,
+    refreshApplications,
+    refreshConversations,
+    refreshCollaborations,
+    refreshStats,
+  } = useBusinessData();
+  
+  // Only wait for auth - show page even if data is still loading
+  // This prevents infinite loading screens
+  const loading = authLoading || !isInitialized;
+  
+  // Get limited data for dashboard
+  const offers = (allOffers || []).slice(0, 3);
+  const applications = (allApplications || []).slice(0, 3);
+  const messages = (allMessages || []).slice(0, 3);
+  const collaborations = (allCollaborations || []).slice(0, 3);
+
+  // Load data when component mounts or auth is ready
+  useEffect(() => {
+    if (authLoading || !isInitialized) {
+      return;
+    }
+
+    if (!user || !session) {
+      router.push('/auth');
+      return;
+    }
+
+    // Load data in background - don't block rendering
+    // Context handles caching and errors gracefully
+    Promise.allSettled([
+      refreshOffers({ status: 'active', limit: 10 }),
+      refreshApplications({ status: 'pending', limit: 10 }),
+      refreshConversations(),
+      refreshCollaborations({ status: 'active' }),
+    ]).catch((error) => {
+      console.error('Error loading business data:', error);
+      // Don't block - data will load when available
+    });
+  }, [router, user, session, authLoading, isInitialized, refreshOffers, refreshApplications, refreshConversations, refreshCollaborations]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
+
+  // Use real data or fallback to sample data
+  const businessInfo = {
+    name: businessProfile?.business_name || "Your Business",
+    location: businessProfile?.business_location || businessProfile?.business_address || "Add Location",
+    rating: 0, // Rating not stored in profile, can be calculated from stats if needed
+    totalReservations: stats?.total_collaborations || 0,
+    acceptedReservations: stats?.accepted_applications || 0,
+    rejectedReservations: (stats?.total_applications || 0) - (stats?.accepted_applications || 0),
+    weeklyReservations: stats?.upcoming_collaborations || 0,
+  };
+
+  const briefStats = {
+    today: collaborations.filter(c => {
+      const collabDate = new Date(c.scheduled_date);
+      const today = new Date();
+      return collabDate.toDateString() === today.toDateString();
+    }).length,
+    thisWeek: stats?.upcoming_collaborations || 0,
+    thisMonth: stats?.total_collaborations || 0,
+    previousMonth: 0, // Would need additional query
+    total: stats?.total_collaborations || 0,
+    accepted: stats?.accepted_applications || 0,
+    rejected: (stats?.total_applications || 0) - (stats?.accepted_applications || 0),
+  };
+
+  const businessMessages = messages.map((msg, idx) => ({
+    id: idx + 1,
+    sender: msg.other_participant?.full_name || 'User',
+    username: msg.other_participant?.username || '@user',
+    profileImage: msg.other_participant?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.other_participant?.full_name || 'User')}&background=random&size=64`,
+    messageCount: 1,
+    unread: (msg.participant_1_id === businessProfile?.id ? msg.participant_1_unread_count : msg.participant_2_unread_count) > 0,
+    lastMessage: msg.last_message_preview || 'No messages yet',
+    timestamp: msg.last_message_at ? new Date(msg.last_message_at).toLocaleString() : 'Just now',
+  }));
+
+  const myOffers = offers.map((offer) => ({
+    id: offer.id,
+    title: offer.title,
+    description: offer.description,
+    applications: offer.applications_count || 0,
+    views: offer.views_count || 0,
+    status: offer.status === 'active' ? 'Active' : offer.status,
+    image: offer.main_image || offer.images?.[0] || 'https://picsum.photos/400/300',
+  }));
+
+  const influencerRequests = applications
+    .filter((app: any) => app.status === 'pending')
+    .map((app: any) => ({
+      id: app.id,
+      influencerId: app.influencer_id || app.influencer?.id,
+      influencerName: app.influencer?.full_name || 'Influencer',
+      username: app.influencer?.username || '@influencer',
+      followers: app.influencer?.followers_count ? `${Math.floor(app.influencer.followers_count / 1000)}K` : '0K',
+      engagement: app.influencer?.engagement_rate ? `${app.influencer.engagement_rate}%` : '0%',
+      niche: app.influencer?.niche || 'General',
+      profileImage: app.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.influencer?.full_name || 'Influencer')}&background=random&size=64`,
+      offerTitle: app.offer?.title || 'Offer',
+      appliedDate: app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'Recently',
+    }));
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -131,17 +260,25 @@ export default function BusinessDashboard() {
       <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-4 pt-4 pb-4">
         <div className="flex items-center justify-center">
           <div className="w-40 h-10">
-            <img
-              src={logo_dark.src}
-              alt="Inshaar"
-              className="h-full w-full object-cover mb-1"
-            />
+            {businessProfile?.business_logo ? (
+              <img
+                src={businessProfile.business_logo}
+                alt={businessInfo.name}
+                className="h-full w-full object-contain mb-1"
+              />
+            ) : (
+              <img
+                src={logo_dark.src}
+                alt="Inshaar"
+                className="h-full w-full object-cover mb-1"
+              />
+            )}
           </div>
         </div>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">
-              Welcome Back!
+              Welcome Back{businessInfo.name !== 'Your Business' ? `, ${businessInfo.name}` : '!'}
             </h1>
             <p className="text-white/80 text-sm">
               Manage your business dashboard
@@ -838,12 +975,20 @@ export default function BusinessDashboard() {
                       </div>
 
                       <div className="flex space-x-2">
-                        <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                        <Link 
+                          href={`/business/post-offer?edit=${offer.id}`}
+                          className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
+                        >
+                          <i className="ri-edit-line mr-1"></i>
                           Edit Offer
-                        </button>
-                        <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
+                        </Link>
+                        <Link 
+                          href={`/business/applications?offer=${offer.id}`}
+                          className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center"
+                        >
+                          <i className="ri-eye-line mr-1"></i>
                           View Applications
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -910,13 +1055,67 @@ export default function BusinessDashboard() {
                           </p>
 
                           <div className="flex space-x-2">
-                            <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                            <Link 
+                              href={`/profile/${request.influencerId || request.id}`}
+                              className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
+                            >
                               View Profile
-                            </button>
-                            <button className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors">
+                            </Link>
+                            <button 
+                              onClick={async () => {
+                                if (!confirm('Are you sure you want to decline this application?')) return;
+                                const { error } = await declineApplication(request.id);
+                                if (error) {
+                                  alert('Failed to decline: ' + error.message);
+                                } else {
+                                  await Promise.all([refreshApplications(), refreshStats()]);
+                                }
+                              }}
+                              className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors"
+                            >
                               Decline
                             </button>
-                            <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  // Check session before attempting to accept
+                                  const { data: { session } } = await supabase.auth.getSession();
+                                  if (!session) {
+                                    alert('You must be logged in to accept applications. Please log in and try again.');
+                                    router.push('/auth');
+                                    return;
+                                  }
+
+                                  const { data, error } = await acceptApplication(request.id);
+                                  if (error) {
+                                    console.error('Accept application error:', error);
+                                    // Provide more helpful error messages
+                                    if (error.message === 'Not authenticated') {
+                                      alert('Your session has expired. Please log in again.');
+                                      router.push('/auth');
+                                    } else if (error.message?.includes('authorized') || error.message?.includes('permission')) {
+                                      alert('You do not have permission to accept this application.');
+                                    } else {
+                                      alert('Failed to accept application: ' + (error.message || 'Unknown error'));
+                                    }
+                                    return;
+                                  }
+                                  
+                                  // Refresh applications and stats to get updated data
+                                  await Promise.allSettled([
+                                    refreshApplications(),
+                                    refreshStats(),
+                                    refreshCollaborations(),
+                                  ]);
+                                  
+                                  alert('Application accepted! Collaboration created.');
+                                } catch (err: any) {
+                                  console.error('Error accepting application:', err);
+                                  alert('Error: ' + (err.message || 'Failed to accept application. Please try again.'));
+                                }
+                              }}
+                              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                            >
                               Accept
                             </button>
                           </div>

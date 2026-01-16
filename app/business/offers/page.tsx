@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
+import { updateOffer, deleteOffer } from "@/lib/supabase-offers";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessData } from "@/contexts/BusinessDataContext";
 
 const myOffers = [
   {
@@ -69,12 +73,63 @@ const applications = [
 ];
 
 export default function BusinessOffers() {
+  const router = useRouter();
+  const { user, session, loading: authLoading } = useAuth();
+  const {
+    offers,
+    stats,
+    offersLoading,
+    statsLoading,
+    refreshOffers,
+    refreshStats,
+  } = useBusinessData();
+  
   const [activeTab, setActiveTab] = useState("offers");
+  // Don't block on loading - show cached data immediately
+  const loading = authLoading;
 
-  const filteredOffers = myOffers.filter((offer) => {
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user || !session) {
+      router.push('/auth');
+      return;
+    }
+
+    // Load data - context handles caching
+    Promise.allSettled([
+      refreshOffers(),
+      refreshStats(),
+    ]);
+  }, [router, user, session, authLoading, refreshOffers, refreshStats]);
+
+  const handleDeleteOffer = async (offerId: string) => {
+    if (!confirm('Are you sure you want to delete this offer?')) return;
+    
+    const { error } = await deleteOffer(offerId);
+    if (error) {
+      alert('Failed to delete offer: ' + error.message);
+      return;
+    }
+    
+    // Refresh offers to get updated data
+    await refreshOffers();
+  };
+
+  const filteredOffers = offers.filter((offer) => {
     if (activeTab === "offers") return true;
     return offer.status.toLowerCase() === activeTab;
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -104,15 +159,15 @@ export default function BusinessOffers() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">3</div>
+            <div className="text-white text-2xl font-bold">{stats?.total_offers || 0}</div>
             <div className="text-white/80 text-sm">Total Offers</div>
           </div>
           <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">26</div>
+            <div className="text-white text-2xl font-bold">{stats?.total_applications || 0}</div>
             <div className="text-white/80 text-sm">Applications</div>
           </div>
           <div className="bg-white/20 rounded-xl p-4 text-center">
-            <div className="text-white text-2xl font-bold">479</div>
+            <div className="text-white text-2xl font-bold">{stats?.total_views || 0}</div>
             <div className="text-white/80 text-sm">Total Views</div>
           </div>
         </div>
@@ -148,126 +203,99 @@ export default function BusinessOffers() {
       <div className="px-6 py-6">
         {activeTab === "offers" && (
           <div className="space-y-4">
-            {filteredOffers.map((offer) => (
-            <div
-              key={offer.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden"
-            >
-              <div className="relative">
-                <img
-                  src={offer.image}
-                  alt={offer.title}
-                  className="w-full h-48 object-cover"
-                />
-
+            {filteredOffers.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl">
+                <i className="ri-file-list-line text-6xl text-gray-300 mb-4"></i>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Offers Yet</h3>
+                <p className="text-gray-500 mb-6">Create your first offer to start attracting influencers</p>
+                <Link href="/business/post-offer">
+                  <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all">
+                    Create Offer
+                  </button>
+                </Link>
+              </div>
+            ) : (
+              filteredOffers.map((offer) => (
                 <div
-                  className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium ${
-                    offer.status === "Active"
-                      ? "bg-green-500 text-white"
-                      : "bg-yellow-500 text-white"
-                  }`}
+                  key={offer.id}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden"
                 >
-                  {offer.status}
-                </div>
-              </div>
+                  <div className="relative">
+                    <img
+                      src={offer.image}
+                      alt={offer.title}
+                      className="w-full h-48 object-cover"
+                    />
 
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-lg text-gray-800">
-                    {offer.title}
-                  </h3>
-                  <span className="text-gray-500 text-sm">
-                    {offer.createdDate}
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-4">{offer.description}</p>
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {offer.applications}
+                    <div
+                      className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium ${
+                        offer.status === "Active"
+                          ? "bg-green-500 text-white"
+                          : "bg-yellow-500 text-white"
+                      }`}
+                    >
+                      {offer.status}
                     </div>
-                    <div className="text-gray-500 text-sm">Applications</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-pink-600">
-                      {offer.views}
-                    </div>
-                    <div className="text-gray-500 text-sm">Views</div>
-                  </div>
-                </div>
 
-                <div className="flex space-x-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-1">
-                    <i className="ri-edit-line"></i>
-                    <span>Edit</span>
-                  </button>
-                  <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-1">
-                    <i className="ri-eye-line"></i>
-                    <span>View Details</span>
-                  </button>
-                  <button className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors">
-                    <i className="ri-delete-bin-line"></i>
-                  </button>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-lg text-gray-800">
+                        {offer.title}
+                      </h3>
+                      <span className="text-gray-500 text-sm">
+                        {offer.createdDate}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mb-4">{offer.description}</p>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {offer.applications}
+                        </div>
+                        <div className="text-gray-500 text-sm">Applications</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-pink-600">
+                          {offer.views}
+                        </div>
+                        <div className="text-gray-500 text-sm">Views</div>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <Link href={`/business/post-offer?edit=${offer.id}`} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-1">
+                        <i className="ri-edit-line"></i>
+                        <span>Edit</span>
+                      </Link>
+                      <Link href={`/offer-details/${offer.id}`} className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-1">
+                        <i className="ri-eye-line"></i>
+                        <span>View Details</span>
+                      </Link>
+                      <button 
+                        onClick={() => handleDeleteOffer(offer.id)}
+                        className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors"
+                      >
+                        <i className="ri-delete-bin-line"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            ))}
+              ))
+            )}
           </div>
         )}
 
         {activeTab === "applications" && (
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Influencer Applications</h2>
-            {applications.map((application) => (
-              <div key={application.id} className="bg-white rounded-2xl p-4 shadow-lg">
-                <div className="flex items-start space-x-4">
-                  <img 
-                    src={application.profileImage}
-                    alt={application.influencerName}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{application.influencerName}</h3>
-                        <p className="text-purple-600 text-sm">{application.username}</p>
-                      </div>
-                      <span className="text-gray-500 text-sm">{application.appliedDate}</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <div className="text-center">
-                        <div className="font-semibold text-gray-800">{application.followers}</div>
-                        <div className="text-gray-500 text-xs">Followers</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-gray-800">{application.engagement}</div>
-                        <div className="text-gray-500 text-xs">Engagement</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-gray-800">{application.niche}</div>
-                        <div className="text-gray-500 text-xs">Niche</div>
-                      </div>
-                    </div>
-                    
-                    <p className="text-gray-600 text-sm mb-3">Applied for: <span className="font-medium">{application.offerTitle}</span></p>
-                    
-                    <div className="flex space-x-2">
-                      <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                        View Profile
-                      </button>
-                      <button className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors">
-                        Decline
-                      </button>
-                      <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
-                        Accept
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <p className="text-gray-500 text-sm mb-4">View applications in the Applications page</p>
+            <Link href="/business/applications">
+              <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all">
+                Go to Applications
+              </button>
+            </Link>
           </div>
         )}
       </div>

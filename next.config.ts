@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  // Removed "export" output mode to support API routes (auth callback)
+  // output: "export",
   images: {
     unoptimized: true,
   },

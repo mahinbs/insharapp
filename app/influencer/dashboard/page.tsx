@@ -1,32 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
 import logo_colorful from "@/assetes/Logo3 (1).png";
+import { getOffers } from "@/lib/supabase-offers";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Offer } from "@/lib/supabase-offers";
 
-// Near Me Offers - Large image cards
-const nearMeOffers = [
-  {
-    id: 1,
-    businessName: "NOMAS TACOS",
-    location: "PARIS 75010",
-    image: "https://picsum.photos/seed/tacos-1/400/300",
-  },
-  {
-    id: 2,
-    businessName: "RIZ DJON-DJON",
-    location: "PARIS 75011",
-    image: "https://picsum.photos/seed/rice-1/400/300",
-  },
-  {
-    id: 3,
-    businessName: "BELLA VISTA",
-    location: "PARIS 75014",
-    image: "https://picsum.photos/seed/restaurant-1/400/300",
-  },
-];
+// Cities for discovery (static)
 
 // Cities for discovery
 const cities = [
@@ -66,52 +50,7 @@ const specialCravings = [
   },
 ];
 
-// Last Minute Offers
-const lastMinuteOffers = [
-  {
-    id: 1,
-    title: "LUNCH & DINNER",
-    businessName: "RESTAURANT KAYZO",
-    location: "ARNOUVILLE",
-    image: "https://picsum.photos/seed/kayzo-1/400/300",
-  },
-  {
-    id: 2,
-    title: "BRUNCH",
-    businessName: "KAYZO",
-    location: "ARNOUVILLE",
-    image: "https://picsum.photos/seed/kayzo-brunch-1/400/300",
-  },
-  {
-    id: 3,
-    title: "DINNER",
-    businessName: "CASA DI MARCO",
-    location: "DEUIL-LA-BARRE",
-    image: "https://picsum.photos/seed/casa-1/400/300",
-  },
-];
-
-// Urgent Offers - Horizontal scroll
-const urgentOffers = [
-  {
-    id: 1,
-    businessName: "CASA DI MARCO",
-    location: "DEUIL-LA-BARRE",
-    image: "https://picsum.photos/seed/urgent-1/400/300",
-  },
-  {
-    id: 2,
-    businessName: "CASA DI SOISY",
-    location: "SOISY-SOU",
-    image: "https://picsum.photos/seed/urgent-2/400/300",
-  },
-  {
-    id: 3,
-    businessName: "BELLA VISTA",
-    location: "PARIS 75014",
-    image: "https://picsum.photos/seed/urgent-3/400/300",
-  },
-];
+// Static data for cities and cravings (not from database)
 
 // Dynamic announcements data
 const dynamicAnnouncements = [
@@ -160,9 +99,81 @@ const dynamicAnnouncements = [
 ];
 
 export default function InfluencerDashboard() {
+  const router = useRouter();
+  const { user, session, loading: authLoading } = useAuth();
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Check authentication and fetch offers
+  useEffect(() => {
+    // Don't proceed if auth is still loading
+    if (authLoading) {
+      return;
+    }
+
+    let mounted = true;
+
+    async function init() {
+      try {
+        // Check if user is authenticated
+        if (!user || !session) {
+          if (mounted) {
+            router.push('/auth');
+          }
+          return;
+        }
+
+        // Fetch offers in parallel
+        const offersPromise = getOffers({ limit: 20 });
+        
+        // Wait for offers
+        const { data: offersData, error: offersError } = await offersPromise;
+        
+        if (!mounted) return;
+
+        if (offersError) {
+          console.error('Error fetching offers:', offersError);
+          setOffers([]);
+        } else if (offersData) {
+          setOffers(offersData);
+        } else {
+          setOffers([]);
+        }
+      } catch (error) {
+        console.error('Error in dashboard init:', error);
+        if (mounted) {
+          setOffers([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    init();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router, user, session, authLoading]);
 
   useEffect(() => {
+    // Wait for offers to load before setting up observers
+    if (loading) return;
+
+    // Fallback: Make sections visible after a short delay if observer doesn't fire
+    const fallbackTimeout = setTimeout(() => {
+      sectionRefs.current.forEach((ref) => {
+        if (ref) {
+          ref.classList.remove("opacity-0");
+          ref.classList.add("opacity-100");
+        }
+      });
+    }, 500);
+
     const observers = sectionRefs.current.map((ref, index) => {
       if (!ref) return null;
 
@@ -170,7 +181,8 @@ export default function InfluencerDashboard() {
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
-              entry.target.classList.add("animate-fadeIn");
+              entry.target.classList.remove("opacity-0");
+              entry.target.classList.add("opacity-100");
               observer.unobserve(entry.target);
             }
           });
@@ -183,9 +195,28 @@ export default function InfluencerDashboard() {
     });
 
     return () => {
+      clearTimeout(fallbackTimeout);
       observers.forEach((observer) => observer?.disconnect());
     };
-  }, []);
+  }, [loading, offers]);
+
+  // Filter offers based on search
+  const filteredOffers = offers.filter(offer => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      offer.title.toLowerCase().includes(query) ||
+      offer.business_name?.toLowerCase().includes(query) ||
+      offer.location.toLowerCase().includes(query) ||
+      offer.category.toLowerCase().includes(query)
+    );
+  });
+
+  // Limit offers per section (show all if fewer than max)
+  const nearMeOffers = filteredOffers.slice(0, 5); // Max 3-5 offers
+  const lastMinuteOffers = filteredOffers.slice(0, 6); // Max 4-6 offers
+  const urgentOffers = filteredOffers.slice(0, 10); // Max 7-10 offers
+  // All Restaurants shows all offers (no limit)
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -193,7 +224,7 @@ export default function InfluencerDashboard() {
       <div className="w-full border-t border-b border-gray-200 bg-white/10 backdrop-blur-sm overflow-hidden">
             <div className="flex animate-scroll">
               <div className="flex space-x-6 sm:space-x-8 whitespace-nowrap">
-                {[...Array(2)].map((_, setIndex) => (
+                {[...Array(2)].map((_: any, setIndex: number) => (
                   <div key={setIndex} className="flex space-x-6 sm:space-x-8">
                     {dynamicAnnouncements.map((announcement) => (
                   <div key={`${setIndex}-${announcement.id}`} className="flex items-center space-x-2 text-gray-700 py-3">
@@ -231,6 +262,8 @@ export default function InfluencerDashboard() {
             <input
               type="text"
               placeholder="SEARCH"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white border border-gray-200 transition-all duration-300 hover:border-pink-300"
             />
           </div>
@@ -239,50 +272,55 @@ export default function InfluencerDashboard() {
 
       {/* Main Content */}
       <div className="px-4 py-6 space-y-8 max-w-7xl mx-auto">
-        {/* Near Me Section */}
-        <div 
-          ref={(el) => { sectionRefs.current[0] = el; }}
-          className="opacity-0"
-        >
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
-            NEAR ME
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+          </div>
+        ) : (
+          <>
+            {/* Near Me Section - Max 5 offers */}
+            {nearMeOffers.length > 0 && (
+              <div 
+                ref={(el) => { sectionRefs.current[0] = el; }}
+                className="opacity-0 transition-opacity duration-500"
+              >
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
+                  NEAR ME
                 </h2>
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:overflow-visible lg:mx-0 lg:px-0">
-            <div className="flex space-x-4 pb-2 lg:grid lg:grid-cols-3 lg:gap-6 lg:pb-0" style={{ scrollSnapType: 'x mandatory' }}>
-              {nearMeOffers.map((offer, index) => (
-                <Link
-                  key={offer.id}
-                  href={`/offer-details/${offer.id}`}
-                  className="relative flex-shrink-0 w-[280px] sm:w-[320px] lg:w-full rounded-2xl overflow-hidden group animate-scaleIn"
-                  style={{ 
-                    scrollSnapAlign: 'start',
-                    animationDelay: `${(index + 1) * 0.1}s`
-                  }}
-                >
-                  <img
-                    src={offer.image}
-                    alt={offer.businessName}
-                    className="w-full h-[200px] sm:h-[240px] lg:h-[280px] xl:h-[300px] object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    <h3 className="text-white font-bold text-lg mb-1 group-hover:text-pink-300 transition-colors duration-300">
-                      {offer.businessName}
-                    </h3>
-                    <p className="text-white/90 text-sm">
-                      {offer.location}
-                    </p>
+                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:overflow-visible lg:mx-0 lg:px-0">
+                  <div className="flex space-x-4 pb-2 lg:grid lg:grid-cols-3 lg:gap-6 lg:pb-0" style={{ scrollSnapType: 'x mandatory' }}>
+                    {nearMeOffers.map((offer, index) => (
+                      <Link
+                        key={offer.id}
+                        href={`/offer-details/${offer.id}`}
+                        className="relative flex-shrink-0 w-[280px] sm:w-[320px] lg:w-full rounded-2xl overflow-hidden group animate-scaleIn"
+                        style={{ 
+                          scrollSnapAlign: 'start',
+                          animationDelay: `${(index + 1) * 0.1}s`
+                        }}
+                      >
+                        <img
+                          src={offer.main_image || offer.images?.[0] || 'https://picsum.photos/400/300'}
+                          alt={offer.business_name || offer.title}
+                          className="w-full h-[200px] sm:h-[240px] lg:h-[280px] xl:h-[300px] object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                          <h3 className="text-white font-bold text-lg mb-1 group-hover:text-pink-300 transition-colors duration-300">
+                            {offer.business_name || offer.title}
+                          </h3>
+                          <p className="text-white/90 text-sm">
+                            {offer.location}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                </Link>
-                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
-        {/* Discover Our Cities Section */}
-        <div 
-          ref={(el) => { sectionRefs.current[1] = el; }}
-          className="opacity-0"
-        >
+        {/* Discover Our Cities Section - Always Show */}
+        <div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
             DISCOVER OUR CITIES
           </h2>
@@ -310,19 +348,24 @@ export default function InfluencerDashboard() {
           </div>
               </div>
 
-        {/* A Special Craving? Section */}
-        <div 
-          ref={(el) => { sectionRefs.current[2] = el; }}
-          className="opacity-0"
-        >
+        {/* A Special Craving? Section - Always Show */}
+        <div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
             A SPECIAL CRAVING?
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-2 lg:gap-6 lg:max-w-4xl lg:mx-auto">
-            {specialCravings.map((item, index) => (
+            {specialCravings.map((item, index) => {
+              // Map cravings to categories
+              const categoryMap: { [key: string]: string } = {
+                'AFTERWORK': 'Restaurant',
+                'BRUNCH': 'Restaurant'
+              };
+              const category = categoryMap[item.title] || 'Restaurant';
+              
+              return (
               <Link
                 key={item.id}
-                href={`/search?q=${item.title.toLowerCase()}`}
+                href={`/category/${category.toLowerCase()}?type=${item.title.toLowerCase()}`}
                 className="relative rounded-2xl overflow-hidden group aspect-[4/5] lg:aspect-[3/4] animate-scaleIn hover:shadow-2xl transition-all duration-300"
                 style={{ animationDelay: `${(index + 1) * 0.1}s` }}
               >
@@ -338,13 +381,15 @@ export default function InfluencerDashboard() {
                   </h3>
                       </div>
               </Link>
-                ))}
+              );
+            })}
               </div>
             </div>
 
-        {/* To Try Urgently Banner */}
-        <div 
-          className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-2xl p-4 sm:p-6 lg:p-8 text-center animate-pulseGlow hover:scale-105 transition-transform duration-300 cursor-pointer animate-fadeIn lg:max-w-4xl lg:mx-auto"
+        {/* To Try Urgently Banner - Clickable */}
+        <Link 
+          href="/search"
+          className="block bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-2xl p-4 sm:p-6 lg:p-8 text-center animate-pulseGlow hover:scale-105 transition-transform duration-300 cursor-pointer animate-fadeIn lg:max-w-4xl lg:mx-auto"
         >
           <h2 
             className="text-xl sm:text-2xl lg:text-3xl font-black"
@@ -356,82 +401,134 @@ export default function InfluencerDashboard() {
           >
             TO TRY URGENTLY
           </h2>
-                  </div>
+        </Link>
 
-        {/* Last Minute Offers */}
-        <div 
-          ref={(el) => { sectionRefs.current[4] = el; }}
-          className="opacity-0"
-        >
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
-            LAST MINUTE OFFERS
-          </h2>
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:overflow-visible lg:mx-0 lg:px-0">
-            <div className="flex space-x-4 pb-2 lg:grid lg:grid-cols-3 lg:gap-6 lg:pb-0" style={{ scrollSnapType: 'x mandatory' }}>
-              {lastMinuteOffers.map((offer, index) => (
-                <Link
-                  key={offer.id}
-                  href={`/offer-details/${offer.id}`}
-                  className="relative flex-shrink-0 w-[280px] sm:w-[320px] lg:w-full rounded-2xl overflow-hidden group animate-scaleIn"
-                  style={{ 
-                    scrollSnapAlign: 'start',
-                    animationDelay: `${(index + 1) * 0.1}s`
-                  }}
-                >
-                  <img
-                    src={offer.image}
-                    alt={offer.businessName}
-                    className="w-full h-[200px] sm:h-[240px] lg:h-[280px] xl:h-[300px] object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    <h3 className="text-white font-bold text-base mb-1 group-hover:text-purple-300 transition-colors duration-300">
-                      {offer.title} - {offer.businessName}
-                    </h3>
-                    <p className="text-white/90 text-sm">
-                      {offer.location}
-                    </p>
-                  </div>
-                          </Link>
+            {/* Last Minute Offers - Max 6 offers */}
+            {lastMinuteOffers.length > 0 && (
+              <div 
+                ref={(el) => { sectionRefs.current[4] = el; }}
+                className="opacity-0 transition-opacity duration-500"
+              >
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
+                  LAST MINUTE OFFERS
+                </h2>
+                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:overflow-visible lg:mx-0 lg:px-0">
+                  <div className="flex space-x-4 pb-2 lg:grid lg:grid-cols-3 lg:gap-6 lg:pb-0" style={{ scrollSnapType: 'x mandatory' }}>
+                    {lastMinuteOffers.map((offer, index) => (
+                      <Link
+                        key={offer.id}
+                        href={`/offer-details/${offer.id}`}
+                        className="relative flex-shrink-0 w-[280px] sm:w-[320px] lg:w-full rounded-2xl overflow-hidden group animate-scaleIn"
+                        style={{ 
+                          scrollSnapAlign: 'start',
+                          animationDelay: `${(index + 1) * 0.1}s`
+                        }}
+                      >
+                        <img
+                          src={offer.main_image || offer.images?.[0] || 'https://picsum.photos/400/300'}
+                          alt={offer.title}
+                          className="w-full h-[200px] sm:h-[240px] lg:h-[280px] xl:h-[300px] object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                          <h3 className="text-white font-bold text-base mb-1 group-hover:text-purple-300 transition-colors duration-300">
+                            {offer.title}
+                          </h3>
+                          <p className="text-white/90 text-sm">
+                            {offer.business_name} • {offer.location}
+                          </p>
+                        </div>
+                      </Link>
                     ))}
+                  </div>
                 </div>
-          </div>
-      </div>
+              </div>
+            )}
 
-        {/* Urgent Offers - Horizontal Scroll */}
-        <div 
-          ref={(el) => { sectionRefs.current[5] = el; }}
-          className="opacity-0"
-        >
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:overflow-visible lg:mx-0 lg:px-0">
-            <div className="flex space-x-4 pb-2 lg:grid lg:grid-cols-3 lg:gap-6 lg:pb-0" style={{ scrollSnapType: 'x mandatory' }}>
-              {urgentOffers.map((offer, index) => (
-                <Link
-                  key={offer.id}
-                  href={`/offer-details/${offer.id}`}
-                  className="relative flex-shrink-0 w-[280px] sm:w-[320px] lg:w-full rounded-2xl overflow-hidden group animate-scaleIn"
-                  style={{ 
-                    scrollSnapAlign: 'start',
-                    animationDelay: `${(index + 1) * 0.1}s`
-                  }}
-                >
-                  <img
-                    src={offer.image}
-                    alt={offer.businessName}
-                    className="w-full h-[200px] sm:h-[240px] lg:h-[280px] xl:h-[300px] object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    <h3 className="text-white font-bold text-lg mb-1 group-hover:text-orange-300 transition-colors duration-300">
-                      {offer.businessName}
-                    </h3>
-                    <p className="text-white/90 text-sm">
-                      {offer.location}
-              </p>
-            </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
+            {/* Urgent Offers - Max 10 offers */}
+            {urgentOffers.length > 0 && (
+              <div 
+                ref={(el) => { sectionRefs.current[5] = el; }}
+                className="opacity-0 transition-opacity duration-500"
+              >
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
+                  URGENT OFFERS
+                </h2>
+                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 lg:overflow-visible lg:mx-0 lg:px-0">
+                  <div className="flex space-x-4 pb-2 lg:grid lg:grid-cols-3 lg:gap-6 lg:pb-0" style={{ scrollSnapType: 'x mandatory' }}>
+                    {urgentOffers.map((offer, index) => (
+                      <Link
+                        key={offer.id}
+                        href={`/offer-details/${offer.id}`}
+                        className="relative flex-shrink-0 w-[280px] sm:w-[320px] lg:w-full rounded-2xl overflow-hidden group animate-scaleIn"
+                        style={{ 
+                          scrollSnapAlign: 'start',
+                          animationDelay: `${(index + 1) * 0.1}s`
+                        }}
+                      >
+                        <img
+                          src={offer.main_image || offer.images?.[0] || 'https://picsum.photos/400/300'}
+                          alt={offer.business_name || offer.title}
+                          className="w-full h-[200px] sm:h-[240px] lg:h-[280px] xl:h-[300px] object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                          <h3 className="text-white font-bold text-lg mb-1 group-hover:text-orange-300 transition-colors duration-300">
+                            {offer.business_name || offer.title}
+                          </h3>
+                          <p className="text-white/90 text-sm">
+                            {offer.location}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* All Restaurants Section - Shows all offers (no limit) */}
+            {filteredOffers.length > 0 && (
+              <div className="opacity-100">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-4 tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 bg-clip-text text-transparent animate-gradient">
+                  ALL RESTAURANTS
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                  {filteredOffers.map((offer) => (
+                    <Link
+                      key={offer.id}
+                      href={`/offer-details/${offer.id}`}
+                      className="relative rounded-2xl overflow-hidden group animate-scaleIn hover:shadow-2xl transition-all duration-300"
+                    >
+                      <img
+                        src={offer.main_image || offer.images?.[0] || 'https://picsum.photos/400/300'}
+                        alt={offer.business_name || offer.title}
+                        className="w-full h-48 sm:h-56 lg:h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4">
+                        <h3 className="text-white font-bold text-lg mb-1 group-hover:text-pink-300 transition-colors duration-300">
+                          {offer.business_name || offer.title}
+                        </h3>
+                        <p className="text-white/90 text-sm">{offer.location}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Show empty message only if searching and no results, or if no offers at all */}
+            {filteredOffers.length === 0 && !loading && searchQuery && (
+              <div className="text-center py-20">
+                <i className="ri-inbox-line text-6xl text-gray-300 mb-4"></i>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  No offers match your search
+                </h3>
+                <p className="text-gray-500">
+                  Try adjusting your search or check back later
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <AdvancedBottomNav userType="influencer" />
