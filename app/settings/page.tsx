@@ -1,23 +1,74 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../components/AdvancedBottomNav";
-
-const options = [
-  {
-    icon: "ri-shield-line",
-    label: "Services",
-    action: (router: ReturnType<typeof useRouter>) => router.push("/services"),
-  },
-  { icon: "ri-notification-line", label: "Notifications" },
-  { icon: "ri-shield-check-line", label: "Privacy" },
-  { icon: "ri-question-line", label: "Help & Support" },
-  { icon: "ri-logout-box-line", label: "Sign Out", danger: true },
-];
+import { signOut } from "@/lib/supabase-auth";
+import { getCurrentUserProfile } from "@/lib/supabase-profile";
+import { supabase } from "@/lib/supabase";
 
 const page = () => {
   const router = useRouter();
+  const [userType, setUserType] = useState<'influencer' | 'business'>('business');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUserType = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push('/auth');
+          return;
+        }
+
+        const profileResult = await getCurrentUserProfile();
+        if (profileResult.data?.user_type) {
+          setUserType(profileResult.data.user_type);
+        }
+      } catch (error) {
+        console.error('Error loading user type:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserType();
+  }, []);
+
+  const handleSignOut = async (router: ReturnType<typeof useRouter>) => {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        alert('Failed to sign out. Please try again.');
+        return;
+      }
+      // Redirect to auth page after successful sign out
+      router.push('/auth');
+      // Force a page reload to clear any cached state
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Sign out error:', error);
+      alert('Failed to sign out. Please try again.');
+    }
+  };
+
+  const options = [
+    {
+      icon: "ri-shield-line",
+      label: "Services",
+      action: (router: ReturnType<typeof useRouter>) => router.push("/services"),
+    },
+    { icon: "ri-notification-line", label: "Notifications" },
+    { icon: "ri-shield-check-line", label: "Privacy" },
+    { icon: "ri-question-line", label: "Help & Support" },
+    { 
+      icon: "ri-logout-box-line", 
+      label: "Sign Out", 
+      danger: true,
+      action: handleSignOut,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -86,7 +137,7 @@ const page = () => {
         </div>
       </div>
 
-      <AdvancedBottomNav userType="business" />
+      {!loading && <AdvancedBottomNav userType={userType} />}
     </div>
   );
 };

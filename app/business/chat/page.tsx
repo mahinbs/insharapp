@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 import logo_dark from "../../../assetes/logo_dark.png";
 import { RiCustomerService2Fill } from "react-icons/ri";
+import { supabase } from '@/lib/supabase';
+import { useBusinessData } from '@/contexts/BusinessDataContext';
 
 const chatList = [
   {
@@ -54,13 +57,78 @@ const chatList = [
 ];
 
 export default function BusinessChatList() {
+  const router = useRouter();
+  const {
+    conversations,
+    collaborations,
+    profile: businessProfile,
+    conversationsLoading,
+    collaborationsLoading,
+    profileLoading,
+    refreshConversations,
+    refreshCollaborations,
+  } = useBusinessData();
+  
   const [searchQuery, setSearchQuery] = useState('');
+  // Don't block on loading - show cached data immediately
+  const loading = false;
 
-  const filteredChats = chatList.filter(chat =>
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push('/auth');
+          return;
+        }
+
+        // Load data - context handles caching
+        await Promise.allSettled([
+          refreshConversations(),
+          refreshCollaborations(),
+        ]);
+      } catch (error) {
+        console.error('Error loading chat data:', error);
+      }
+    };
+
+    loadData();
+  }, [router, refreshConversations, refreshCollaborations]);
+
+  // Transform conversations to chat list format
+  const transformedChatList = conversations.map((conv) => {
+    const collaboration = collaborations.find(c => 
+      c.influencer_id === conv.other_participant?.id
+    );
+    
+    return {
+      id: conv.id,
+      name: conv.other_participant?.full_name || 'User',
+      username: conv.other_participant?.username || '@user',
+      lastMessage: conv.last_message_preview || 'No messages yet',
+      time: conv.last_message_at 
+        ? new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : 'Just now',
+      unread: (conv.participant_1_unread_count || 0) + (conv.participant_2_unread_count || 0),
+      avatar: conv.other_participant?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_participant?.full_name || 'User')}&background=random&size=64`,
+      online: false, // Would need real-time subscription
+      collaboration: collaboration?.offer?.title || 'Collaboration'
+    };
+  });
+
+  const filteredChats = transformedChatList.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     chat.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     chat.collaboration.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -73,11 +141,19 @@ export default function BusinessChatList() {
             </div>
           </Link>
           <div className="flex flex-col items-center">
-            <img 
-              src={logo_dark.src}
-              alt="Inshaar" 
-              className="h-10 w-40 object-cover mb-1"
-            />
+            {businessProfile?.business_logo ? (
+              <img 
+                src={businessProfile.business_logo}
+                alt={businessProfile.business_name || 'Business'}
+                className="h-10 w-40 object-contain mb-1"
+              />
+            ) : (
+              <img 
+                src={logo_dark.src}
+                alt="Inshaar" 
+                className="h-10 w-40 object-cover mb-1"
+              />
+            )}
             <span className="text-white/80 text-sm">Messages</span>
           </div>
           <Link href="/help">

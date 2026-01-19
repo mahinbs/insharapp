@@ -1,19 +1,25 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
 import QRScanner from "../../components/QRScanner";
+import { getInfluencerCollaborations } from "@/lib/supabase-collaborations";
+import { getInfluencerApplications } from "@/lib/supabase-applications";
+import { getCurrentUser } from "@/lib/supabase-auth";
+import type { Collaboration as SupabaseCollaboration } from "@/lib/supabase-collaborations";
+import type { Application } from "@/lib/supabase-applications";
 
 interface Collaboration {
-  id: number;
+  id: string;
   businessName: string;
   businessLogo: string;
   title: string;
   date: string;
   time?: string;
-  status: "pending" | "approved" | "expired";
+  status: "pending" | "approved" | "expired" | "completed" | "active";
   uploadedImage?: string;
   businessId?: string;
   visitInfo?: {
@@ -23,64 +29,99 @@ interface Collaboration {
   };
 }
 
-const initialCollaborations: Collaboration[] = [
-  {
-    id: 1,
-    businessName: "Bella Vista Restaurant",
-    businessLogo:
-      "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20logo%2C%20modern%20dining%20establishment%2C%20sophisticated%20branding%2C%20clean%20minimalist%20design%2C%20professional%20restaurant%20identity%2C%20upscale%20dining%20logo&width=60&height=60&seq=resto3&orientation=squarish",
-    title: "Free 3-Course Dinner",
-    date: "Dec 15, 2024",
-    time: "7:00 PM",
-    status: "pending",
-    businessId: "business-bella-vista-001",
-  },
-  {
-    id: 2,
-    businessName: "Café Mocha",
-    businessLogo:
-      "https://readdy.ai/api/search-image?query=Modern%20coffee%20shop%20logo%2C%20elegant%20caf%C3%A9%20branding%2C%20minimalist%20coffee%20brand%20identity%2C%20sophisticated%20caf%C3%A9%20logo%20design%2C%20premium%20coffee%20house%20branding&width=60&height=60&seq=cafe1&orientation=squarish",
-    title: "Weekend Brunch Feature",
-    date: "Dec 10, 2024",
-    time: "11:00 AM",
-    status: "pending",
-    businessId: "business-cafe-mocha-001",
-  },
-  {
-    id: 3,
-    businessName: "Luxe Beauty Salon",
-    businessLogo:
-      "https://readdy.ai/api/search-image?query=Modern%20beauty%20salon%20logo%2C%20elegant%20spa%20branding%2C%20luxury%20beauty%20brand%20identity%2C%20sophisticated%20salon%20logo%20design%2C%20premium%20beauty%20house%20branding&width=60&height=60&seq=beauty1&orientation=squarish",
-    title: "Complete Hair Makeover",
-    date: "Dec 5, 2024",
-    time: "2:00 PM",
-    status: "approved",
-    businessId: "business-luxe-beauty-001",
-  },
-  {
-    id: 4,
-    businessName: "Urban Threads",
-    businessLogo:
-      "https://readdy.ai/api/search-image?query=Modern%20fashion%20boutique%20logo%2C%20trendy%20clothing%20brand%20identity%2C%20urban%20fashion%20logo%2C%20stylish%20apparel%20branding%2C%20contemporary%20fashion%20design&width=60&height=60&seq=fashion2&orientation=squarish",
-    title: "Designer Outfit Package",
-    date: "Nov 20, 2024",
-    status: "expired",
-    businessId: "business-urban-threads-001",
-  },
-];
-
 export default function CollaborationsPage() {
-  const [collaborations, setCollaborations] = useState<Collaboration[]>(initialCollaborations);
+  const router = useRouter();
+  const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCollab, setSelectedCollab] = useState<Collaboration | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerCollab, setScannerCollab] = useState<Collaboration | null>(null);
 
+  // Fetch collaborations and applications
+  useEffect(() => {
+    async function fetchData() {
+      // Check authentication
+      const { data: user, error: authError } = await getCurrentUser();
+      if (authError || !user) {
+        router.push('/auth');
+        return;
+      }
+
+      try {
+        // Fetch collaborations
+        const { data: collabs, error: collabError } = await getInfluencerCollaborations();
+        if (collabError) {
+          console.error('Error fetching collaborations:', collabError);
+        }
+
+        // Fetch applications
+        const { data: applications, error: appError } = await getInfluencerApplications();
+        if (appError) {
+          console.error('Error fetching applications:', appError);
+        }
+
+        // Combine and transform data
+        const allItems: Collaboration[] = [];
+
+        // Add applications as pending/approved
+        if (applications) {
+          applications.forEach((app: Application) => {
+            const offer = app.offer as any;
+            const business = offer?.business || {};
+            allItems.push({
+              id: app.id,
+              businessName: business.business_name || offer?.business_name || 'Business',
+              businessLogo: business.business_logo || offer?.business_logo || 'https://picsum.photos/60/60',
+              title: offer?.title || 'Offer',
+              date: app.scheduled_date ? new Date(app.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(app.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              time: app.scheduled_time || undefined,
+              status: app.status === 'accepted' ? 'approved' : app.status === 'declined' ? 'expired' : 'pending',
+              businessId: offer?.business_id
+            });
+          });
+        }
+
+        // Add collaborations
+        if (collabs) {
+          collabs.forEach((collab: SupabaseCollaboration) => {
+            const offer = collab.offer as any;
+            const business = (collab.business as any) || {};
+            allItems.push({
+              id: collab.id,
+              businessName: business.business_name || 'Business',
+              businessLogo: business.business_logo || 'https://picsum.photos/60/60',
+              title: offer?.title || 'Collaboration',
+              date: new Date(collab.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              time: collab.scheduled_time,
+              status: collab.status === 'completed' ? 'completed' : collab.status === 'active' ? 'approved' : collab.status as any,
+              uploadedImage: collab.proof_image_url,
+              businessId: collab.business_id,
+              visitInfo: collab.checked_in_at ? {
+                arrivalTime: collab.checked_in_at,
+                isOnTime: collab.is_on_time || false,
+                checkedIn: true
+              } : undefined
+            });
+          });
+        }
+
+        setCollaborations(allItems);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [router]);
+
   const pendingCollabs = collaborations.filter(c => c.status === "pending" && !c.uploadedImage);
-  const approvedCollabs = collaborations.filter(c => c.status === "approved" && !c.uploadedImage);
+  const approvedCollabs = collaborations.filter(c => (c.status === "approved" || c.status === "active") && !c.uploadedImage);
   const expiredCollabs = collaborations.filter(c => c.status === "expired");
-  const completedCollabs = collaborations.filter(c => c.uploadedImage);
+  const completedCollabs = collaborations.filter(c => c.uploadedImage || c.status === "completed");
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -159,6 +200,14 @@ export default function CollaborationsPage() {
     };
     return styles[status as keyof typeof styles] || styles.pending;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pb-24">

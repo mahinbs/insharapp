@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 import logo_dark from "../../../assetes/logo_dark.png";
+import { acceptApplication, declineApplication } from '@/lib/supabase-business';
+import { supabase } from '@/lib/supabase';
+import { useBusinessData } from '@/contexts/BusinessDataContext';
 
 const applications = [
   {
@@ -60,73 +64,244 @@ const applications = [
   }
 ];
 
-export default function BusinessApplications() {
+function BusinessApplicationsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const offerIdFilter = searchParams.get('offer');
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const {
+    applications,
+    stats,
+    applicationsLoading,
+    statsLoading,
+    refreshApplications,
+    refreshStats,
+    refreshCollaborations,
+  } = useBusinessData();
+  
+  // Don't block on loading - show cached data immediately
+  const loading = false;
 
-  const filteredApplications = applications.filter(app => {
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          if (isMounted) {
+            router.push('/auth');
+          }
+          return;
+        }
+
+        if (!isMounted) return;
+
+        // Load data - context handles caching
+        // Force refresh when offerIdFilter changes
+        const results = await Promise.allSettled([
+          refreshApplications(offerIdFilter ? { offerId: offerIdFilter } : {}),
+          refreshStats(),
+        ]);
+        
+        // Check for errors but don't log AbortErrors
+        results.forEach((result) => {
+          if (result.status === 'rejected' && isMounted) {
+            const error = result.reason;
+            if (error?.name !== 'AbortError' && !error?.message?.includes('aborted')) {
+              console.error('Error loading applications:', error);
+            }
+          }
+        });
+      } catch (error: any) {
+        // Ignore AbortErrors - they're expected when component unmounts
+        if (isMounted && error?.name !== 'AbortError' && !error?.message?.includes('aborted')) {
+          console.error('Error loading applications:', error);
+        }
+      }
+    };
+
+    loadData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [router, offerIdFilter, refreshApplications, refreshStats]);
+
+  // Transform applications to display format
+  const transformedApplications = applications.map((app: any) => ({
+    id: app.id,
+    influencerName: app.influencer?.full_name || 'Influencer',
+    username: app.influencer?.username || '@influencer',
+    followers: app.influencer?.followers_count ? `${Math.floor(app.influencer.followers_count / 1000)}K` : '0K',
+    engagement: app.influencer?.engagement_rate ? `${app.influencer.engagement_rate}%` : '0%',
+    niche: app.influencer?.niche || 'General',
+    profileImage: app.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.influencer?.full_name || 'Influencer')}&background=random&size=64`,
+    offerTitle: app.offer?.title || 'Offer',
+    appliedDate: app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'Recently',
+    status: (app.status || 'pending').toLowerCase(),
+    message: app.message || 'No message provided',
+    influencer: app.influencer, // Keep full influencer object for modal
+  }));
+
+  const filteredApplications = transformedApplications.filter(app => {
     if (activeFilter === 'all') return true;
-    return app.status === activeFilter;
+    // Normalize status for comparison
+    const appStatus = (app.status || 'pending').toLowerCase();
+    const filterStatus = activeFilter.toLowerCase();
+    return appStatus === filterStatus;
   });
 
-  const handleAccept = (id: number) => {
-    // Handle accept logic
-    console.log('Accepted application:', id);
+  const handleAccept = async (id: string) => {
+    try {
+      // Check session before attempting to accept
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('You must be logged in to accept applications. Please log in and try again.');
+        router.push('/auth');
+        return;
+      }
+
+      const { data, error } = await acceptApplication(id);
+      if (error) {
+        console.error('Accept application error:', error);
+        // Provide more helpful error messages
+        if (error.message === 'Not authenticated') {
+          alert('Your session has expired. Please log in again.');
+          router.push('/auth');
+        } else if (error.message?.includes('authorized') || error.message?.includes('permission')) {
+          alert('You do not have permission to accept this application.');
+        } else {
+          alert('Failed to accept application: ' + (error.message || 'Unknown error'));
+        }
+        return;
+      }
+      
+      // Close modal if open
+      setSelectedApplication(null);
+      
+      // Move to accepted tab
+      setActiveFilter('accepted');
+      
+      alert('Application accepted! Collaboration created.');
+      
+      // Refresh all data to get updated counts (non-blocking)
+      // Use setTimeout to avoid race conditions and don't await
+      setTimeout(() => {
+        Promise.allSettled([
+          refreshApplications(offerIdFilter ? { offerId: offerIdFilter } : {}),
+          refreshStats(),
+          refreshCollaborations(),
+        ]).catch(() => {
+          // Silently ignore errors - data will refresh on next navigation
+        });
+      }, 200);
+      
+    } catch (err: any) {
+      console.error('Error accepting application:', err);
+      // Only show error if it's not an AbortError
+      if (err?.name !== 'AbortError' && !err?.message?.includes('aborted')) {
+        alert('Error: ' + (err.message || 'Failed to accept application. Please try again.'));
+      }
+    }
   };
 
-  const handleDecline = (id: number) => {
-    // Handle decline logic
-    console.log('Declined application:', id);
+  const handleDecline = async (id: string) => {
+    if (!confirm('Are you sure you want to decline this application?')) return;
+    
+    try {
+      const { data, error } = await declineApplication(id);
+      if (error) {
+        alert('Failed to decline application: ' + error.message);
+        return;
+      }
+      
+      // Close modal if open
+      setSelectedApplication(null);
+      
+      // Move to declined tab
+      setActiveFilter('declined');
+      
+      alert('Application declined.');
+      
+      // Refresh all data to get updated counts (non-blocking)
+      // Use setTimeout to avoid race conditions and don't await
+      setTimeout(() => {
+        Promise.allSettled([
+          refreshApplications(offerIdFilter ? { offerId: offerIdFilter } : {}),
+          refreshStats(),
+        ]).catch(() => {
+          // Silently ignore errors - data will refresh on next navigation
+        });
+      }, 200);
+      
+    } catch (err: any) {
+      // Only show error if it's not an AbortError
+      if (err?.name !== 'AbortError' && !err?.message?.includes('aborted')) {
+        alert('Error: ' + (err.message || 'Failed to decline application'));
+      }
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-6 pt-12 pb-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 px-4 sm:px-6 pt-8 sm:pt-12 pb-4 sm:pb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <Link href="/business/home">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <i className="ri-arrow-left-line text-white text-xl"></i>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <i className="ri-arrow-left-line text-white text-lg sm:text-xl"></i>
             </div>
           </Link>
           <div className="flex flex-col items-center">
             <img 
               src={logo_dark.src}
               alt="Inshaar" 
-              className="h-10 w-40 object-cover mb-1"
+              className="h-8 sm:h-10 w-32 sm:w-40 object-cover mb-1"
             />
-            <span className="text-white/80 text-sm">Applications</span>
+            <span className="text-white/80 text-xs sm:text-sm">
+              {offerIdFilter ? 'Offer Applications' : 'Applications'}
+            </span>
           </div>
-          <div className="w-10"></div>
+          <div className="w-9 sm:w-10"></div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3">
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">26</div>
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+          <div className="bg-white/20 rounded-xl p-2 sm:p-3 text-center">
+            <div className="text-white text-lg sm:text-xl font-bold">{stats?.total_applications || 0}</div>
             <div className="text-white/80 text-xs">Total</div>
           </div>
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">15</div>
+          <div className="bg-white/20 rounded-xl p-2 sm:p-3 text-center">
+            <div className="text-white text-lg sm:text-xl font-bold">{stats?.pending_applications || 0}</div>
             <div className="text-white/80 text-xs">Pending</div>
           </div>
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">8</div>
+          <div className="bg-white/20 rounded-xl p-2 sm:p-3 text-center">
+            <div className="text-white text-lg sm:text-xl font-bold">{stats?.accepted_applications || 0}</div>
             <div className="text-white/80 text-xs">Accepted</div>
           </div>
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <div className="text-white text-xl font-bold">3</div>
+          <div className="bg-white/20 rounded-xl p-2 sm:p-3 text-center">
+            <div className="text-white text-lg sm:text-xl font-bold">{(stats?.total_applications || 0) - (stats?.accepted_applications || 0) - (stats?.pending_applications || 0)}</div>
             <div className="text-white/80 text-xs">Declined</div>
           </div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-white px-6 py-4 shadow-sm">
-        <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
+      <div className="bg-white px-4 sm:px-6 py-3 sm:py-4 shadow-sm">
+        <div className="flex space-x-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
           <button
             onClick={() => setActiveFilter('all')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-300 ${
+            className={`flex-1 min-w-[60px] py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
               activeFilter === 'all'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-800'
@@ -136,7 +311,7 @@ export default function BusinessApplications() {
           </button>
           <button
             onClick={() => setActiveFilter('pending')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-300 ${
+            className={`flex-1 min-w-[60px] py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
               activeFilter === 'pending'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-800'
@@ -146,7 +321,7 @@ export default function BusinessApplications() {
           </button>
           <button
             onClick={() => setActiveFilter('accepted')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-300 ${
+            className={`flex-1 min-w-[60px] py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
               activeFilter === 'accepted'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-800'
@@ -156,7 +331,7 @@ export default function BusinessApplications() {
           </button>
           <button
             onClick={() => setActiveFilter('declined')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-300 ${
+            className={`flex-1 min-w-[60px] py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
               activeFilter === 'declined'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-800'
@@ -168,93 +343,109 @@ export default function BusinessApplications() {
       </div>
 
       {/* Applications List */}
-      <div className="px-6 py-6">
+      <div className="px-4 sm:px-6 py-4 sm:py-6">
         <div className="space-y-4">
           {filteredApplications.map((application) => (
-            <div key={application.id} className="bg-white rounded-2xl p-4 shadow-lg">
-              <div className="flex items-start space-x-4">
+            <div key={application.id} data-application-id={application.id} className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg overflow-hidden">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
                 <img 
                   src={application.profileImage}
                   alt={application.influencerName}
-                  className="w-16 h-16 rounded-full object-cover"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover flex-shrink-0"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(application.influencerName)}&background=random&size=64`;
+                  }}
                 />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold text-gray-800">{application.influencerName}</h3>
-                      <p className="text-purple-600 text-sm">{application.username}</p>
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-gray-800 text-base sm:text-lg truncate">{application.influencerName}</h3>
+                      <p className="text-purple-600 text-sm truncate">{application.username}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                         application.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
                         application.status === 'accepted' ? 'bg-green-100 text-green-600' :
                         'bg-red-100 text-red-600'
                       }`}>
                         {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                       </span>
-                      <span className="text-gray-500 text-sm">{application.appliedDate}</span>
+                      <span className="text-gray-500 text-xs sm:text-sm whitespace-nowrap">{application.appliedDate}</span>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-3">
                     <div className="text-center">
-                      <div className="font-semibold text-gray-800">{application.followers}</div>
+                      <div className="font-semibold text-gray-800 text-sm sm:text-base">{application.followers}</div>
                       <div className="text-gray-500 text-xs">Followers</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-gray-800">{application.engagement}</div>
+                      <div className="font-semibold text-gray-800 text-sm sm:text-base">{application.engagement}</div>
                       <div className="text-gray-500 text-xs">Engagement</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-gray-800">{application.niche}</div>
+                      <div className="font-semibold text-gray-800 text-sm sm:text-base truncate">{application.niche}</div>
                       <div className="text-gray-500 text-xs">Niche</div>
                     </div>
                   </div>
                   
-                  <p className="text-gray-600 text-sm mb-2">Applied for: <span className="font-medium">{application.offerTitle}</span></p>
-                  <p className="text-gray-600 text-sm mb-4 italic">"{application.message}"</p>
+                  <p className="text-gray-600 text-sm mb-2 break-words">
+                    Applied for: <span className="font-medium break-words">{application.offerTitle}</span>
+                  </p>
+                  {application.message && (
+                    <p className="text-gray-600 text-sm mb-4 italic break-words">"{application.message}"</p>
+                  )}
                   
                   {application.status === 'pending' && (
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
                       <button 
                         onClick={() => setSelectedApplication(application)}
-                        className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-1"
+                        className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-3 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-1.5 text-sm sm:text-base min-w-0"
                       >
-                        <i className="ri-user-line"></i>
-                        <span>View Profile</span>
+                        <i className="ri-user-line text-base"></i>
+                        <span className="truncate">View Profile</span>
                       </button>
                       <button 
-                        onClick={() => handleDecline(application.id)}
-                        className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center justify-center space-x-1"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDecline(application.id);
+                        }}
+                        className="decline-button flex-1 bg-red-100 text-red-600 py-2.5 px-3 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-w-0"
                       >
-                        <i className="ri-close-line"></i>
-                        <span>Decline</span>
+                        <i className="ri-close-line text-base"></i>
+                        <span className="truncate">Decline</span>
                       </button>
                       <button 
-                        onClick={() => handleAccept(application.id)}
-                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-1"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAccept(application.id);
+                        }}
+                        className="accept-button flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2.5 px-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-w-0"
                       >
-                        <i className="ri-check-line"></i>
-                        <span>Accept</span>
+                        <i className="ri-check-line text-base"></i>
+                        <span className="truncate">Accept</span>
                       </button>
                     </div>
                   )}
 
                   {application.status === 'accepted' && (
-                    <div className="flex space-x-2">
-                      <button className="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center justify-center space-x-1">
-                        <i className="ri-message-line"></i>
-                        <span>Message</span>
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                      <button className="flex-1 bg-blue-100 text-blue-600 py-2.5 px-3 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-1.5 text-sm sm:text-base min-w-0">
+                        <i className="ri-message-line text-base"></i>
+                        <span className="truncate">Message</span>
                       </button>
-                      <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-1">
-                        <i className="ri-calendar-line"></i>
-                        <span>Schedule</span>
+                      <button className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2.5 px-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 text-sm sm:text-base min-w-0">
+                        <i className="ri-calendar-line text-base"></i>
+                        <span className="truncate">Schedule</span>
                       </button>
                     </div>
                   )}
 
                   {application.status === 'declined' && (
-                    <div className="text-center">
+                    <div className="text-center mt-4">
                       <span className="text-gray-500 text-sm">Application declined</span>
                     </div>
                   )}
@@ -289,38 +480,60 @@ export default function BusinessApplications() {
             
             <div className="text-center mb-6">
               <img 
-                src={selectedApplication.profileImage}
-                alt={selectedApplication.influencerName}
+                src={selectedApplication.influencer?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedApplication.influencer?.full_name || 'Influencer')}&background=random&size=80`}
+                alt={selectedApplication.influencer?.full_name}
                 className="w-20 h-20 rounded-full object-cover mx-auto mb-4"
               />
-              <h4 className="font-bold text-lg text-gray-800">{selectedApplication.influencerName}</h4>
-              <p className="text-purple-600">{selectedApplication.username}</p>
+              <h4 className="font-bold text-lg text-gray-800">{selectedApplication.influencer?.full_name || 'Influencer'}</h4>
+              <p className="text-purple-600">{selectedApplication.influencer?.username || '@influencer'}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{selectedApplication.followers}</div>
+                <div className="text-2xl font-bold text-purple-600">{selectedApplication.influencer?.followers_count ? `${Math.floor(selectedApplication.influencer.followers_count / 1000)}K` : '0K'}</div>
                 <div className="text-gray-500 text-sm">Followers</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-pink-600">{selectedApplication.engagement}</div>
+                <div className="text-2xl font-bold text-pink-600">{selectedApplication.influencer?.engagement_rate ? `${selectedApplication.influencer.engagement_rate}%` : '0%'}</div>
                 <div className="text-gray-500 text-sm">Engagement</div>
               </div>
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={() => handleAccept(selectedApplication.id)}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-semibold"
+              <Link
+                href={`/profile/${selectedApplication.influencer?.id || selectedApplication.id}`}
+                className="block w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold text-center hover:bg-gray-200 transition-colors"
               >
-                Accept Application
-              </button>
-              <button
-                onClick={() => handleDecline(selectedApplication.id)}
-                className="w-full bg-red-100 text-red-600 py-3 rounded-xl font-semibold"
-              >
-                Decline Application
-              </button>
+                View Full Profile
+              </Link>
+              {selectedApplication.status === 'pending' && (
+                <>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await handleAccept(selectedApplication.id);
+                      } catch (err) {
+                        console.error('Error in accept handler:', err);
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+                  >
+                    Accept Application
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await handleDecline(selectedApplication.id);
+                      } catch (err) {
+                        console.error('Error in decline handler:', err);
+                      }
+                    }}
+                    className="w-full bg-red-100 text-red-600 py-3 rounded-xl font-semibold hover:bg-red-200 transition-colors"
+                  >
+                    Decline Application
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -329,5 +542,17 @@ export default function BusinessApplications() {
       {/* Advanced Bottom Navigation */}
       <AdvancedBottomNav userType="business" />
     </div>
+  );
+}
+
+export default function BusinessApplications() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    }>
+      <BusinessApplicationsContent />
+    </Suspense>
   );
 }

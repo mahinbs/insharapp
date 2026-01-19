@@ -2,37 +2,15 @@
 
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import logo_dark from "@/assetes/logo_dark.png";
-
-const offerDetails = {
-  id: 1,
-  businessName: "Bella Vista Restaurant",
-  businessLogo:
-    "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20logo%2C%20modern%20dining%20establishment%2C%20sophisticated%20branding%2C%20clean%20minimalist%20design%2C%20professional%20restaurant%20identity%2C%20upscale%20dining%20logo&width=80&height=80&seq=resto2&orientation=squarish",
-  title: "Free 3-Course Dinner",
-  description:
-    "Experience our new seasonal menu featuring locally sourced ingredients and innovative culinary techniques. This exclusive collaboration includes appetizer, main course, and dessert with wine pairing.",
-  category: "Restaurant",
-  location: "Downtown Plaza, 123 Main Street",
-  requirements: [
-    "Minimum 10K followers",
-    "Food/Lifestyle niche",
-    "Post 3 Instagram stories",
-    "1 Instagram post with our hashtag",
-    "Tag @bellavista in all posts",
-  ],
-  images: [
-    "https://readdy.ai/api/search-image?query=Gourmet%20restaurant%20meal%2C%20beautifully%20plated%20fine%20dining%20dish%2C%20elegant%20food%20presentation%2C%20professional%20food%20photography%2C%20warm%20restaurant%20lighting%2C%20luxury%20dining%20experience&width=350&height=250&seq=meal3&orientation=landscape",
-    "https://readdy.ai/api/search-image?query=Elegant%20restaurant%20interior%2C%20fine%20dining%20atmosphere%2C%20sophisticated%20table%20setting%2C%20warm%20ambient%20lighting%2C%20luxury%20restaurant%20decor%2C%20upscale%20dining%20room&width=350&height=250&seq=interior1&orientation=landscape",
-    "https://readdy.ai/api/search-image?query=Professional%20chef%20preparing%20gourmet%20dish%2C%20culinary%20artistry%2C%20kitchen%20expertise%2C%20fine%20dining%20preparation%2C%20chef%20at%20work%20in%20restaurant%20kitchen&width=350&height=250&seq=chef1&orientation=landscape",
-  ],
-  businessInfo: {
-    rating: 4.8,
-    reviews: 234,
-    collaborations: 45,
-    responseTime: "2 hours",
-  },
-};
+import { getOfferById } from "@/lib/supabase-offers";
+import { applyToOffer, getApplicationStatus } from "@/lib/supabase-applications";
+import { getCurrentUser } from "@/lib/supabase-auth";
+import { submitContentProof, getInfluencerCollaborations } from "@/lib/supabase-collaborations";
+import type { Offer } from "@/lib/supabase-offers";
+import type { Application } from "@/lib/supabase-applications";
+import type { Collaboration } from "@/lib/supabase-collaborations";
 
 const reviews = [
   {
@@ -304,6 +282,7 @@ const sectionOrder: SectionId[] = [
 export default function OfferDetailsClient({
   offerId,
 }: OfferDetailsClientProps) {
+  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -336,6 +315,12 @@ export default function OfferDetailsClient({
   const [proofSaved, setProofSaved] = useState(false);
   const cancellationNoticeRef = useRef(false);
   const [activeTab, setActiveTab] = useState<SectionId>('information');
+  // Backend-integrated state
+  const [loading, setLoading] = useState(true);
+  const [offerDetails, setOfferDetails] = useState<any>(null);
+  const [application, setApplication] = useState<Application | null>(null);
+  const [collaboration, setCollaboration] = useState<Collaboration | null>(null);
+  // Frontend creator content toggle
   const [showAllCreatorWork, setShowAllCreatorWork] = useState(false);
   const sectionsRef = useRef<Record<SectionId, HTMLDivElement | null>>({
     offers: null,
@@ -401,48 +386,63 @@ export default function OfferDetailsClient({
   const availableMonths = getAvailableMonths();
   const availableDates = getAvailableDatesForMonth();
 
+  // Fetch offer data and application status
   useEffect(() => {
-    if (!isBrowser()) return;
+    async function fetchData() {
+      // Check authentication
+      const { data: user, error: authError } = await getCurrentUser();
+      if (authError || !user) {
+        router.push('/auth');
+        return;
+      }
 
-    const syncBookingState = () => {
-      const currentRecord = getStoredRequests().find(
-        (req) => req.offerId === offerId
-      );
-      if (currentRecord) {
-        setBookingStatus(currentRecord.status);
-        if (
-          currentRecord.status === "cancelled" &&
-          !cancellationNoticeRef.current
-        ) {
-          setNotificationMessage(
-            "This request was cancelled because another business accepted your collaboration first."
-          );
-          setNotificationType("warning");
-          setShowNotification(true);
-          cancellationNoticeRef.current = true;
+      // Fetch offer details
+      const { data: offer, error: offerError } = await getOfferById(offerId);
+      if (offerError) {
+        setNotificationMessage('Failed to load offer details');
+        setNotificationType('error');
+        setShowNotification(true);
+        setLoading(false);
+        return;
+      }
+
+      if (offer) {
+        setOfferDetails(offer);
+      }
+
+      // Fetch application status
+      const { data: appData, error: appError } = await getApplicationStatus(offerId);
+      if (!appError && appData) {
+        setApplication(appData);
+        setBookingStatus(appData.status as RequestStatus);
+      }
+
+      // Fetch collaboration if application is accepted
+      if (appData?.status === 'accepted') {
+        const { data: collabs, error: collabError } = await getInfluencerCollaborations();
+        if (!collabError && collabs) {
+          const collab = collabs.find(c => c.offer_id === offerId);
+          if (collab) {
+            setCollaboration(collab);
+            // Load saved content if exists
+            if (collab.content_video_url) {
+              setVideoPreviewUrl(collab.content_video_url);
+              setVideoUploadStatus('uploaded');
+              setVideoFileName(collab.content_video_filename || '');
+              setSocialLink(collab.social_media_post_url || '');
+              setHasTaggedBusiness(collab.has_tagged_business);
+              setHasSentCollabRequest(collab.has_sent_collab_request);
+              setProofSaved(!!collab.content_submitted_at);
+            }
+          }
         }
-      } else {
-        setBookingStatus(null);
       }
-    };
 
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === REQUEST_STORAGE_KEY) {
-        syncBookingState();
-      }
-    };
+      setLoading(false);
+    }
 
-    const handleCustomEvent = () => syncBookingState();
-
-    syncBookingState();
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener("collab-request-updated", handleCustomEvent);
-
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("collab-request-updated", handleCustomEvent);
-    };
-  }, [offerId]);
+    fetchData();
+  }, [offerId, router]);
 
   useEffect(() => {
     if (!isBrowser()) return;
@@ -510,8 +510,9 @@ export default function OfferDetailsClient({
 
   const sectionClasses = 'rounded-3xl bg-white/90 backdrop-blur px-5 py-6 shadow-lg border border-white/60 mb-4';
 
-  const updateRequestStatus = (status: RequestStatus) => {
-    persistRequestStatus(offerId, offerDetails.businessName, status);
+  const updateRequestStatus = async (status: RequestStatus) => {
+    // Status is updated via Supabase, no need for localStorage
+    setBookingStatus(status);
   };
 
   const resetCurrentRequest = () => {
@@ -544,7 +545,7 @@ export default function OfferDetailsClient({
     reader.readAsDataURL(file);
   };
 
-  const handleProofSubmission = () => {
+  const handleProofSubmission = async () => {
     if (videoUploadStatus !== "uploaded" || !videoPreviewUrl) {
       setNotificationMessage("Please upload the collaboration video before submitting.");
       setNotificationType("warning");
@@ -566,20 +567,40 @@ export default function OfferDetailsClient({
       return;
     }
 
-    saveVideoSubmissionRecord({
-      offerId,
-      fileName: videoFileName || "collaboration-video.mp4",
-      dataUrl: videoPreviewUrl,
-      socialLink: socialLink.trim(),
-      hasTaggedBusiness,
-      hasSentCollabRequest,
-      submittedAt: new Date().toISOString(),
-    });
+    if (!collaboration) {
+      setNotificationMessage("Collaboration not found. Please try again.");
+      setNotificationType("error");
+      setShowNotification(true);
+      return;
+    }
 
-    setProofSaved(true);
-    setNotificationMessage("Great! Your video proof is stored and ready for the business to download.");
-    setNotificationType("success");
-    setShowNotification(true);
+    try {
+      const { data, error } = await submitContentProof(collaboration.id, {
+        videoUrl: videoPreviewUrl,
+        videoFilename: videoFileName || "collaboration-video.mp4",
+        socialMediaPostUrl: socialLink.trim(),
+        hasTaggedBusiness,
+        hasSentCollabRequest,
+        proofImageUrl: videoPreviewUrl // Using video URL as proof for now
+      });
+
+      if (error) {
+        setNotificationMessage(error.message || "Failed to submit proof");
+        setNotificationType("error");
+        setShowNotification(true);
+        return;
+      }
+
+      setProofSaved(true);
+      setCollaboration(data);
+      setNotificationMessage("Great! Your video proof is stored and ready for the business to download.");
+      setNotificationType("success");
+      setShowNotification(true);
+    } catch (err: any) {
+      setNotificationMessage(err.message || "An error occurred");
+      setNotificationType("error");
+      setShowNotification(true);
+    }
   };
 
   const handleBookingSubmit = () => {
@@ -595,7 +616,7 @@ export default function OfferDetailsClient({
     setShowConfirmationModal(true);
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     // Check if all conditions are accepted
     if (!acceptedConditions.checkDeal || !acceptedConditions.respectDateTime || !acceptedConditions.postContent) {
       setNotificationMessage("Please accept all conditions to continue");
@@ -604,37 +625,42 @@ export default function OfferDetailsClient({
       return;
     }
 
-    // Simulate booking submission
-    setBookingStatus("pending");
-    updateRequestStatus("pending");
-    setShowConfirmationModal(false);
-    setNotificationMessage(
-      "Booking request sent! Waiting for business confirmation."
-    );
-    setNotificationType("success");
-    setShowNotification(true);
+    try {
+      // Submit application to Supabase
+      const { data, error } = await applyToOffer({
+        offerId,
+        scheduledDate: selectedDate,
+        scheduledTime: selectedTime,
+        numberOfPeople: selectedPeople
+      });
 
-    // Reset conditions
-    setAcceptedConditions({
-      checkDeal: false,
-      respectDateTime: false,
-      postContent: false
-    });
+      if (error) {
+        setNotificationMessage(error.message || "Failed to submit application");
+        setNotificationType("error");
+        setShowNotification(true);
+        return;
+      }
 
-    // Simulate business response after 3 seconds
-    setTimeout(() => {
-      const isAccepted = Math.random() > 0.3; // 70% acceptance rate
-      const nextStatus: RequestStatus = isAccepted ? "accepted" : "declined";
-      setBookingStatus(nextStatus);
-      updateRequestStatus(nextStatus);
+      setBookingStatus("pending");
+      setApplication(data);
+      setShowConfirmationModal(false);
       setNotificationMessage(
-        isAccepted
-          ? "Great! Your booking has been confirmed by the business. All other pending requests were cancelled automatically."
-          : "Unfortunately, your booking request was declined by the business."
+        "Booking request sent! Waiting for business confirmation."
       );
-      setNotificationType(isAccepted ? "success" : "error");
+      setNotificationType("success");
       setShowNotification(true);
-    }, 3000);
+
+      // Reset conditions
+      setAcceptedConditions({
+        checkDeal: false,
+        respectDateTime: false,
+        postContent: false
+      });
+    } catch (err: any) {
+      setNotificationMessage(err.message || "An error occurred");
+      setNotificationType("error");
+      setShowNotification(true);
+    }
   };
 
   const showNotificationComponent = () => {
@@ -671,6 +697,32 @@ export default function OfferDetailsClient({
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
+
+  if (!offerDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <i className="ri-error-warning-line text-6xl text-gray-300 mb-4"></i>
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">Offer not found</h3>
+          <Link href="/influencer/dashboard" className="text-pink-500 hover:text-pink-600">
+            Go back to dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const business = offerDetails.business || {};
+  const images = offerDetails.images || [];
+  const requirements = offerDetails.requirements || [];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -696,40 +748,44 @@ export default function OfferDetailsClient({
       </div>
 
       {/* Image Carousel */}
-      <div className="relative">
-        <div className="h-64 overflow-hidden">
-          <img
-            src={offerDetails.images[currentImageIndex]}
-            alt="Offer"
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Image indicators */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-          {offerDetails.images.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentImageIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentImageIndex ? "bg-white" : "bg-white/50"
-              }`}
+      {images.length > 0 && (
+        <div className="relative">
+          <div className="h-64 overflow-hidden">
+            <img
+              src={images[currentImageIndex] || offerDetails.main_image || 'https://picsum.photos/400/300'}
+              alt="Offer"
+              className="w-full h-full object-cover"
             />
-          ))}
+          </div>
+
+          {/* Image indicators */}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {images.map((_: string, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentImageIndex ? "bg-white" : "bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Business Info Header */}
       <div className="px-6 py-4 bg-white border-b border-gray-200">
         <div className="flex items-center space-x-4">
           <img
-            src={offerDetails.businessLogo}
-            alt={offerDetails.businessName}
+            src={business.business_logo || offerDetails.business_logo || 'https://picsum.photos/80/80'}
+            alt={business.business_name || offerDetails.business_name || 'Business'}
             className="w-16 h-16 rounded-full object-cover"
           />
           <div className="flex-1">
             <h2 className="font-bold text-xl text-gray-800">
-              {offerDetails.businessName}
+              {business.business_name || offerDetails.business_name || 'Business'}
             </h2>
             <p className="text-gray-600">
               {offerDetails.category} • {offerDetails.location}
@@ -738,14 +794,11 @@ export default function OfferDetailsClient({
               <div className="flex items-center space-x-1">
                 <i className="ri-star-fill text-yellow-400"></i>
                 <span className="text-sm font-medium">
-                  {offerDetails.businessInfo.rating}
-                </span>
-                <span className="text-gray-500 text-sm">
-                  ({offerDetails.businessInfo.reviews})
+                  {business.rating || offerDetails.business?.rating || '0.0'}
                 </span>
               </div>
               <span className="text-gray-500 text-sm">
-                {offerDetails.businessInfo.collaborations} collaborations
+                {business.total_collaborations || 0} collaborations
               </span>
             </div>
           </div>
@@ -794,28 +847,59 @@ export default function OfferDetailsClient({
               Open
             </span>
           </div>
-          <p className="text-sm text-slate-600 leading-6">
-            {offerDetails.businessName} is a premium {offerDetails.category.toLowerCase()} located in {offerDetails.location}, 
-            specializing in {offerDetails.description.split('.')[0].toLowerCase()}.
+              <p className="text-sm text-slate-600 leading-6">
+            {business.business_name || offerDetails.business_name} is a premium {offerDetails.category.toLowerCase()} located in {offerDetails.location}.
+            {offerDetails.description && ` ${offerDetails.description.split('.')[0]}.`}
           </p>
-          <div className="mt-5 grid gap-3">
-            {socialLinks.map((item) => (
-              <a
-                href={item.href}
-                key={item.id}
-                className="flex items-center justify-between rounded-2xl border border-white/40 px-4 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white"
-                target="_blank"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 rounded-2xl bg-white/20 text-white flex items-center justify-center">
-                    <i className={`${item.icon} text-lg`}></i>
+          {(business.business_website || business.business_instagram || business.business_tiktok) && (
+            <div className="mt-5 grid gap-3">
+              {business.business_website && (
+                <a
+                  href={business.business_website}
+                  className="flex items-center justify-between rounded-2xl border border-white/40 px-4 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white"
+                  target="_blank"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-2xl bg-white/20 text-white flex items-center justify-center">
+                      <i className="ri-earth-line text-lg"></i>
+                    </div>
+                    <span className="text-sm font-medium">{business.business_website}</span>
                   </div>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </div>
-                <i className="ri-arrow-right-up-line text-xs text-white/80"></i>
-              </a>
-            ))}
-          </div>
+                  <i className="ri-arrow-right-up-line text-xs text-white/80"></i>
+                </a>
+              )}
+              {business.business_instagram && (
+                <a
+                  href={`https://instagram.com/${business.business_instagram.replace('@', '')}`}
+                  className="flex items-center justify-between rounded-2xl border border-white/40 px-4 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white"
+                  target="_blank"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-2xl bg-white/20 text-white flex items-center justify-center">
+                      <i className="ri-instagram-line text-lg"></i>
+                    </div>
+                    <span className="text-sm font-medium">{business.business_instagram}</span>
+                  </div>
+                  <i className="ri-arrow-right-up-line text-xs text-white/80"></i>
+                </a>
+              )}
+              {business.business_tiktok && (
+                <a
+                  href={`https://tiktok.com/@${business.business_tiktok.replace('@', '')}`}
+                  className="flex items-center justify-between rounded-2xl border border-white/40 px-4 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white"
+                  target="_blank"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-2xl bg-white/20 text-white flex items-center justify-center">
+                      <i className="ri-tiktok-fill text-lg"></i>
+                    </div>
+                    <span className="text-sm font-medium">{business.business_tiktok}</span>
+                  </div>
+                  <i className="ri-arrow-right-up-line text-xs text-white/80"></i>
+                </a>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Content Section */}
@@ -941,49 +1025,42 @@ export default function OfferDetailsClient({
           <div>
             <h4 className="font-semibold text-gray-800 mb-3">Requirements</h4>
             <div className="space-y-2">
-              {offerDetails.requirements.map((req, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <i className="ri-check-line text-green-500"></i>
-                  <span className="text-gray-600 text-sm">{req}</span>
-                </div>
-              ))}
+              {requirements.length > 0 ? (
+                requirements.map((req: string, index: number) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    <i className="ri-check-line text-green-500"></i>
+                    <span className="text-gray-600 text-sm">{req}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No specific requirements listed</p>
+              )}
             </div>
           </div>
         </section>
 
         {/* Gallery Section */}
-        <section id="gallery" ref={registerSectionRef('gallery')} className={sectionClasses}>
-          <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Gallery</p>
-          <h3 className="text-xl font-semibold text-slate-900 mb-4">Visual Showcase</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {galleryItems.map((src, idx) => (
-              <div key={idx} className="relative overflow-hidden rounded-2xl ring-1 ring-black/5">
-                <img
-                  src={src}
-                  className="w-full h-32 sm:h-36 object-cover"
-                  alt={`Gallery item ${idx + 1}`}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = `https://picsum.photos/seed/gallery-${idx + 1}/400/400`;
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 grid gap-4">
-            {videoShowcase.map((video, idx) => (
-              <div key={video} className="rounded-2xl overflow-hidden border border-slate-100" style={{ maxHeight: '200px' }}>
-                <iframe
-                  src={video}
-                  className="w-full"
-                  style={{ height: '200px' }}
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  title={`Business video ${idx + 1}`}
-                ></iframe>
-              </div>
-            ))}
-          </div>
-        </section>
+        {images.length > 0 && (
+          <section id="gallery" ref={registerSectionRef('gallery')} className={sectionClasses}>
+            <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Gallery</p>
+            <h3 className="text-xl font-semibold text-slate-900 mb-4">Visual Showcase</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {images.slice(0, 4).map((src: string, idx: number) => (
+                <div key={idx} className="relative overflow-hidden rounded-2xl ring-1 ring-black/5">
+                  <img
+                    src={src || offerDetails.main_image || 'https://picsum.photos/400/400'}
+                    className="w-full h-32 sm:h-36 object-cover"
+                    alt={`Gallery item ${idx + 1}`}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://picsum.photos/seed/gallery-${idx + 1}/400/400`;
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Location Section */}
         <section id="location" ref={registerSectionRef('location')} className={sectionClasses}>
@@ -1033,7 +1110,7 @@ export default function OfferDetailsClient({
           </div>
         </section>
 
-        {/* Reviews Section - Keep existing reviews */}
+        {/* Reviews Section - placeholder, can be wired to Supabase reviews table later */}
         {/* <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
           <h4 className="font-semibold text-gray-800 mb-4">Recent Reviews</h4>
           <div className="space-y-4">
@@ -1074,7 +1151,7 @@ export default function OfferDetailsClient({
         </div> */}
 
 
-        {bookingStatus === "accepted" && (
+        {(bookingStatus === "accepted" || collaboration) && (
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 mt-6">
             <div className="flex items-center justify-between mb-2">
               <div>
@@ -1142,7 +1219,7 @@ export default function OfferDetailsClient({
                 className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none"
               />
               <p className="text-xs text-gray-500 mt-1">
-                The post must tag @{offerDetails.businessName.replace(/\s+/g, "").toLowerCase()} and include “Collaboration requested via Inshaar.”
+                The post must tag @{(business.business_name || offerDetails.business_name || '').replace(/\s+/g, "").toLowerCase()} and include "Collaboration requested via Inshaar."
               </p>
             </div>
 
