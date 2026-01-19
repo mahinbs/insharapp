@@ -471,7 +471,7 @@ export default function BusinessProfile() {
         <section id="content" ref={registerSectionRef('content')} className={sectionClasses}>
           <div className="flex items-center justify-between mb-4">
             <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Content</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Content</p>
               <h3 className="text-xl font-semibold text-slate-900">Signature Rituals</h3>
             </div>
             <button
@@ -482,14 +482,14 @@ export default function BusinessProfile() {
             </button>
           </div>
           {contentHighlights.length > 0 ? (
-          <div className="grid gap-4">
+            <div className="grid gap-4">
               {contentHighlights.map((item: any, idx: number) => (
                 <div key={idx} className="rounded-2xl bg-gray-50 p-4 border border-gray-100">
                   <h4 className="text-sm font-semibold text-gray-900">{item.title || 'Content Title'}</h4>
                   <p className="text-xs text-gray-500 mt-1">{item.description || 'Content description'}</p>
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50">
               <i className="ri-file-text-line text-4xl text-gray-400 mb-2"></i>
