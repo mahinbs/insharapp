@@ -493,65 +493,14 @@ export default function BusinessDashboard() {
 
         {true && (
           <div className="space-y-6 max-w-6xl mx-auto">
-            {/* Greeting Section - Elegant */}
-            <div className="relative bg-gradient-to-br from-pink-500 via-purple-500 to-orange-500 rounded-3xl p-8 sm:p-10 shadow-2xl overflow-hidden">
-              {/* Decorative Background Elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl -ml-24 -mb-24"></div>
-
-              <div className="relative z-10">
-                {/* Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                  <div className="mb-4 sm:mb-0">
-                    <div className="flex items-center space-x-3 mb-3">
-                      {/* <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 shadow-lg">
-                        <i className="ri-store-3-line text-white text-2xl"></i>
-                      </div> */}
-
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-2 leading-tight">
-                      Hello,{" "}
-                      <span className="text-yellow-200">
-                        {businessInfo.name}
-                      </span>
-                      !
+            {/* Greeting Section - Simplified */}
+            <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-2xl p-6 shadow-lg">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-1">
+                Hello, {businessInfo.name}!
                     </h1>
-                    <p className="text-white/90 text-base sm:text-lg max-w-2xl leading-relaxed">
-                      Here's your comprehensive dashboard for today. Stay on top of
-                      your collaborations, manage your business activities, and
-                      grow your partnerships seamlessly.
-                    </p>
-                  </div>
-
-                  {/* Quick Stats */}
-                  <div className="flex flex-col space-y-3 sm:min-w-[200px]">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 shadow-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-white/80 text-xs font-medium">
-                            Today's Activity
-                          </p>
-                          <p className="text-2xl font-bold text-white">{briefStats.today}</p>
-                        </div>
-                        <i className="ri-calendar-check-line text-white/80 text-xl"></i>
-                      </div>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 shadow-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-white/80 text-xs font-medium">
-                            New Messages
-                          </p>
-                          <p className="text-2xl font-bold text-white">
-                            {businessMessages.filter((m) => m.unread).length}
-                          </p>
-                        </div>
-                        <i className="ri-message-3-line text-white/80 text-xl"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <p className="text-white/90 text-sm">
+                Manage your collaborations and grow your partnerships
+              </p>
             </div>
 
             {/* Business Information */}

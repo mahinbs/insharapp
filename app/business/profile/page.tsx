@@ -315,12 +315,26 @@ const establishments = [
 
         <section id="content" ref={registerSectionRef('content')} className={sectionClasses}>
           <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Content</p>
-          <h3 className="text-xl font-semibold text-slate-900 mb-4">Signature Rituals</h3>
-          <div className="grid gap-4">
-            {contentHighlights.map((item) => (
-              <div key={item.title} className="rounded-2xl bg-gray-50 p-4 border border-gray-100">
-                <h4 className="text-sm font-semibold text-gray-900">{item.title}</h4>
-                <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Creator Work Showcase</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Content created by other creators for this business
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { id: 1, creator: "Sarah Foodie", image: "https://picsum.photos/seed/creator1/400/400" },
+              { id: 2, creator: "Mike Tastes", image: "https://picsum.photos/seed/creator2/400/400" },
+              { id: 3, creator: "Lifestyle Lux", image: "https://picsum.photos/seed/creator3/400/400" },
+              { id: 4, creator: "Chef Stories", image: "https://picsum.photos/seed/creator4/400/400" },
+            ].map((work) => (
+              <div key={work.id} className="relative overflow-hidden rounded-xl bg-gray-100 group">
+                <img
+                  src={work.image}
+                  alt={`${work.creator}'s work`}
+                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                  <p className="text-white text-xs font-semibold">{work.creator}</p>
+                </div>
               </div>
             ))}
           </div>

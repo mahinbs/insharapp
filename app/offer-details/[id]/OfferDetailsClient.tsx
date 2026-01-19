@@ -336,6 +336,7 @@ export default function OfferDetailsClient({
   const [proofSaved, setProofSaved] = useState(false);
   const cancellationNoticeRef = useRef(false);
   const [activeTab, setActiveTab] = useState<SectionId>('information');
+  const [showAllCreatorWork, setShowAllCreatorWork] = useState(false);
   const sectionsRef = useRef<Record<SectionId, HTMLDivElement | null>>({
     offers: null,
     information: null,
@@ -820,15 +821,103 @@ export default function OfferDetailsClient({
         {/* Content Section */}
         <section id="content" ref={registerSectionRef('content')} className={sectionClasses}>
           <p className="text-xs uppercase tracking-[0.35em] text-pink-500">Content</p>
-          <h3 className="text-xl font-semibold text-slate-900 mb-4">Signature Offerings</h3>
-          <div className="grid gap-4">
-            {contentHighlights.map((item) => (
-              <div key={item.title} className="rounded-2xl bg-gray-50 p-4 border border-gray-100">
-                <h4 className="text-sm font-semibold text-gray-900">{item.title}</h4>
-                <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Creator Work Showcase</h3>
+          <p className="text-gray-600 text-sm mb-6">
+            See how other creators have showcased this collaboration
+          </p>
+          <div className="flex flex-col lg:flex-row lg:flex-wrap gap-3 md:gap-8">
+            {(showAllCreatorWork ? creatorWorkExamples : creatorWorkExamples.slice(0, 3)).map((work) => (
+              <div
+                key={work.id}
+                className="group relative overflow-hidden rounded-xl bg-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 w-full sm:w-auto"
+              >
+                {/* Post Image */}
+                <div className="w-full aspect-square relative h-32 lg:h-48">
+                  <img
+                    src={work.postImage}
+                    alt={`${work.creatorName}'s work`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop&auto=format`;
+                    }}
+                  />
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <img
+                          src={work.profileImage}
+                          alt={work.creatorName}
+                          className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(work.creatorName)}&background=random&size=100`;
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-semibold truncate">
+                            {work.creatorName}
+                          </p>
+                          <p className="text-white/80 text-xs truncate">
+                            {work.username}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <i className="ri-heart-fill text-white text-sm"></i>
+                          <span className="text-white text-xs font-medium">
+                            {work.likes}
+                          </span>
+                        </div>
+                        <span className="text-white/90 text-xs bg-purple-500/80 px-2 py-0.5 rounded-full">
+                          {work.engagement}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Creator info (visible by default) */}
+                <div className="p-2 sm:p-3 bg-white">
+                  <div className="flex items-center space-x-2">
+                    <img
+                      src={work.profileImage}
+                      alt={work.creatorName}
+                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(work.creatorName)}&background=random&size=100`;
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-800 text-xs font-semibold truncate">
+                        {work.creatorName}
+                      </p>
+                      <p className="text-gray-500 text-xs truncate">
+                        {work.username}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-1 text-gray-400">
+                      <i className="ri-heart-line text-xs"></i>
+                      <span className="text-xs">{work.likes}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+          {creatorWorkExamples.length > 4 && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setShowAllCreatorWork(!showAllCreatorWork)}
+                className="px-6 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2 mx-auto"
+              >
+                <span>{showAllCreatorWork ? 'Show Less' : `Show More (${creatorWorkExamples.length - 4} more)`}</span>
+                <i className={`ri-arrow-${showAllCreatorWork ? 'up' : 'down'}-s-line text-lg`}></i>
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Offers Section */}
@@ -945,7 +1034,7 @@ export default function OfferDetailsClient({
         </section>
 
         {/* Reviews Section - Keep existing reviews */}
-        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
+        {/* <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
           <h4 className="font-semibold text-gray-800 mb-4">Recent Reviews</h4>
           <div className="space-y-4">
             {reviews.map((review) => (
@@ -982,100 +1071,8 @@ export default function OfferDetailsClient({
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
-        {/* Creator Work Showcase */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-800">Creator Work Showcase</h4>
-            <span className="text-sm text-gray-500">{creatorWorkExamples.length} examples</span>
-          </div>
-          <p className="text-gray-600 text-sm mb-6">
-            See how other creators have showcased this collaboration
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            {creatorWorkExamples.map((work) => (
-              <div
-                key={work.id}
-                className="group relative overflow-hidden rounded-xl bg-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300"
-              >
-                {/* Post Image */}
-                <div className="aspect-square relative">
-                  <img
-                    src={work.postImage}
-                    alt={`${work.creatorName}'s work`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=400&fit=crop&auto=format`;
-                    }}
-                  />
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <img
-                          src={work.profileImage}
-                          alt={work.creatorName}
-                          className="w-6 h-6 rounded-full object-cover border-2 border-white"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(work.creatorName)}&background=random&size=100`;
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-xs font-semibold truncate">
-                            {work.creatorName}
-                          </p>
-                          <p className="text-white/80 text-xs truncate">
-                            {work.username}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <i className="ri-heart-fill text-white text-sm"></i>
-                          <span className="text-white text-xs font-medium">
-                            {work.likes}
-                          </span>
-                        </div>
-                        <span className="text-white/90 text-xs bg-purple-500/80 px-2 py-0.5 rounded-full">
-                          {work.engagement}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Creator info (visible by default) */}
-                <div className="p-3 bg-white">
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src={work.profileImage}
-                      alt={work.creatorName}
-                      className="w-6 h-6 rounded-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(work.creatorName)}&background=random&size=100`;
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-gray-800 text-xs font-semibold truncate">
-                        {work.creatorName}
-                      </p>
-                      <p className="text-gray-500 text-xs truncate">
-                        {work.username}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-1 text-gray-400">
-                      <i className="ri-heart-line text-xs"></i>
-                      <span className="text-xs">{work.likes}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {bookingStatus === "accepted" && (
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 mt-6">
