@@ -17,28 +17,28 @@ const businessServices = [
   {
     id: 1,
     title: 'Community Management',
-    description: 'Professional social media community management to engage and grow your audience',
+    description: 'Engage and grow your audience',
     icon: 'ri-group-line',
     features: ['Daily engagement', 'Content moderation', 'Audience growth', 'Analytics reports']
   },
   {
     id: 2,
     title: 'Digital Marketing',
-    description: 'Meta & Google Ads management to maximize your ROI and reach',
+    description: 'Meta & Google Ads management',
     icon: 'ri-megaphone-line',
     features: ['Campaign setup', 'Ad optimization', 'Performance tracking', 'ROI analysis']
   },
   {
     id: 3,
     title: 'Website Creation',
-    description: 'Professional website design and development for your business',
+    description: 'Professional website design',
     icon: 'ri-global-line',
     features: ['Responsive design', 'SEO optimized', 'Fast loading', 'Mobile friendly']
   },
   {
     id: 4,
     title: 'Photoshoots & Photography',
-    description: 'Professional photography services for products, events, and branding',
+    description: 'Professional photography services',
     icon: 'ri-camera-line',
     features: ['Product photography', 'Event coverage', 'Brand shoots', 'Post-production']
   }
@@ -105,36 +105,35 @@ export default function BusinessServicesPage() {
               key={service.id}
               className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 p-6">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                    <i className={`${service.icon} text-white text-3xl`}></i>
+              <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i className={`${service.icon} text-white text-2xl`}></i>
                   </div>
-                  <div>
-                    <h3 className="text-white text-xl font-bold mb-1">{service.title}</h3>
-                    <p className="text-white/90 text-sm">{service.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white text-lg font-bold mb-0.5">{service.title}</h3>
+                    <p className="text-white/90 text-xs">{service.description}</p>
                   </div>
-                </div>
-                
-                <div className="mt-4 pt-4 border-t border-white/30">
-                  <div
+                  <button
                     onClick={() => setSelectedService(selectedService === service.id ? null : service.id)}
-                    className="flex items-center justify-between cursor-pointer mb-3"
+                    className="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors"
                   >
-                    <h4 className="text-white font-semibold">What's Included:</h4>
-                    <i className={`ri-arrow-${selectedService === service.id ? 'up' : 'down'}-s-line text-white text-xl transition-transform`}></i>
+                    <i className={`ri-arrow-${selectedService === service.id ? 'up' : 'down'}-s-line text-white text-lg transition-transform`}></i>
+                  </button>
                   </div>
+                
                   {selectedService === service.id && (
-                    <div className="space-y-2">
+                  <div className="mt-3 pt-3 border-t border-white/30">
+                    <div className="space-y-1.5">
                       {service.features.map((feature, index) => (
                         <div key={index} className="flex items-center space-x-2">
-                          <i className="ri-check-line text-white text-lg"></i>
-                          <span className="text-white/90 text-sm">{feature}</span>
+                          <i className="ri-check-line text-white text-sm"></i>
+                          <span className="text-white/90 text-xs">{feature}</span>
                         </div>
                       ))}
                     </div>
+                    </div>
                   )}
-                </div>
               </div>
             </div>
           ))}
