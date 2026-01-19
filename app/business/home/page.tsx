@@ -174,16 +174,18 @@ export default function BusinessDashboard() {
 
     // Load data in background - don't block rendering
     // Context handles caching and errors gracefully
+    // Load all offers (not just active) to get accurate counts
     Promise.allSettled([
-      refreshOffers({ status: 'active', limit: 10 }),
-      refreshApplications({ status: 'pending', limit: 10 }),
+      refreshOffers({ limit: 50 }), // Load more offers to get accurate counts
+      refreshApplications({ limit: 50 }), // Load all applications for accurate stats
       refreshConversations(),
       refreshCollaborations({ status: 'active' }),
+      refreshStats(), // Ensure stats are refreshed
     ]).catch((error) => {
       console.error('Error loading business data:', error);
       // Don't block - data will load when available
     });
-  }, [router, user, session, authLoading, isInitialized, refreshOffers, refreshApplications, refreshConversations, refreshCollaborations]);
+  }, [router, user, session, authLoading, isInitialized, refreshOffers, refreshApplications, refreshConversations, refreshCollaborations, refreshStats]);
 
   if (loading) {
     return (
@@ -229,15 +231,28 @@ export default function BusinessDashboard() {
     timestamp: msg.last_message_at ? new Date(msg.last_message_at).toLocaleString() : 'Just now',
   }));
 
-  const myOffers = offers.map((offer) => ({
-    id: offer.id,
-    title: offer.title,
-    description: offer.description,
-    applications: offer.applications_count || 0,
-    views: offer.views_count || 0,
-    status: offer.status === 'active' ? 'Active' : offer.status,
-    image: offer.main_image || offer.images?.[0] || 'https://picsum.photos/400/300',
-  }));
+  // Calculate application counts per offer from applications data
+  const offerApplicationCounts = (allApplications || []).reduce((acc: any, app: any) => {
+    const offerId = app.offer_id || app.offer?.id;
+    if (offerId) {
+      acc[offerId] = (acc[offerId] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  const myOffers = offers.map((offer) => {
+    // Use actual application count from applications data, fallback to offer's count
+    const appCount = offerApplicationCounts[offer.id] || offer.applications_count || 0;
+    return {
+      id: offer.id,
+      title: offer.title,
+      description: offer.description,
+      applications: appCount,
+      views: offer.views_count || 0,
+      status: offer.status === 'active' ? 'Active' : offer.status,
+      image: offer.main_image || offer.images?.[0] || 'https://picsum.photos/400/300',
+    };
+  });
 
   const influencerRequests = applications
     .filter((app: any) => app.status === 'pending')
@@ -275,14 +290,11 @@ export default function BusinessDashboard() {
             )}
           </div>
         </div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between ">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">
               Welcome Back{businessInfo.name !== 'Your Business' ? `, ${businessInfo.name}` : '!'}
             </h1>
-            <p className="text-white/80 text-sm">
-              Manage your business dashboard
-            </p>
           </div>
           <div className="flex items-center space-x-3">
             <button className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300">
@@ -1017,7 +1029,11 @@ export default function BusinessDashboard() {
                                 if (error) {
                                   alert('Failed to decline: ' + error.message);
                                 } else {
-                                  await Promise.all([refreshApplications(), refreshStats()]);
+                                  await Promise.allSettled([
+                                    refreshApplications({ limit: 50 }),
+                                    refreshOffers({ limit: 50 }),
+                                    refreshStats(),
+                                  ]);
                                 }
                               }}
                               className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium hover:bg-red-200 transition-colors"
@@ -1050,9 +1066,10 @@ export default function BusinessDashboard() {
                                     return;
                                   }
                                   
-                                  // Refresh applications and stats to get updated data
+                                  // Refresh all data to get updated counts
                                   await Promise.allSettled([
-                                    refreshApplications(),
+                                    refreshApplications({ limit: 50 }),
+                                    refreshOffers({ limit: 50 }),
                                     refreshStats(),
                                     refreshCollaborations(),
                                   ]);

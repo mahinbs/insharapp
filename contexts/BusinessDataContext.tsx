@@ -253,7 +253,7 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
   
   // Load offers
   const refreshOffers = useCallback(async (filters?: any, force = false) => {
-    if (!force && !isStale('offers') && offers.length > 0) {
+    if (!force && !isStale('offers') && offers.length > 0 && !filters) {
       return
     }
     
@@ -264,6 +264,16 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
     setOffersError(null)
     
     try {
+      // Check for session before making request
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        if (mountedRef.current) {
+          setOffersError({ message: 'Not authenticated' })
+          setOffersLoading(false)
+        }
+        return
+      }
+      
       const { data, error } = await getBusinessOffers(undefined, filters)
       if (error) throw error
       
@@ -273,6 +283,10 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setLastUpdated(prev => ({ ...prev, offers: Date.now() }))
       }
     } catch (error: any) {
+      // Ignore AbortError - it's expected when component unmounts
+      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        return
+      }
       if (mountedRef.current) {
         setOffersError(error)
         console.error('Error loading offers:', error)
@@ -286,7 +300,10 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
   
   // Load applications
   const refreshApplications = useCallback(async (filters?: any, force = false) => {
-    if (!force && !isStale('applications') && applications.length > 0) {
+    // If filters include offerId, always force refresh to get correct data
+    const shouldForce = force || (filters?.offerId && applications.length > 0)
+    
+    if (!shouldForce && !isStale('applications') && applications.length > 0 && !filters?.offerId) {
       return
     }
     
@@ -297,18 +314,55 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
     setApplicationsError(null)
     
     try {
-      const { data, error } = await getBusinessApplications(undefined, filters)
-      if (error) throw error
-      
-      if (mountedRef.current) {
-        setApplications(data || [])
-        setApplicationsError(null)
-        setLastUpdated(prev => ({ ...prev, applications: Date.now() }))
+      // Check if component is still mounted
+      if (!mountedRef.current) {
+        return
       }
+      
+      // Check for session before making request
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        if (mountedRef.current) {
+          setApplicationsError({ message: 'Not authenticated' })
+          setApplicationsLoading(false)
+        }
+        return
+      }
+      
+      // Double check mounted before making request
+      if (!mountedRef.current) {
+        return
+      }
+      
+      const { data, error } = await getBusinessApplications(undefined, filters)
+      
+      // Check mounted again after async operation
+      if (!mountedRef.current) {
+        return
+      }
+      
+      if (error) {
+        // Don't throw - just set error state
+        setApplicationsError(error)
+        setApplicationsLoading(false)
+        return
+      }
+      
+      setApplications(data || [])
+      setApplicationsError(null)
+      setLastUpdated(prev => ({ ...prev, applications: Date.now() }))
+      setApplicationsLoading(false)
     } catch (error: any) {
+      // Ignore AbortError - it's expected when component unmounts
+      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        return
+      }
       if (mountedRef.current) {
         setApplicationsError(error)
-        console.error('Error loading applications:', error)
+        // Only log non-abort errors
+        if (error?.name !== 'AbortError' && !error?.message?.includes('aborted')) {
+          console.error('Error loading applications:', error)
+        }
       }
     } finally {
       if (mountedRef.current) {
@@ -592,34 +646,59 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
   // Initialize: Load profile and stats on mount
   useEffect(() => {
     let isMounted = true
+    let abortController: AbortController | null = null
     
     const initialize = async () => {
       try {
-        // Wait a bit for auth to initialize
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Create abort controller for this initialization
+        abortController = new AbortController()
         
-        // Check for session first
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError || !session) {
-          // Don't redirect immediately - might be a temporary issue
-          console.warn('BusinessDataContext: No session found, skipping data load')
+        // Wait a bit for auth to initialize
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
+        if (!isMounted || abortController?.signal.aborted) return
+        
+        // Check for session first with retry logic
+        let session = null
+        let sessionError = null
+        let retries = 3
+        
+        while (retries > 0 && !session) {
+          const result = await supabase.auth.getSession()
+          session = result.data.session
+          sessionError = result.error
+          
+          if (session?.user) break
+          
+          if (retries > 1 && !abortController?.signal.aborted) {
+            await new Promise(resolve => setTimeout(resolve, 300))
+          }
+          retries--
+        }
+        
+        if (sessionError || !session || !isMounted || abortController?.signal.aborted) {
+          if (sessionError && !sessionError.message?.includes('aborted')) {
+            console.warn('BusinessDataContext: No session found, skipping data load')
+          }
           return
         }
         
         // Load essential data in parallel - don't block rendering
         // Use allSettled to ensure we don't fail if one request fails
-        Promise.allSettled([
-          refreshProfile(true),
-          refreshStats(true),
-        ]).catch((error) => {
-          // Ignore AbortError - it's expected when component unmounts
-          if (error?.name !== 'AbortError' && !error?.message?.includes('aborted')) {
-            console.error('BusinessDataContext: Error loading initial data:', error)
-          }
-        })
+        if (isMounted && !abortController?.signal.aborted) {
+          Promise.allSettled([
+            refreshProfile(true),
+            refreshStats(true),
+          ]).catch((error) => {
+            // Ignore AbortError - it's expected when component unmounts
+            if (error?.name !== 'AbortError' && !error?.message?.includes('aborted') && isMounted) {
+              console.error('BusinessDataContext: Error loading initial data:', error)
+            }
+          })
+        }
       } catch (error: any) {
         // Ignore AbortError - it's expected when component unmounts
-        if (error?.name !== 'AbortError' && !error?.message?.includes('aborted')) {
+        if (error?.name !== 'AbortError' && !error?.message?.includes('aborted') && isMounted) {
           console.error('BusinessDataContext: Error initializing:', error)
         }
       }
@@ -629,9 +708,11 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
     
     // Listen to auth state changes to refresh data
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return
+      
       if (event === 'SIGNED_IN' && session?.user) {
         // Wait a bit for session to be fully ready
-        await new Promise(resolve => setTimeout(resolve, 200))
+        await new Promise(resolve => setTimeout(resolve, 300))
         if (isMounted) {
           Promise.allSettled([
             refreshProfile(true),
@@ -646,11 +727,22 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
           setApplications([])
           setCollaborations([])
         }
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Refresh data when token is refreshed
+        if (isMounted) {
+          Promise.allSettled([
+            refreshProfile(true),
+            refreshStats(true),
+          ])
+        }
       }
     })
     
     return () => {
       isMounted = false
+      if (abortController) {
+        abortController.abort()
+      }
       subscription.unsubscribe()
     }
   }, [router, refreshProfile, refreshStats])
