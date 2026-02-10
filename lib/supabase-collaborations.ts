@@ -101,7 +101,63 @@ export async function submitContentProof(collaborationId: string, proofData: {
 }
 
 /**
- * Check in with QR code
+ * Check in with QR code when business scans influencer's QR at venue.
+ * Scanned content is the qr_data string.
+ */
+export async function checkInWithQRByScannedData(qrData: string) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: qrCode, error: qrError } = await supabase
+      .from('qr_codes')
+      .select('*, collaboration:collaborations(*)')
+      .eq('qr_data', qrData)
+      .eq('is_active', true)
+      .single()
+
+    if (qrError || !qrCode) throw new Error('Invalid or expired QR code')
+    const collaboration = (qrCode as any).collaboration
+    if (!collaboration) throw new Error('Collaboration not found')
+    if (collaboration.business_id !== user.id) {
+      throw new Error('This QR is for a different business')
+    }
+
+    const scheduledDateTime = new Date(
+      `${collaboration.scheduled_date}T${collaboration.scheduled_time}`
+    )
+    const now = new Date()
+    const isOnTime = now <= new Date(scheduledDateTime.getTime() + 15 * 60000)
+
+    const { data, error } = await supabase
+      .from('collaborations')
+      .update({
+        checked_in_at: now.toISOString(),
+        is_on_time: isOnTime,
+        qr_code_scanned: true
+      })
+      .eq('id', collaboration.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    await supabase
+      .from('qr_codes')
+      .update({
+        scan_count: (qrCode.scan_count || 0) + 1,
+        last_scanned_at: now.toISOString()
+      })
+      .eq('id', qrCode.id)
+
+    return { data: { ...data, isOnTime }, error: null }
+  } catch (error: any) {
+    return { data: null, error }
+  }
+}
+
+/**
+ * Check in with QR code (when collaborationId + qrData both known)
  */
 export async function checkInWithQR(collaborationId: string, qrData: string) {
   try {

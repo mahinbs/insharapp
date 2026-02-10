@@ -4,8 +4,8 @@ import { useState, ChangeEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../components/AdvancedBottomNav";
-import logo_dark from "@/assetes/logo_dark.png";
-import QRScanner from "../../components/QRScanner";
+import white_logo from "@/assetes/white-logo.png";
+import InfluencerQRCode from "../../components/InfluencerQRCode";
 import { getInfluencerCollaborations } from "@/lib/supabase-collaborations";
 import { getInfluencerApplications } from "@/lib/supabase-applications";
 import { getCurrentUser } from "@/lib/supabase-auth";
@@ -14,6 +14,7 @@ import type { Application } from "@/lib/supabase-applications";
 
 interface Collaboration {
   id: string;
+  collaborationId?: string; // set when from collaborations table (for QR)
   businessName: string;
   businessLogo: string;
   title: string;
@@ -36,8 +37,7 @@ export default function CollaborationsPage() {
   const [selectedCollab, setSelectedCollab] = useState<Collaboration | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [showQRScanner, setShowQRScanner] = useState(false);
-  const [scannerCollab, setScannerCollab] = useState<Collaboration | null>(null);
+  const [showQRModalCollab, setShowQRModalCollab] = useState<Collaboration | null>(null);
 
   // Fetch collaborations and applications
   useEffect(() => {
@@ -83,13 +83,14 @@ export default function CollaborationsPage() {
           });
         }
 
-        // Add collaborations
+        // Add collaborations (id is collaboration id for QR)
         if (collabs) {
           collabs.forEach((collab: SupabaseCollaboration) => {
             const offer = collab.offer as any;
             const business = (collab.business as any) || {};
             allItems.push({
               id: collab.id,
+              collaborationId: collab.id,
               businessName: business.business_name || 'Business',
               businessLogo: business.business_logo || 'https://picsum.photos/60/60',
               title: offer?.title || 'Collaboration',
@@ -151,41 +152,6 @@ export default function CollaborationsPage() {
     setUploadedImage(null);
   };
 
-  const handleScanQR = (collab: Collaboration) => {
-    if (!collab.businessId) {
-      alert('Business ID not found for this collaboration');
-      return;
-    }
-    setScannerCollab(collab);
-    setShowQRScanner(true);
-  };
-
-  const handleScanSuccess = (data: {
-    businessId: string;
-    arrivalTime: string;
-    isOnTime: boolean;
-  }) => {
-    if (!scannerCollab) return;
-
-    setCollaborations(prev =>
-      prev.map(collab =>
-        collab.id === scannerCollab.id
-          ? {
-              ...collab,
-              visitInfo: {
-                arrivalTime: data.arrivalTime,
-                isOnTime: data.isOnTime,
-                checkedIn: true,
-              }
-            }
-          : collab
-      )
-    );
-
-    setShowQRScanner(false);
-    setScannerCollab(null);
-  };
-
   const handlePendingClick = (collab: Collaboration) => {
     setSelectedCollab(collab);
     setShowUploadModal(true);
@@ -220,10 +186,10 @@ export default function CollaborationsPage() {
             </div>
           </Link>
           <div className="flex flex-col items-center">
-            <img 
-              src={logo_dark.src}
-              alt="Inshaar" 
-              className="h-10 w-40 object-cover mb-1"
+            <img
+              src={white_logo.src}
+              alt="Inshaar"
+              className="h-12 w-40 object-cover mb-1"
             />
             <span className="text-white/80 text-sm">My Collaborations</span>
           </div>
@@ -262,31 +228,31 @@ export default function CollaborationsPage() {
               <div
                 key={collab.id}
                 onClick={() => handlePendingClick(collab)}
-                className="bg-white rounded-2xl p-5 shadow-lg border-2 border-gray-100 hover:border-pink-300 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                className="bg-white rounded-2xl p-4 sm:p-5 shadow-lg border-2 border-gray-100 hover:border-pink-300 hover:shadow-xl transition-all duration-300 cursor-pointer group overflow-hidden"
               >
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-wrap items-start gap-3 sm:gap-4">
                   <img
                     src={collab.businessLogo}
                     alt={collab.businessName}
-                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-gray-100 group-hover:ring-pink-200 transition-all"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-2 ring-gray-100 group-hover:ring-pink-200 transition-all flex-shrink-0"
                   />
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-800 group-hover:text-pink-600 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-base sm:text-lg text-gray-800 group-hover:text-pink-600 transition-colors truncate">
                       {collab.businessName}
                     </h3>
-                    <p className="text-gray-600 text-sm mt-1">{collab.title}</p>
-                    <div className="flex items-center space-x-3 mt-2">
+                    <p className="text-gray-600 text-sm mt-1 truncate">{collab.title}</p>
+                    <div className="flex items-center space-x-3 mt-2 flex-wrap gap-y-1">
                       <span className="text-xs text-gray-500 flex items-center space-x-1">
                         <i className="ri-calendar-line"></i>
                         <span>{collab.date}</span>
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
+                  <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:flex-col sm:items-end">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
                       {collab.status.toUpperCase()}
-                        </span>
-                    <i className="ri-arrow-right-line text-gray-400 group-hover:text-pink-500 transition-colors"></i>
+                    </span>
+                    <i className="ri-arrow-right-line text-gray-400 group-hover:text-pink-500 transition-colors ml-auto sm:ml-0"></i>
                   </div>
                 </div>
               </div>
@@ -312,20 +278,20 @@ export default function CollaborationsPage() {
             {approvedCollabs.map((collab) => (
               <div
                 key={collab.id}
-                className="bg-white rounded-2xl p-5 shadow-lg border-2 border-gray-100 hover:shadow-xl transition-all duration-300"
+                className="bg-white rounded-2xl p-4 sm:p-5 shadow-lg border-2 border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden"
               >
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-wrap items-start gap-3 sm:gap-4">
                   <img
                     src={collab.businessLogo}
                     alt={collab.businessName}
-                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-green-100"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-2 ring-green-100 flex-shrink-0"
                   />
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-800">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-base sm:text-lg text-gray-800 truncate">
                       {collab.businessName}
                     </h3>
-                    <p className="text-gray-600 text-sm mt-1">{collab.title}</p>
-                    <div className="flex items-center space-x-3 mt-2">
+                    <p className="text-gray-600 text-sm mt-1 truncate">{collab.title}</p>
+                    <div className="flex items-center space-x-3 mt-2 flex-wrap gap-y-1">
                       <span className="text-xs text-gray-500 flex items-center space-x-1">
                         <i className="ri-calendar-line"></i>
                         <span>{collab.date}</span>
@@ -338,12 +304,11 @@ export default function CollaborationsPage() {
                       )}
                     </div>
                     {collab.visitInfo?.checkedIn && (
-                      <div className="mt-2 flex items-center space-x-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          collab.visitInfo.isOnTime 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-orange-100 text-orange-700'
-                        }`}>
+                      <div className="mt-2 flex items-center space-x-2 flex-wrap">
+                        <span className={`text-xs px-2 py-1 rounded-full ${collab.visitInfo.isOnTime
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-orange-100 text-orange-700'
+                          }`}>
                           <i className={`ri-${collab.visitInfo.isOnTime ? 'check' : 'time'}-line mr-1`}></i>
                           {collab.visitInfo.isOnTime ? 'Checked In (On Time)' : 'Checked In (Late)'}
                         </span>
@@ -353,21 +318,25 @@ export default function CollaborationsPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
+                  <div className="flex-shrink-0 w-full sm:w-auto flex justify-between sm:flex-col sm:items-end sm:justify-start gap-2">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
                       {collab.status.toUpperCase()}
                     </span>
-                    {collab.status === "approved" && !collab.visitInfo?.checkedIn && collab.businessId && (
-                      <button
-                        onClick={() => handleScanQR(collab)}
-                        className="px-3 py-1.5 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full text-xs font-semibold hover:shadow-lg transition-all flex items-center space-x-1"
-                      >
-                        <i className="ri-qr-scan-line"></i>
-                        <span>Scan QR</span>
-                      </button>
-                    )}
                   </div>
                 </div>
+                {collab.status === "approved" && collab.collaborationId && !collab.visitInfo?.checkedIn && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <p className="text-gray-600 text-sm mb-2">Show this QR to the business when you arrive.</p>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowQRModalCollab(collab); }}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                    >
+                      <i className="ri-qr-scan-line text-xl"></i>
+                      <span>Show my QR</span>
+                    </button>
+                  </div>
+                )}
                 {collab.uploadedImage && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <img
@@ -396,32 +365,32 @@ export default function CollaborationsPage() {
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <span>Completed ({completedCollabs.length})</span>
               </h2>
-                      </div>
+            </div>
             <div className="space-y-3">
               {completedCollabs.map((collab) => (
                 <div
                   key={collab.id}
                   className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-5 shadow-lg border-2 border-purple-100"
                 >
-                  <div className="flex items-center space-x-4 mb-4">
+                  <div className="flex flex-wrap items-start gap-3 sm:gap-4">
                     <img
                       src={collab.businessLogo}
                       alt={collab.businessName}
-                      className="w-16 h-16 rounded-2xl object-cover ring-2 ring-purple-200"
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-2 ring-purple-200 flex-shrink-0"
                     />
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-gray-800">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-base sm:text-lg text-gray-800 truncate">
                         {collab.businessName}
                       </h3>
-                      <p className="text-gray-600 text-sm mt-1">{collab.title}</p>
-                      <div className="flex items-center space-x-3 mt-2">
+                      <p className="text-gray-600 text-sm mt-1 truncate">{collab.title}</p>
+                      <div className="flex items-center space-x-3 mt-2 flex-wrap">
                         <span className="text-xs text-gray-500 flex items-center space-x-1">
                           <i className="ri-calendar-line"></i>
                           <span>{collab.date}</span>
                         </span>
                       </div>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border-2 border-green-300">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border-2 border-green-300 flex-shrink-0">
                       COMPLETED
                     </span>
                   </div>
@@ -455,25 +424,25 @@ export default function CollaborationsPage() {
                 key={collab.id}
                 className="bg-white rounded-2xl p-5 shadow-lg border-2 border-gray-100 opacity-75"
               >
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-wrap items-start gap-3 sm:gap-4">
                   <img
                     src={collab.businessLogo}
                     alt={collab.businessName}
-                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-red-100 grayscale"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-2 ring-red-100 grayscale flex-shrink-0"
                   />
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-600">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-base sm:text-lg text-gray-600 truncate">
                       {collab.businessName}
                     </h3>
-                    <p className="text-gray-500 text-sm mt-1">{collab.title}</p>
-                    <div className="flex items-center space-x-3 mt-2">
+                    <p className="text-gray-500 text-sm mt-1 truncate">{collab.title}</p>
+                    <div className="flex items-center space-x-3 mt-2 flex-wrap">
                       <span className="text-xs text-gray-400 flex items-center space-x-1">
                         <i className="ri-calendar-line"></i>
                         <span>{collab.date}</span>
                       </span>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusBadge(collab.status)}`}>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border-2 flex-shrink-0 ${getStatusBadge(collab.status)}`}>
                     {collab.status.toUpperCase()}
                   </span>
                 </div>
@@ -488,6 +457,36 @@ export default function CollaborationsPage() {
           </div>
         </div>
       </div>
+
+      {/* Full-screen QR modal (unique per approved card) */}
+      {showQRModalCollab && showQRModalCollab.collaborationId && (
+        <div className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-800">Check-in QR — {showQRModalCollab.businessName}</h3>
+              <button
+                type="button"
+                onClick={() => setShowQRModalCollab(null)}
+                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+              >
+                <i className="ri-close-line text-gray-600 text-xl"></i>
+              </button>
+            </div>
+            <InfluencerQRCode
+              collaborationId={showQRModalCollab.collaborationId}
+              businessName={showQRModalCollab.businessName}
+              title="Show this to the business to scan"
+            />
+            <button
+              type="button"
+              onClick={() => setShowQRModalCollab(null)}
+              className="w-full mt-4 py-3 rounded-xl bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Upload Image Modal */}
       {showUploadModal && selectedCollab && (
@@ -572,21 +571,6 @@ export default function CollaborationsPage() {
         </div>
       )}
 
-      {/* QR Scanner Modal */}
-      {showQRScanner && scannerCollab && scannerCollab.businessId && (
-        <QRScanner
-          collaborationId={scannerCollab.id.toString()}
-          businessId={scannerCollab.businessId}
-          scheduledTime={scannerCollab.date && scannerCollab.time 
-            ? new Date(`${scannerCollab.date} ${scannerCollab.time}`).toISOString()
-            : undefined}
-          onScanSuccess={handleScanSuccess}
-          onClose={() => {
-            setShowQRScanner(false);
-            setScannerCollab(null);
-          }}
-        />
-      )}
 
       {/* Advanced Bottom Navigation */}
       <AdvancedBottomNav userType="influencer" />

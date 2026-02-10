@@ -330,6 +330,17 @@ export async function acceptApplication(applicationId: string) {
         related_collaboration_id: collaboration.id
       })
 
+    // Create QR code for influencer (they show it at venue; business scans it)
+    const qrData = `inshaar-${collaboration.id}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+    await supabase
+      .from('qr_codes')
+      .insert({
+        business_id: user.id,
+        collaboration_id: collaboration.id,
+        qr_data: qrData,
+        is_active: true
+      })
+
     return { data: { application: updatedApp, collaboration }, error: null }
   } catch (error: any) {
     return { data: null, error }
@@ -470,6 +481,46 @@ export async function getBusinessCollaborations(businessId?: string, filters?: {
 
     if (error) throw error
     return { data: data as Collaboration[], error: null }
+  } catch (error: any) {
+    return { data: null, error }
+  }
+}
+
+/**
+ * Get a single collaboration with offer and influencer (for business, after QR scan)
+ */
+export async function getCollaborationById(collaborationId: string) {
+  try {
+    const { session, error: sessionError } = await getValidSession()
+    if (sessionError || !session?.user) {
+      return { data: null, error: { message: 'Not authenticated' } }
+    }
+    const userId = session.user.id
+
+    const { data, error } = await supabase
+      .from('collaborations')
+      .select(`
+        *,
+        offer:offers!collaborations_offer_id_fkey (
+          id,
+          title,
+          main_image
+        ),
+        influencer:profiles!collaborations_influencer_id_fkey (
+          id,
+          full_name,
+          username,
+          avatar_url,
+          instagram_handle,
+          tiktok_handle
+        )
+      `)
+      .eq('id', collaborationId)
+      .eq('business_id', userId)
+      .single()
+
+    if (error || !data) return { data: null, error: error || { message: 'Collaboration not found' } }
+    return { data, error: null }
   } catch (error: any) {
     return { data: null, error }
   }

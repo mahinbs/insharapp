@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import AdvancedBottomNav from '../../components/AdvancedBottomNav';
-import logo_dark from "@/assetes/logo_dark.png";
+import white_logo from "@/assetes/white-logo.png";
 import { RiCustomerService2Fill } from "react-icons/ri";
 
 // Mock video data for TikTok/Reels style feed
 const videoFeed = [
-  { 
-    id: 1, 
+  {
+    id: 1,
     influencer: {
       name: "Sarah Styles",
       handle: "@sarahstyles",
@@ -25,8 +25,8 @@ const videoFeed = [
     views: "24.1K",
     isLiked: false
   },
-  { 
-    id: 2, 
+  {
+    id: 2,
     influencer: {
       name: "Foodie Guy",
       handle: "@foodieguy",
@@ -42,8 +42,8 @@ const videoFeed = [
     views: "18.7K",
     isLiked: true
   },
-  { 
-    id: 3, 
+  {
+    id: 3,
     influencer: {
       name: "City Life",
       handle: "@citylife",
@@ -59,8 +59,8 @@ const videoFeed = [
     views: "67.3K",
     isLiked: false
   },
-  { 
-    id: 4, 
+  {
+    id: 4,
     influencer: {
       name: "Fitness Queen",
       handle: "@fitnessqueen",
@@ -85,8 +85,8 @@ export default function SearchPage() {
   const [isScrolling, setIsScrolling] = useState(false);
 
   const handleLike = (videoId: number) => {
-    setLikedVideos(prev => 
-      prev.includes(videoId) 
+    setLikedVideos(prev =>
+      prev.includes(videoId)
         ? prev.filter(id => id !== videoId)
         : [...prev, videoId]
     );
@@ -94,16 +94,16 @@ export default function SearchPage() {
 
   const handleScroll = (e: React.WheelEvent) => {
     if (isScrolling) return;
-    
+
     setIsScrolling(true);
     const delta = e.deltaY;
-    
+
     if (delta > 0 && currentVideoIndex < videoFeed.length - 1) {
       setCurrentVideoIndex(prev => prev + 1);
     } else if (delta < 0 && currentVideoIndex > 0) {
       setCurrentVideoIndex(prev => prev - 1);
     }
-    
+
     setTimeout(() => setIsScrolling(false), 500);
   };
 
@@ -127,23 +127,23 @@ export default function SearchPage() {
             </div>
           </Link>
           <div className=" flex flex-col items-center">
-            <img 
-              src={logo_dark.src}
-              alt="Inshaar" 
-              className="h-10 w-40 object-cover mb-1"
+            <img
+              src={white_logo.src}
+              alt="Inshaar"
+              className="h-12 w-40 object-cover"
             />
             <span className="text-white/80 text-xs">Discover</span>
           </div>
           <Link href="/help">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-            <RiCustomerService2Fill className="text-white text-xl" />
-              </div>
+              <RiCustomerService2Fill className="text-white text-xl" />
+            </div>
           </Link>
         </div>
       </div>
 
       {/* Video Feed Container */}
-      <div 
+      <div
         ref={containerRef}
         className="relative h-screen overflow-y-scroll snap-y snap-mandatory"
         onWheel={handleScroll}
@@ -152,21 +152,21 @@ export default function SearchPage() {
         {videoFeed.map((video, index) => (
           <div
             key={video.id}
-            className="relative h-screen w-full snap-start flex items-center justify-center"
+            className="relative min-h-screen h-screen w-full snap-start flex items-center justify-center"
           >
             {/* Video/Image */}
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full min-h-[100dvh] flex flex-col">
               <img
                 src={video.videoUrl}
                 alt={video.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full min-h-[100dvh] object-cover flex-1"
               />
-              
+
               {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-              
-              {/* Content Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 pb-24">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
+
+              {/* Content Overlay - ensure always visible on short screens */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 pb-24 sm:pb-24 pt-12">
                 {/* Influencer Info */}
                 <div className="flex items-center space-x-3 mb-4">
                   <img
@@ -174,11 +174,11 @@ export default function SearchPage() {
                     alt={video.influencer.name}
                     className="w-12 h-12 rounded-full border-2 border-white"
                   />
-            <div>
+                  <div>
                     <h3 className="text-white font-bold text-lg">{video.influencer.name}</h3>
                     <p className="text-white/80 text-sm">{video.influencer.handle} • {video.influencer.followers} followers</p>
-              </div>
-            </div>
+                  </div>
+                </div>
 
                 {/* Video Title */}
                 <p className="text-white text-base mb-4 font-medium">{video.title}</p>
@@ -188,45 +188,44 @@ export default function SearchPage() {
                   <i className="ri-store-line text-white"></i>
                   <span className="text-white text-sm font-medium">{video.business}</span>
                 </div>
-        </div>
-        
-              {/* Right Side Actions */}
-              <div className="absolute right-4 bottom-24 flex flex-col items-center space-y-6">
-            <button
+              </div>
+
+              {/* Right Side Actions - visible on all screen heights */}
+              <div className="absolute right-2 sm:right-4 bottom-24 sm:bottom-24 flex flex-col items-center space-y-4 sm:space-y-6 z-10">
+                <button
                   onClick={() => handleLike(video.id)}
                   className="flex flex-col items-center space-y-1"
                 >
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
-                    likedVideos.includes(video.id) ? 'bg-red-500' : 'bg-white/20 backdrop-blur-sm'
-                  }`}>
-                    <i className={`${likedVideos.includes(video.id) ? 'ri-heart-fill' : 'ri-heart-line'} text-white text-2xl`}></i>
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center ${likedVideos.includes(video.id) ? 'bg-red-500' : 'bg-white/20 backdrop-blur-sm'
+                    }`}>
+                    <i className={`${likedVideos.includes(video.id) ? 'ri-heart-fill' : 'ri-heart-line'} text-white text-xl sm:text-2xl`}></i>
                   </div>
                   <span className="text-white text-xs font-semibold">{video.likes}</span>
                 </button>
 
                 <button className="flex flex-col items-center space-y-1">
-                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                    <i className="ri-chat-3-line text-white text-2xl"></i>
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <i className="ri-chat-3-line text-white text-xl sm:text-2xl"></i>
                   </div>
                   <span className="text-white text-xs font-semibold">{video.comments}</span>
-            </button>
+                </button>
 
                 <button className="flex flex-col items-center space-y-1">
-                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                    <i className="ri-share-line text-white text-2xl"></i>
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <i className="ri-share-line text-white text-xl sm:text-2xl"></i>
                   </div>
                   <span className="text-white text-xs font-semibold">{video.shares}</span>
-                  </button>
+                </button>
               </div>
-              
-              {/* Views Counter */}
-              <div className="absolute top-20 right-4">
-                <div className="bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+
+              {/* Views Counter - always visible */}
+              <div className="absolute top-20 sm:top-20 right-2 sm:right-4 z-10">
+                <div className="bg-black/50 backdrop-blur-sm px-2 py-1 sm:px-3 rounded-full">
                   <span className="text-white text-xs font-medium">{video.views} views</span>
                 </div>
               </div>
             </div>
-        </div>
+          </div>
         ))}
       </div>
 

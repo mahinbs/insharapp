@@ -8,6 +8,7 @@ import { getOfferById } from "@/lib/supabase-offers";
 import { applyToOffer, getApplicationStatus } from "@/lib/supabase-applications";
 import { getCurrentUser } from "@/lib/supabase-auth";
 import { submitContentProof, getInfluencerCollaborations } from "@/lib/supabase-collaborations";
+import InfluencerQRCode from "@/components/InfluencerQRCode";
 import type { Offer } from "@/lib/supabase-offers";
 import type { Application } from "@/lib/supabase-applications";
 import type { Collaboration } from "@/lib/supabase-collaborations";
@@ -1150,6 +1151,16 @@ export default function OfferDetailsClient({
           </div>
         </div> */}
 
+
+        {(bookingStatus === "accepted" || collaboration) && collaboration?.id && (
+          <div className="mt-6">
+            <InfluencerQRCode
+              collaborationId={collaboration.id}
+              businessName={offerDetails.businessName || business.business_name}
+              title="Your check-in QR code"
+            />
+          </div>
+        )}
 
         {(bookingStatus === "accepted" || collaboration) && (
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 mt-6">

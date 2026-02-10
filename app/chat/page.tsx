@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AdvancedBottomNav from '../../components/AdvancedBottomNav';
-import logo_dark from "@/assetes/logo_dark.png";
+import white_logo from "@/assetes/white-logo.png"
 import { RiCustomerService2Fill } from "react-icons/ri";
 import { getUserConversations, type Conversation } from '@/lib/supabase-messages';
 import { supabase } from '@/lib/supabase';
@@ -45,7 +45,7 @@ export default function ChatList() {
     // Subscribe to new messages
     const channel = supabase
       .channel('conversations')
-      .on('postgres_changes', 
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'messages' },
         () => {
           loadConversations();
@@ -82,8 +82,8 @@ export default function ChatList() {
 
   const getUnreadCount = (conv: Conversation) => {
     if (!currentUserId) return 0;
-    return conv.participant_1_id === currentUserId 
-      ? conv.participant_1_unread_count 
+    return conv.participant_1_id === currentUserId
+      ? conv.participant_1_unread_count
       : conv.participant_2_unread_count;
   };
 
@@ -106,10 +106,10 @@ export default function ChatList() {
             </div>
           </Link>
           <div className=" flex flex-col items-center">
-            <img 
-              src={logo_dark.src}
-              alt="Inshaar" 
-              className="h-10 w-40 object-cover mb-1"
+            <img
+              src={white_logo.src}
+              alt="Inshaar"
+              className="h-12 w-40 object-cover mb-1"
             />
             <span className="text-white/80 text-sm">Messages</span>
           </div>
@@ -146,7 +146,7 @@ export default function ChatList() {
               {filteredConversations.map((conv) => {
                 const otherParticipant = conv.other_participant;
                 const name = otherParticipant?.full_name || otherParticipant?.business_name || 'Unknown';
-                const avatar = otherParticipant?.avatar_url || otherParticipant?.business_logo || 
+                const avatar = otherParticipant?.avatar_url || otherParticipant?.business_logo ||
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=60`;
                 const unreadCount = getUnreadCount(conv);
 
@@ -155,7 +155,7 @@ export default function ChatList() {
                     <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
                       <div className="flex items-center space-x-4">
                         <div className="relative">
-                          <img 
+                          <img
                             src={avatar}
                             alt={name}
                             className="w-14 h-14 rounded-full object-cover"
@@ -165,7 +165,7 @@ export default function ChatList() {
                             }}
                           />
                         </div>
-                        
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <h3 className="font-semibold text-gray-800 truncate">{name}</h3>
@@ -175,7 +175,7 @@ export default function ChatList() {
                             {conv.last_message_preview || 'No messages yet'}
                           </p>
                         </div>
-                        
+
                         {unreadCount > 0 && (
                           <div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
                             <span className="text-white text-xs font-semibold">{unreadCount}</span>
@@ -196,8 +196,8 @@ export default function ChatList() {
                   {searchQuery ? 'No conversations match your search' : 'No Messages Yet'}
                 </h3>
                 <p className="text-gray-500">
-                  {searchQuery 
-                    ? 'Try a different search term' 
+                  {searchQuery
+                    ? 'Try a different search term'
                     : 'Start collaborating to begin conversations'}
                 </p>
               </div>
