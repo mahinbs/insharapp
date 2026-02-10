@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import logo_dark from "@/assetes/logo_dark.png";
+import logo_colorful from "@/assetes/Logo3 (1).png";
+import white_logo from "@/assetes/white-logo.png";
 
 export default function SplashScreen() {
   return (
@@ -13,9 +14,9 @@ export default function SplashScreen() {
       <div className="relative z-10 text-center">
         <div className="flex flex-col items-center justify-center">
           <img
-            src={logo_dark.src}
+            src={white_logo.src}
             alt="Inshaar"
-            className="h-10 w-40 object-cover mb-1"
+            className="h-12 w-40 object-cover mb-1"
           />
         </div>
 

@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AdvancedBottomNav from "../../../components/AdvancedBottomNav";
 import logo_dark from "@/assetes/logo_dark.png";
+import BusinessQRScanner from "../../../components/BusinessQRScanner";
+import { checkInWithQRByScannedData } from "@/lib/supabase-collaborations";
+import { getCollaborationById } from "@/lib/supabase-business";
 import { useBusinessData } from "@/contexts/BusinessDataContext";
 import { supabase } from "@/lib/supabase";
 
@@ -33,6 +36,15 @@ const getWeekDates = () => {
 export default function BusinessAgendaPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"thisWeek" | "upcoming" | "past">("thisWeek");
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [scanResultDetails, setScanResultDetails] = useState<{
+    influencerName: string;
+    username?: string;
+    offerTitle: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    isOnTime?: boolean;
+  } | null>(null);
   const weekDates = getWeekDates();
   const { collaborations, refreshCollaborations } = useBusinessData();
 
@@ -140,8 +152,15 @@ export default function BusinessAgendaPage() {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-white px-4 py-4 shadow-sm sticky top-0 z-40">
+      {/* Scan influencer QR + Tab Navigation */}
+      <div className="bg-white px-4 py-4 shadow-sm sticky top-0 z-40 space-y-3">
+        <button
+          onClick={() => setShowQRScanner(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+        >
+          <i className="ri-qr-scan-line text-xl"></i>
+          <span>Scan influencer QR</span>
+        </button>
         <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
           <button
             onClick={() => setActiveTab("thisWeek")}
@@ -359,6 +378,97 @@ export default function BusinessAgendaPage() {
           </div>
         )}
       </div>
+
+      {showQRScanner && (
+        <BusinessQRScanner
+          onScanSuccess={async (qrData) => {
+            const { data, error } = await checkInWithQRByScannedData(qrData);
+            setShowQRScanner(false);
+            if (error) {
+              alert(error.message || 'Check-in failed');
+              return;
+            }
+            if (data?.id) {
+              const { data: details } = await getCollaborationById(data.id);
+              if (details) {
+                const offer = (details as any).offer;
+                const influencer = (details as any).influencer;
+                setScanResultDetails({
+                  influencerName: influencer?.full_name || 'Influencer',
+                  username: influencer?.username,
+                  offerTitle: offer?.title || 'Offer',
+                  scheduledDate: details.scheduled_date ? new Date(details.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+                  scheduledTime: details.scheduled_time ? new Date(`2000-01-01T${details.scheduled_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+                  isOnTime: (data as any).isOnTime,
+                });
+              } else {
+                refreshCollaborations();
+              }
+            } else {
+              refreshCollaborations();
+            }
+          }}
+          onClose={() => setShowQRScanner(false)}
+        />
+      )}
+
+      {/* Booking details modal after scan */}
+      {scanResultDetails && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800">Booking details</h3>
+              <button
+                type="button"
+                onClick={() => { setScanResultDetails(null); refreshCollaborations(); }}
+                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+              >
+                <i className="ri-close-line text-gray-600 text-xl"></i>
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Influencer</p>
+                <p className="font-semibold text-gray-800">{scanResultDetails.influencerName}</p>
+                {scanResultDetails.username && (
+                  <p className="text-sm text-purple-600">{scanResultDetails.username}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Offer / collaboration</p>
+                <p className="font-semibold text-gray-800">{scanResultDetails.offerTitle}</p>
+              </div>
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Date</p>
+                  <p className="font-semibold text-gray-800">{scanResultDetails.scheduledDate}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Time</p>
+                  <p className="font-semibold text-gray-800">{scanResultDetails.scheduledTime}</p>
+                </div>
+              </div>
+              {typeof scanResultDetails.isOnTime === 'boolean' && (
+                <div className="pt-2">
+                  <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
+                    scanResultDetails.isOnTime ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    <i className={scanResultDetails.isOnTime ? 'ri-check-line' : 'ri-time-line'}></i>
+                    {scanResultDetails.isOnTime ? 'Checked in on time' : 'Checked in (late)'}
+                  </span>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setScanResultDetails(null); refreshCollaborations(); }}
+              className="w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white font-semibold"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
 
       <AdvancedBottomNav userType="business" />
     </div>

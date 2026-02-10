@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import logo_dark from '@/assetes/logo_dark.png';
 import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 import { useRouter } from 'next/navigation';
-import QRCodeGenerator from '../../../components/QRCodeGenerator';
 import { updateProfile } from '@/lib/supabase-profile';
 import { updateBusinessProfileData, createBusinessEstablishment } from '@/lib/supabase-business';
 import { supabase } from '@/lib/supabase';
@@ -18,7 +17,6 @@ type SectionId =
   | 'location'
   | 'timing'
   | 'establishment'
-  | 'qrcode'
   | 'statistics';
 
 const sectionOrder: SectionId[] = [
@@ -28,7 +26,6 @@ const sectionOrder: SectionId[] = [
   'location',
   'timing',
   'establishment',
-  'qrcode',
   'statistics',
 ];
 
@@ -38,15 +35,12 @@ export default function BusinessProfile() {
     profile: profileData,
     stats,
     establishments,
-    qrCodes,
     weeklyReservations,
     profileLoading,
     statsLoading,
     establishmentsLoading,
-    qrCodesLoading,
     weeklyReservationsLoading,
     refreshEstablishments,
-    refreshQRCodes,
     refreshWeeklyReservations,
     refreshStats,
     refreshProfile,
@@ -66,7 +60,6 @@ export default function BusinessProfile() {
     location: null,
     timing: null,
     establishment: null,
-    qrcode: null,
     statistics: null,
   });
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -79,7 +72,6 @@ export default function BusinessProfile() {
       { id: 'location', label: 'Location' },
       { id: 'timing', label: 'Timing' },
       { id: 'establishment', label: 'Establishment' },
-      { id: 'qrcode', label: 'QR Code' },
       { id: 'statistics', label: 'Statistics' },
     ],
     []
@@ -101,7 +93,6 @@ export default function BusinessProfile() {
         // Use allSettled to not block if one fails
         Promise.allSettled([
           refreshEstablishments(),
-          refreshQRCodes(),
           refreshWeeklyReservations(),
           refreshStats(),
         ]).catch((error) => {
@@ -125,7 +116,7 @@ export default function BusinessProfile() {
     return () => {
       isMounted = false;
     };
-  }, [router, refreshEstablishments, refreshQRCodes, refreshWeeklyReservations, refreshStats]);
+  }, [router, refreshEstablishments, refreshWeeklyReservations, refreshStats]);
 
   // Handle hash navigation to statistics tab
   useEffect(() => {
@@ -721,26 +712,6 @@ export default function BusinessProfile() {
               ))
             )}
           </div>
-        </section>
-
-        <section id="qrcode" ref={registerSectionRef('qrcode')} className={sectionClasses}>
-          <QRCodeGenerator 
-            businessId={profileData?.id || 'business-id'} 
-            businessName={businessInfo.name}
-          />
-          {(qrCodes || []).length > 0 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-sm text-gray-600">Recent QR Codes:</p>
-              {(qrCodes || []).slice(0, 3).map((qr: any) => (
-                <div key={qr.id} className="p-3 bg-gray-50 rounded-lg text-xs">
-                  <p className="font-medium">Scans: {qr.scan_count || 0}</p>
-                  {qr.last_scanned_at && (
-                    <p className="text-gray-500">Last scanned: {new Date(qr.last_scanned_at).toLocaleDateString()}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </section>
 
         <section id="statistics" ref={registerSectionRef('statistics')} className={sectionClasses}>

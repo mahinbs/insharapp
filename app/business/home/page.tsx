@@ -273,34 +273,25 @@ export default function BusinessDashboard() {
     <div className="min-h-screen bg-white pb-24">
       {/* Simplified Header */}
       <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 px-4 pt-4 pb-4">
-        <div className="flex items-center justify-center">
-          <div className="w-40 h-10">
+        <div className="flex items-center justify-between">
+          <div className="w-32 h-8 lg:w-40 lg:h-10">
             {businessProfile?.business_logo ? (
               <img
                 src={businessProfile.business_logo}
                 alt={businessInfo.name}
-                className="h-full w-full object-contain mb-1"
+                className="h-full w-full object-contain"
               />
             ) : (
               <img
                 src={logo_dark.src}
                 alt="Inshaar"
-                className="h-full w-full object-cover mb-1"
+                className="h-full w-full object-cover"
               />
             )}
           </div>
-        </div>
-        <div className="flex items-center justify-between ">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-1">
-              Welcome Back{businessInfo.name !== 'Your Business' ? `, ${businessInfo.name}` : '!'}
-            </h1>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300">
-              <i className="ri-notification-line text-white text-xl"></i>
-            </button>
-          </div>
+          <button className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300">
+            <i className="ri-notification-line text-white text-xl"></i>
+          </button>
         </div>
       </div>
 
@@ -653,16 +644,16 @@ export default function BusinessDashboard() {
             </div>
 
             {/* Business Information */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Business Information</h2>
-                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-xl flex items-center justify-center">
                   <i className="ri-building-line text-white text-lg"></i>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 hover:shadow-md transition-all duration-300 group">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                <div className="flex items-center space-x-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-xl flex items-center justify-center group-hover:opacity-90 transition-opacity">
                     <i className="ri-store-line text-white text-xl"></i>
                   </div>
                   <div>
@@ -672,8 +663,8 @@ export default function BusinessDashboard() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-all duration-300 group">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                <div className="flex items-center space-x-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-xl flex items-center justify-center group-hover:opacity-90 transition-opacity">
                     <i className="ri-map-pin-line text-white text-xl"></i>
                   </div>
                   <div>
@@ -683,8 +674,8 @@ export default function BusinessDashboard() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-100 hover:shadow-md transition-all duration-300 group">
-                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                <div className="flex items-center space-x-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-xl flex items-center justify-center group-hover:opacity-90 transition-opacity">
                     <i className="ri-star-fill text-white text-xl"></i>
                   </div>
                   <div>
@@ -694,8 +685,8 @@ export default function BusinessDashboard() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:shadow-md transition-all duration-300 group">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                <div className="flex items-center space-x-3 p-4 bg-white rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="w-12 h-12 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-xl flex items-center justify-center group-hover:opacity-90 transition-opacity">
                     <i className="ri-calendar-check-line text-white text-xl"></i>
                   </div>
                   <div>

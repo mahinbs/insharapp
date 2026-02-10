@@ -4,9 +4,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { getCurrentUserProfile, Profile } from '@/lib/supabase-profile'
-import { 
-  getBusinessStats, 
-  getBusinessOffers, 
+import {
+  getBusinessStats,
+  getBusinessOffers,
   getBusinessApplications,
   getBusinessCollaborations,
   getBusinessEstablishments,
@@ -21,62 +21,62 @@ interface BusinessDataContextType {
   profile: Profile | null
   profileLoading: boolean
   profileError: any
-  
+
   // Stats
   stats: BusinessStats | null
   statsLoading: boolean
   statsError: any
-  
+
   // Offers
   offers: any[]
   offersLoading: boolean
   offersError: any
-  
+
   // Applications
   applications: any[]
   applicationsLoading: boolean
   applicationsError: any
-  
+
   // Collaborations
   collaborations: any[]
   collaborationsLoading: boolean
   collaborationsError: any
-  
+
   // Establishments
   establishments: any[]
   establishmentsLoading: boolean
   establishmentsError: any
-  
+
   // QR Codes
   qrCodes: any[]
   qrCodesLoading: boolean
   qrCodesError: any
-  
+
   // Weekly Reservations
   weeklyReservations: any[]
   weeklyReservationsLoading: boolean
   weeklyReservationsError: any
-  
+
   // Conversations
   conversations: any[]
   conversationsLoading: boolean
   conversationsError: any
-  
+
   // Actions
-  refreshProfile: () => Promise<void>
-  refreshStats: () => Promise<void>
-  refreshOffers: (filters?: any) => Promise<void>
-  refreshApplications: (filters?: any) => Promise<void>
-  refreshCollaborations: (filters?: any) => Promise<void>
-  refreshEstablishments: () => Promise<void>
-  refreshQRCodes: () => Promise<void>
-  refreshWeeklyReservations: () => Promise<void>
-  refreshConversations: () => Promise<void>
+  refreshProfile: (force?: boolean, session?: any) => Promise<void>
+  refreshStats: (force?: boolean, session?: any) => Promise<void>
+  refreshOffers: (filters?: any, force?: boolean, session?: any) => Promise<void>
+  refreshApplications: (filters?: any, force?: boolean, session?: any) => Promise<void>
+  refreshCollaborations: (filters?: any, force?: boolean, session?: any) => Promise<void>
+  refreshEstablishments: (force?: boolean, session?: any) => Promise<void>
+  refreshQRCodes: (force?: boolean, session?: any) => Promise<void>
+  refreshWeeklyReservations: (force?: boolean, session?: any) => Promise<void>
+  refreshConversations: (force?: boolean, session?: any) => Promise<void>
   refreshAll: () => Promise<void>
-  
+
   // Cache timestamps
   lastUpdated: { [key: string]: number }
-  
+
   // Loading state
   isLoading: boolean
 }
@@ -107,7 +107,7 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
   const [qrCodes, setQRCodes] = useState<any[]>([])
   const [weeklyReservations, setWeeklyReservations] = useState<any[]>([])
   const [conversations, setConversations] = useState<any[]>([])
-  
+
   const [profileLoading, setProfileLoading] = useState(false)
   const [statsLoading, setStatsLoading] = useState(false)
   const [offersLoading, setOffersLoading] = useState(false)
@@ -117,7 +117,7 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
   const [qrCodesLoading, setQRCodesLoading] = useState(false)
   const [weeklyReservationsLoading, setWeeklyReservationsLoading] = useState(false)
   const [conversationsLoading, setConversationsLoading] = useState(false)
-  
+
   const [profileError, setProfileError] = useState<any>(null)
   const [statsError, setStatsError] = useState<any>(null)
   const [offersError, setOffersError] = useState<any>(null)
@@ -127,10 +127,55 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
   const [qrCodesError, setQRCodesError] = useState<any>(null)
   const [weeklyReservationsError, setWeeklyReservationsError] = useState<any>(null)
   const [conversationsError, setConversationsError] = useState<any>(null)
-  
+
   const [lastUpdated, setLastUpdated] = useState<{ [key: string]: number }>({})
   const mountedRef = useRef(true)
-  
+
+  // Local Storage Keys
+  const CACHE_KEYS = {
+    PROFILE: 'business_profile_cache',
+    STATS: 'business_stats_cache',
+    OFFERS: 'business_offers_cache',
+    APPLICATIONS: 'business_applications_cache',
+    COLLABORATIONS: 'business_collaborations_cache',
+    ESTABLISHMENTS: 'business_establishments_cache',
+    QR_CODES: 'business_qr_codes_cache',
+    WEEKLY_RESERVATIONS: 'business_weekly_reservations_cache',
+    CONVERSATIONS: 'business_conversations_cache',
+  }
+
+  // Load from cache helper
+  const loadFromCache = useCallback((key: string, setter: (data: any) => void) => {
+    try {
+      if (typeof window === 'undefined') return false
+      const cached = localStorage.getItem(key)
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached)
+        // Only use cache if it's not too old (e.g., 24 hours) - tough persistence
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          setter(data)
+          return true
+        }
+      }
+    } catch (e) {
+      console.error('Error loading from cache:', key, e)
+    }
+    return false
+  }, [])
+
+  // Save to cache helper
+  const saveToCache = useCallback((key: string, data: any) => {
+    try {
+      if (typeof window === 'undefined') return
+      localStorage.setItem(key, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }))
+    } catch (e) {
+      console.error('Error saving to cache:', key, e)
+    }
+  }, [])
+
   // Helper to check if data is stale
   const isStale = useCallback((key: string) => {
     const lastUpdate = lastUpdated[key]
@@ -138,30 +183,44 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
     const duration = CACHE_DURATION[key as keyof typeof CACHE_DURATION] || 30 * 1000
     return Date.now() - lastUpdate > duration
   }, [lastUpdated])
-  
+
+  // Initialize from cache on mount
+  useEffect(() => {
+    loadFromCache(CACHE_KEYS.PROFILE, setProfile)
+    loadFromCache(CACHE_KEYS.STATS, setStats)
+    loadFromCache(CACHE_KEYS.OFFERS, setOffers)
+    loadFromCache(CACHE_KEYS.APPLICATIONS, setApplications)
+    loadFromCache(CACHE_KEYS.COLLABORATIONS, setCollaborations)
+    loadFromCache(CACHE_KEYS.ESTABLISHMENTS, setEstablishments)
+    loadFromCache(CACHE_KEYS.QR_CODES, setQRCodes)
+    loadFromCache(CACHE_KEYS.WEEKLY_RESERVATIONS, setWeeklyReservations)
+    loadFromCache(CACHE_KEYS.CONVERSATIONS, setConversations)
+  }, [loadFromCache])
+
   // Load profile
-  const refreshProfile = useCallback(async (force = false) => {
+  const refreshProfile = useCallback(async (force = false, session?: any) => {
     if (!force && !isStale('profile') && profile) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (!profile) {
       setProfileLoading(true)
     }
     setProfileError(null)
-    
+
     try {
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setProfileError({ message: 'Not authenticated' })
           setProfileLoading(false)
         }
         return
       }
-      
+
       const { data, error } = await getCurrentUserProfile()
       if (error) {
         // Don't log "Not authenticated" errors as they're expected when session is not ready
@@ -173,11 +232,12 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
         return
       }
-      
+
       if (mountedRef.current) {
         setProfile(data)
         setProfileError(null)
         setLastUpdated(prev => ({ ...prev, profile: Date.now() }))
+        saveToCache(CACHE_KEYS.PROFILE, data)
       }
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -193,31 +253,32 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setProfileLoading(false)
       }
     }
-  }, [profile, isStale])
-  
+  }, [profile, isStale, saveToCache, CACHE_KEYS])
+
   // Load stats
-  const refreshStats = useCallback(async (force = false) => {
+  const refreshStats = useCallback(async (force = false, session?: any) => {
     if (!force && !isStale('stats') && stats !== null) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (!stats) {
       setStatsLoading(true)
     }
     setStatsError(null)
-    
+
     try {
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setStatsError({ message: 'Not authenticated' })
           setStatsLoading(false)
         }
         return
       }
-      
+
       const { data, error } = await getBusinessStats()
       if (error) {
         // Don't log "Not authenticated" errors as they're expected when session is not ready
@@ -229,11 +290,12 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
         return
       }
-      
+
       if (mountedRef.current) {
         setStats(data)
         setStatsError(null)
         setLastUpdated(prev => ({ ...prev, stats: Date.now() }))
+        saveToCache(CACHE_KEYS.STATS, data)
       }
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -249,38 +311,40 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setStatsLoading(false)
       }
     }
-  }, [stats, isStale])
-  
+  }, [stats, isStale, saveToCache, CACHE_KEYS])
+
   // Load offers
-  const refreshOffers = useCallback(async (filters?: any, force = false) => {
+  const refreshOffers = useCallback(async (filters?: any, force = false, session?: any) => {
     if (!force && !isStale('offers') && offers.length > 0 && !filters) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (offers.length === 0) {
       setOffersLoading(true)
     }
     setOffersError(null)
-    
+
     try {
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setOffersError({ message: 'Not authenticated' })
           setOffersLoading(false)
         }
         return
       }
-      
+
       const { data, error } = await getBusinessOffers(undefined, filters)
       if (error) throw error
-      
+
       if (mountedRef.current) {
         setOffers(data || [])
         setOffersError(null)
         setLastUpdated(prev => ({ ...prev, offers: Date.now() }))
+        saveToCache(CACHE_KEYS.OFFERS, data || [])
       }
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -296,61 +360,63 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setOffersLoading(false)
       }
     }
-  }, [offers, isStale])
-  
+  }, [offers, isStale, saveToCache, CACHE_KEYS])
+
   // Load applications
-  const refreshApplications = useCallback(async (filters?: any, force = false) => {
+  const refreshApplications = useCallback(async (filters?: any, force = false, session?: any) => {
     // If filters include offerId, always force refresh to get correct data
     const shouldForce = force || (filters?.offerId && applications.length > 0)
-    
+
     if (!shouldForce && !isStale('applications') && applications.length > 0 && !filters?.offerId) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (applications.length === 0) {
       setApplicationsLoading(true)
     }
     setApplicationsError(null)
-    
+
     try {
       // Check if component is still mounted
       if (!mountedRef.current) {
         return
       }
-      
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setApplicationsError({ message: 'Not authenticated' })
           setApplicationsLoading(false)
         }
         return
       }
-      
+
       // Double check mounted before making request
       if (!mountedRef.current) {
         return
       }
-      
+
       const { data, error } = await getBusinessApplications(undefined, filters)
-      
+
       // Check mounted again after async operation
       if (!mountedRef.current) {
         return
       }
-      
+
       if (error) {
         // Don't throw - just set error state
         setApplicationsError(error)
         setApplicationsLoading(false)
         return
       }
-      
+
       setApplications(data || [])
       setApplicationsError(null)
       setLastUpdated(prev => ({ ...prev, applications: Date.now() }))
+      saveToCache(CACHE_KEYS.APPLICATIONS, data || [])
       setApplicationsLoading(false)
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -369,28 +435,37 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setApplicationsLoading(false)
       }
     }
-  }, [applications, isStale])
-  
+  }, [applications, isStale, saveToCache, CACHE_KEYS])
+
   // Load collaborations
-  const refreshCollaborations = useCallback(async (filters?: any, force = false) => {
+  const refreshCollaborations = useCallback(async (filters?: any, force = false, session?: any) => {
     if (!force && !isStale('collaborations') && collaborations.length > 0) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (collaborations.length === 0) {
       setCollaborationsLoading(true)
     }
     setCollaborationsError(null)
-    
+
     try {
+      // Use provided session or fetch new one
+      if (!session) {
+        // Optimization: usually collaborations fetch doesn't need session check explicitly if RLS handles it, 
+        // but we check it for consistency.
+        const { data: { session: fetchedSession } } = await supabase.auth.getSession()
+        if (!fetchedSession) throw new Error('Not authenticated')
+      }
+
       const { data, error } = await getBusinessCollaborations(undefined, filters)
       if (error) throw error
-      
+
       if (mountedRef.current) {
         setCollaborations(data || [])
         setCollaborationsError(null)
         setLastUpdated(prev => ({ ...prev, collaborations: Date.now() }))
+        saveToCache(CACHE_KEYS.COLLABORATIONS, data || [])
       }
     } catch (error: any) {
       if (mountedRef.current) {
@@ -402,31 +477,32 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setCollaborationsLoading(false)
       }
     }
-  }, [collaborations, isStale])
-  
+  }, [collaborations, isStale, saveToCache, CACHE_KEYS])
+
   // Load establishments
-  const refreshEstablishments = useCallback(async (force = false) => {
+  const refreshEstablishments = useCallback(async (force = false, session?: any) => {
     if (!force && !isStale('establishments') && establishments.length > 0) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (establishments.length === 0) {
       setEstablishmentsLoading(true)
     }
     setEstablishmentsError(null)
-    
+
     try {
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setEstablishmentsError({ message: 'Not authenticated' })
           setEstablishmentsLoading(false)
         }
         return
       }
-      
+
       const { data, error } = await getBusinessEstablishments()
       if (error) {
         // Don't log "Not authenticated" errors as they're expected when session is not ready
@@ -438,11 +514,12 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
         return
       }
-      
+
       if (mountedRef.current) {
         setEstablishments(data || [])
         setEstablishmentsError(null)
         setLastUpdated(prev => ({ ...prev, establishments: Date.now() }))
+        saveToCache(CACHE_KEYS.ESTABLISHMENTS, data || [])
       }
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -458,31 +535,32 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setEstablishmentsLoading(false)
       }
     }
-  }, [establishments, isStale])
-  
+  }, [establishments, isStale, saveToCache, CACHE_KEYS])
+
   // Load QR codes
-  const refreshQRCodes = useCallback(async (force = false) => {
+  const refreshQRCodes = useCallback(async (force = false, session?: any) => {
     if (!force && !isStale('qrCodes') && qrCodes.length > 0) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (qrCodes.length === 0) {
       setQRCodesLoading(true)
     }
     setQRCodesError(null)
-    
+
     try {
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setQRCodesError({ message: 'Not authenticated' })
           setQRCodesLoading(false)
         }
         return
       }
-      
+
       const { data, error } = await getBusinessQRCodes()
       if (error) {
         // Don't log "Not authenticated" errors as they're expected when session is not ready
@@ -494,11 +572,12 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
         return
       }
-      
+
       if (mountedRef.current) {
         setQRCodes(data || [])
         setQRCodesError(null)
         setLastUpdated(prev => ({ ...prev, qrCodes: Date.now() }))
+        saveToCache(CACHE_KEYS.QR_CODES, data || [])
       }
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -514,31 +593,32 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setQRCodesLoading(false)
       }
     }
-  }, [qrCodes, isStale])
-  
+  }, [qrCodes, isStale, saveToCache, CACHE_KEYS])
+
   // Load weekly reservations
-  const refreshWeeklyReservations = useCallback(async (force = false) => {
+  const refreshWeeklyReservations = useCallback(async (force = false, session?: any) => {
     if (!force && !isStale('weeklyReservations') && weeklyReservations.length > 0) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (weeklyReservations.length === 0) {
       setWeeklyReservationsLoading(true)
     }
     setWeeklyReservationsError(null)
-    
+
     try {
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setWeeklyReservationsError({ message: 'Not authenticated' })
           setWeeklyReservationsLoading(false)
         }
         return
       }
-      
+
       const { data, error } = await getWeeklyReservations()
       if (error) {
         // Don't log "Not authenticated" errors as they're expected when session is not ready
@@ -550,11 +630,12 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
         return
       }
-      
+
       if (mountedRef.current) {
         setWeeklyReservations(data || [])
         setWeeklyReservationsError(null)
         setLastUpdated(prev => ({ ...prev, weeklyReservations: Date.now() }))
+        saveToCache(CACHE_KEYS.WEEKLY_RESERVATIONS, data || [])
       }
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -570,31 +651,32 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setWeeklyReservationsLoading(false)
       }
     }
-  }, [weeklyReservations, isStale])
-  
+  }, [weeklyReservations, isStale, saveToCache, CACHE_KEYS])
+
   // Load conversations
-  const refreshConversations = useCallback(async (force = false) => {
+  const refreshConversations = useCallback(async (force = false, session?: any) => {
     if (!force && !isStale('conversations') && conversations.length > 0) {
       return
     }
-    
+
     // Don't set loading if we have cached data - show it immediately
     if (conversations.length === 0) {
       setConversationsLoading(true)
     }
     setConversationsError(null)
-    
+
     try {
-      // Check for session before making request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use provided session or fetch new one
+      const currentSession = session || (await supabase.auth.getSession()).data.session
+
+      if (!currentSession) {
         if (mountedRef.current) {
           setConversationsError({ message: 'Not authenticated' })
           setConversationsLoading(false)
         }
         return
       }
-      
+
       const { data, error } = await getUserConversations()
       if (error) {
         // Don't log "Not authenticated" errors as they're expected when session is not ready
@@ -606,11 +688,12 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
         return
       }
-      
+
       if (mountedRef.current) {
         setConversations(data || [])
         setConversationsError(null)
         setLastUpdated(prev => ({ ...prev, conversations: Date.now() }))
+        saveToCache(CACHE_KEYS.CONVERSATIONS, data || [])
       }
     } catch (error: any) {
       // Ignore AbortError - it's expected when component unmounts
@@ -626,63 +709,75 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         setConversationsLoading(false)
       }
     }
-  }, [conversations, isStale])
-  
+  }, [conversations, isStale, saveToCache, CACHE_KEYS])
+
   // Refresh all data
   const refreshAll = useCallback(async () => {
+    // Optimization: Fetch session once and pass to all functions
+    // This prevents 9 parallel calls to getSession() which can cause lock contention/AbortError
+    let session = null;
+    try {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+    } catch (e) {
+      console.warn('Error fetching session for refreshAll:', e);
+    }
+
+    if (!session) return; // Don't attempt to refresh if no session
+
     await Promise.allSettled([
-      refreshProfile(true),
-      refreshStats(true),
-      refreshOffers(undefined, true),
-      refreshApplications(undefined, true),
-      refreshCollaborations(undefined, true),
-      refreshEstablishments(true),
-      refreshQRCodes(true),
-      refreshWeeklyReservations(true),
-      refreshConversations(true),
+      refreshProfile(true, session),
+      refreshStats(true, session),
+      refreshOffers(undefined, true, session),
+      refreshApplications(undefined, true, session),
+      refreshCollaborations(undefined, true, session),
+      refreshEstablishments(true, session),
+      refreshQRCodes(true, session),
+      refreshWeeklyReservations(true, session),
+      refreshConversations(true, session),
     ])
   }, [refreshProfile, refreshStats, refreshOffers, refreshApplications, refreshCollaborations, refreshEstablishments, refreshQRCodes, refreshWeeklyReservations, refreshConversations])
-  
+
   // Initialize: Load profile and stats on mount
   useEffect(() => {
     let isMounted = true
     let abortController: AbortController | null = null
-    
+
     const initialize = async () => {
       try {
         // Create abort controller for this initialization
         abortController = new AbortController()
-        
+
         // Wait a bit for auth to initialize
         await new Promise(resolve => setTimeout(resolve, 200))
-        
+
         if (!isMounted || abortController?.signal.aborted) return
-        
+
         // Check for session first with retry logic
         let session = null
         let sessionError = null
         let retries = 3
-        
+
         while (retries > 0 && !session) {
           const result = await supabase.auth.getSession()
           session = result.data.session
           sessionError = result.error
-          
+
           if (session?.user) break
-          
+
           if (retries > 1 && !abortController?.signal.aborted) {
             await new Promise(resolve => setTimeout(resolve, 300))
           }
           retries--
         }
-        
+
         if (sessionError || !session || !isMounted || abortController?.signal.aborted) {
           if (sessionError && !sessionError.message?.includes('aborted')) {
             console.warn('BusinessDataContext: No session found, skipping data load')
           }
           return
         }
-        
+
         // Load essential data in parallel - don't block rendering
         // Use allSettled to ensure we don't fail if one request fails
         if (isMounted && !abortController?.signal.aborted) {
@@ -703,13 +798,13 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
       }
     }
-    
+
     initialize()
-    
+
     // Listen to auth state changes to refresh data
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return
-      
+
       if (event === 'SIGNED_IN' && session?.user) {
         // Wait a bit for session to be fully ready
         await new Promise(resolve => setTimeout(resolve, 300))
@@ -737,7 +832,7 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
         }
       }
     })
-    
+
     return () => {
       isMounted = false
       if (abortController) {
@@ -746,17 +841,17 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
       subscription.unsubscribe()
     }
   }, [router, refreshProfile, refreshStats])
-  
+
   useEffect(() => {
     return () => {
       mountedRef.current = false
     }
   }, [])
-  
-  const isLoading = profileLoading || statsLoading || offersLoading || applicationsLoading || 
-    collaborationsLoading || establishmentsLoading || qrCodesLoading || 
+
+  const isLoading = profileLoading || statsLoading || offersLoading || applicationsLoading ||
+    collaborationsLoading || establishmentsLoading || qrCodesLoading ||
     weeklyReservationsLoading || conversationsLoading
-  
+
   const value: BusinessDataContextType = {
     profile,
     profileLoading,
@@ -798,7 +893,7 @@ export function BusinessDataProvider({ children }: { children: React.ReactNode }
     lastUpdated,
     isLoading,
   }
-  
+
   return (
     <BusinessDataContext.Provider value={value}>
       {children}

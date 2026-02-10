@@ -6,6 +6,14 @@ import AdvancedBottomNav from '../../../components/AdvancedBottomNav';
 import logo_dark from "@/assetes/logo_dark.png";
 import { RiCustomerService2Fill } from "react-icons/ri";
 
+interface ServiceFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  message: string;
+}
+
 interface VIPFormData {
   name: string;
   email: string;
@@ -19,33 +27,90 @@ const businessServices = [
     title: 'Community Management',
     description: 'Engage and grow your audience',
     icon: 'ri-group-line',
-    features: ['Daily engagement', 'Content moderation', 'Audience growth', 'Analytics reports']
+    brief: 'We manage your social communities with daily engagement, content moderation, and audience growth strategies. Get regular analytics and reports to track performance and build an authentic, active following.',
+    points: [
+      'Daily engagement and moderation across your social channels',
+      'Audience growth and community-building strategies',
+      'Analytics reports and performance tracking',
+      'Content calendar and posting support',
+      'Crisis and reputation management',
+    ],
+    images: [
+      'https://picsum.photos/seed/community-mgmt-1/400/300',
+      'https://picsum.photos/seed/community-mgmt-2/400/300',
+      'https://picsum.photos/seed/community-mgmt-3/400/300',
+    ],
   },
   {
     id: 2,
     title: 'Digital Marketing',
     description: 'Meta & Google Ads management',
     icon: 'ri-megaphone-line',
-    features: ['Campaign setup', 'Ad optimization', 'Performance tracking', 'ROI analysis']
+    brief: 'Full-service Meta and Google Ads campaigns: setup, optimization, and performance tracking. We focus on ROI and scalable growth for your brand across paid channels.',
+    points: [
+      'Meta (Facebook & Instagram) and Google Ads campaign setup',
+      'Ad creative and targeting optimization',
+      'Performance tracking and ROI analysis',
+      'A/B testing and conversion optimization',
+      'Budget management and scaling strategies',
+    ],
+    images: [
+      'https://picsum.photos/seed/digital-mkt-1/400/300',
+      'https://picsum.photos/seed/digital-mkt-2/400/300',
+      'https://picsum.photos/seed/digital-mkt-3/400/300',
+    ],
   },
   {
     id: 3,
     title: 'Website Creation',
     description: 'Professional website design',
     icon: 'ri-global-line',
-    features: ['Responsive design', 'SEO optimized', 'Fast loading', 'Mobile friendly']
+    brief: 'Custom, responsive websites designed for conversion. SEO-optimized, fast-loading, and mobile-friendly so your business looks professional and ranks well.',
+    points: [
+      'Custom design and responsive layout (mobile, tablet, desktop)',
+      'SEO optimization and fast loading',
+      'Contact forms and lead capture',
+      'Content management and updates',
+      'Hosting setup and ongoing support',
+    ],
+    images: [
+      'https://picsum.photos/seed/website-1/400/300',
+      'https://picsum.photos/seed/website-2/400/300',
+      'https://picsum.photos/seed/website-3/400/300',
+    ],
   },
   {
     id: 4,
     title: 'Photoshoots & Photography',
     description: 'Professional photography services',
     icon: 'ri-camera-line',
-    features: ['Product photography', 'Event coverage', 'Brand shoots', 'Post-production']
-  }
+    brief: 'Product photography, event coverage, and brand shoots with full post-production. High-quality visuals that elevate your brand and marketing materials.',
+    points: [
+      'Product and catalog photography',
+      'Event and corporate coverage',
+      'Brand and lifestyle shoots',
+      'Photo editing and retouching',
+      'High-resolution delivery for web and print',
+    ],
+    images: [
+      'https://picsum.photos/seed/photography-1/400/300',
+      'https://picsum.photos/seed/photography-2/400/300',
+      'https://picsum.photos/seed/photography-3/400/300',
+    ],
+  },
 ];
 
 export default function BusinessServicesPage() {
   const [selectedService, setSelectedService] = useState<number | null>(null);
+  const [getServiceModal, setGetServiceModal] = useState<typeof businessServices[0] | null>(null);
+  const [serviceFormData, setServiceFormData] = useState<ServiceFormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
+  const [serviceFormSubmitted, setServiceFormSubmitted] = useState(false);
   const [formData, setFormData] = useState<VIPFormData>({
     name: '',
     email: '',
@@ -54,9 +119,23 @@ export default function BusinessServicesPage() {
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  const handleGetServiceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setServiceFormSubmitted(true);
+    setTimeout(() => {
+      setServiceFormSubmitted(false);
+      setServiceFormData({ firstName: '', lastName: '', email: '', phone: '', message: '' });
+      setGetServiceModal(null);
+    }, 3000);
+  };
+
+  const openGetServiceModal = (service: typeof businessServices[0]) => {
+    setGetServiceModal(service);
+    setServiceFormData({ firstName: '', lastName: '', email: '', phone: '', message: '' });
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
     setFormSubmitted(true);
     setTimeout(() => {
       setFormSubmitted(false);
@@ -78,7 +157,7 @@ export default function BusinessServicesPage() {
             <img 
               src={logo_dark.src}
               alt="Inshaar" 
-              className="h-10 w-40 object-cover mb-1"
+              className="h-8 w-32 lg:h-10 lg:w-40 object-cover mb-1"
             />
             <span className="text-white/80 text-sm">Business Services</span>
           </div>
@@ -120,24 +199,143 @@ export default function BusinessServicesPage() {
                   >
                     <i className={`ri-arrow-${selectedService === service.id ? 'up' : 'down'}-s-line text-white text-lg transition-transform`}></i>
                   </button>
-                  </div>
-                
-                  {selectedService === service.id && (
-                  <div className="mt-3 pt-3 border-t border-white/30">
-                    <div className="space-y-1.5">
-                      {service.features.map((feature, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <i className="ri-check-line text-white text-sm"></i>
-                          <span className="text-white/90 text-xs">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
+                </div>
+              </div>
+              {selectedService === service.id && (
+                <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+                  <p className="text-gray-700 text-sm leading-relaxed mb-3">{service.brief}</p>
+                  {service.points && service.points.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">What we provide</p>
+                      <ul className="space-y-1.5">
+                        {service.points.map((point, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                            <i className="ri-check-line text-purple-500 mt-0.5 flex-shrink-0" aria-hidden />
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
-              </div>
+                  {/* 2-3 images in a row: mobile 2-3 cols, tablet/desktop 3 cols with fixed height */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4 max-w-2xl">
+                    {service.images.map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="relative rounded-lg overflow-hidden bg-gray-200 h-20 sm:h-28 md:h-32 w-full"
+                      >
+                        <img
+                          src={img}
+                          alt={`${service.title} ${idx + 1}`}
+                          className="w-full h-full object-cover object-center"
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 200px"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => openGetServiceModal(service)}
+                    className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white shadow-md hover:shadow-lg transition-all"
+                  >
+                    Get service
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
+
+        {/* Get service modal */}
+        {getServiceModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-800">Request: {getServiceModal.title}</h3>
+                <button
+                  onClick={() => setGetServiceModal(null)}
+                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                >
+                  <i className="ri-close-line text-gray-600"></i>
+                </button>
+              </div>
+              <form onSubmit={handleGetServiceSubmit} className="p-6 space-y-4">
+                {serviceFormSubmitted ? (
+                  <div className="text-center py-8">
+                    <i className="ri-checkbox-circle-line text-green-500 text-4xl mb-2"></i>
+                    <p className="text-green-600 font-semibold">Request submitted!</p>
+                    <p className="text-gray-500 text-sm mt-1">We&apos;ll be in touch soon.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">First name</label>
+                        <input
+                          type="text"
+                          value={serviceFormData.firstName}
+                          onChange={(e) => setServiceFormData({ ...serviceFormData, firstName: e.target.value })}
+                          required
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none"
+                          placeholder="First name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+                        <input
+                          type="text"
+                          value={serviceFormData.lastName}
+                          onChange={(e) => setServiceFormData({ ...serviceFormData, lastName: e.target.value })}
+                          required
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none"
+                          placeholder="Last name"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={serviceFormData.email}
+                        onChange={(e) => setServiceFormData({ ...serviceFormData, email: e.target.value })}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none"
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        value={serviceFormData.phone}
+                        onChange={(e) => setServiceFormData({ ...serviceFormData, phone: e.target.value })}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none"
+                        placeholder="+1 (555) 000-0000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">What you want</label>
+                      <textarea
+                        value={serviceFormData.message}
+                        onChange={(e) => setServiceFormData({ ...serviceFormData, message: e.target.value })}
+                        required
+                        rows={4}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none resize-none"
+                        placeholder="Describe what you need for this service..."
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-white shadow-md hover:shadow-lg transition-all"
+                    >
+                      Submit request
+                    </button>
+                  </>
+                )}
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* VIP Influencers Section */}
         <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 rounded-2xl p-6 border-2 border-purple-100">
